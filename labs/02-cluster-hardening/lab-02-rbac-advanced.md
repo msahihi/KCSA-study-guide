@@ -26,7 +26,6 @@ Master advanced RBAC concepts including ClusterRoles, ClusterRoleBindings, aggre
 ## Lab Setup
 
 ```bash
-
 # Create multiple namespaces for multi-tenant scenario
 
 kubectl create namespace team-a
@@ -47,8 +46,6 @@ kubectl create deployment app --image=nginx:1.27 --replicas=2 -n team-b
 kubectl get pods --all-namespaces | grep -E "team-a|team-b|shared"
 ```
 
-```
-
 ## Exercises
 
 ### Exercise 1: Create a ClusterRole for Node Viewing
@@ -56,7 +53,6 @@ kubectl get pods --all-namespaces | grep -E "team-a|team-b|shared"
 **Objective**: Create a ClusterRole to view cluster-scoped resources.
 
 ```yaml
-
 # Save as node-viewer-clusterrole.yaml
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -73,9 +69,6 @@ rules:
 ```
 
 ```
-
-```bash
-
 # Apply ClusterRole
 
 kubectl apply -f node-viewer-clusterrole.yaml
@@ -111,8 +104,6 @@ kubectl auth can-i delete nodes \
 
 ```
 
-```
-
 ---
 
 ### Exercise 2: Use ClusterRole with RoleBinding (Cross-Namespace Pattern)
@@ -120,7 +111,6 @@ kubectl auth can-i delete nodes \
 **Objective**: Use a single ClusterRole with multiple RoleBindings for namespace-specific access.
 
 ```yaml
-
 # Save as pod-manager-clusterrole.yaml
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -134,9 +124,6 @@ rules:
 ```
 
 ```
-
-```bash
-
 # Apply ClusterRole
 
 kubectl apply -f pod-manager-clusterrole.yaml
@@ -189,8 +176,6 @@ kubectl auth can-i delete pods \
 
 ```
 
-```
-
 **Key Point**: ClusterRole is reusable, RoleBinding limits scope to namespace.
 
 ---
@@ -200,7 +185,6 @@ kubectl auth can-i delete pods \
 **Objective**: Create modular ClusterRoles that aggregate into a single role.
 
 ```yaml
-
 # Save as aggregated-monitoring-role.yaml
 # 1. Main aggregated role (rules auto-filled by matching labels)
 
@@ -257,9 +241,6 @@ rules:
 ```
 
 ```
-
-```bash
-
 # Apply all components
 
 kubectl apply -f aggregated-monitoring-role.yaml
@@ -297,8 +278,6 @@ kubectl auth can-i get /metrics --as=system:serviceaccount:default:prometheus
 
 ```
 
-```
-
 **Benefits**:
 
 - Modular role composition
@@ -312,7 +291,6 @@ kubectl auth can-i get /metrics --as=system:serviceaccount:default:prometheus
 **Objective**: Use Kubernetes built-in ClusterRoles.
 
 ```bash
-
 # View built-in ClusterRoles
 
 kubectl get clusterroles | grep -E "^admin|^edit|^view|^cluster-admin"
@@ -383,8 +361,6 @@ kubectl auth can-i delete pods \
 
 ```
 
-```
-
 **Built-in Roles Summary**:
 
 - **cluster-admin**: Full cluster access (dangerous!)
@@ -399,7 +375,6 @@ kubectl auth can-i delete pods \
 **Objective**: Grant ServiceAccount from one namespace access to another.
 
 ```yaml
-
 # Save as cross-namespace-access.yaml
 # ServiceAccount in team-a accessing team-b resources
 
@@ -441,9 +416,6 @@ roleRef:
 ```
 
 ```
-
-```bash
-
 # Apply configuration
 
 kubectl apply -f cross-namespace-access.yaml
@@ -466,8 +438,6 @@ kubectl auth can-i list pods \
 
 ```
 
-```
-
 ---
 
 ### Exercise 6: Cluster-Wide Viewer
@@ -475,7 +445,6 @@ kubectl auth can-i list pods \
 **Objective**: Create a ServiceAccount with read-only access across entire cluster.
 
 ```yaml
-
 # Save as cluster-viewer.yaml
 
 apiVersion: v1
@@ -514,9 +483,6 @@ roleRef:
 ```
 
 ```
-
-```bash
-
 # Apply configuration
 
 kubectl apply -f cluster-viewer.yaml
@@ -558,8 +524,6 @@ kubectl exec -it viewer-pod -- kubectl get pods --all-namespaces
 
 ```
 
-```
-
 ---
 
 ### Exercise 7: CI/CD Deployer Role
@@ -567,7 +531,6 @@ kubectl exec -it viewer-pod -- kubectl get pods --all-namespaces
 **Objective**: Create a realistic CI/CD ServiceAccount with deploy permissions.
 
 ```yaml
-
 # Save as cicd-deployer.yaml
 
 apiVersion: v1
@@ -629,9 +592,6 @@ roleRef:
 ```
 
 ```
-
-```bash
-
 # Apply configuration
 
 kubectl apply -f cicd-deployer.yaml
@@ -679,8 +639,6 @@ kubectl exec -it cicd-test -n team-a -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 8: Namespace Admin with RBAC Restrictions
@@ -688,7 +646,6 @@ kubectl exec -it cicd-test -n team-a -- \
 **Objective**: Create namespace admin that cannot modify certain resources.
 
 ```yaml
-
 # Save as restricted-admin.yaml
 
 apiVersion: v1
@@ -730,9 +687,6 @@ roleRef:
 ```
 
 ```
-
-```bash
-
 # Apply configuration
 
 kubectl apply -f restricted-admin.yaml
@@ -767,14 +721,11 @@ kubectl auth can-i create rolebindings \
 
 ```
 
-```
-
 ---
 
 ## Verification
 
 ```bash
-
 # 1. Verify ClusterRoles exist
 
 kubectl get clusterroles | grep -E "node-viewer|pod-manager|monitoring-aggregate|cluster-viewer"
@@ -807,12 +758,9 @@ kubectl auth can-i get nodes \
 kubectl get clusterroles --no-headers | grep -v "system:" | head -10
 ```
 
-```
-
 ## Cleanup
 
 ```bash
-
 # Delete test namespaces (cascades all resources)
 
 kubectl delete namespace team-a
@@ -828,8 +776,6 @@ kubectl delete clusterrolebinding node-viewer-binding prometheus-binding cluster
 
 kubectl delete pod viewer-pod --ignore-not-found
 kubectl delete pod cicd-test -n team-a --ignore-not-found
-```
-
 ```
 
 ## Key Takeaways

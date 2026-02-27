@@ -25,7 +25,6 @@ These hands-on labs provide practical experience with container supply chain sec
 ### Setup Script
 
 ```bash
-
 #!/bin/bash
 # setup-lab-environment.sh
 
@@ -65,8 +64,6 @@ grype version
 
 echo ""
 echo "Setup complete! Ready for labs."
-```
-
 ```
 
 ## Labs
@@ -195,7 +192,6 @@ Implement admission control to enforce supply chain security policies. You'll us
 We recommend completing the labs in order:
 
 ```
-
 Lab 01: Trivy Scanning (Foundation)
     ↓
 Lab 02: Image Signing (Build on scanning)
@@ -207,14 +203,12 @@ Lab 04: SBOM Generation (Inventory and tracking)
 Lab 05: Admission Control (Policy enforcement)
 
 ```
-```
 
 ## Common Lab Environment
 
 All labs use a consistent environment:
 
 ```bash
-
 # Namespace for labs
 
 kubectl create namespace supply-chain-labs
@@ -224,14 +218,11 @@ kubectl create namespace supply-chain-labs
 kubectl config set-context --current --namespace=supply-chain-labs
 ```
 
-```
-
 ## Lab Cleanup
 
 Each lab includes cleanup instructions. To clean up all labs:
 
 ```bash
-
 # Delete lab namespace
 
 kubectl delete namespace supply-chain-labs
@@ -243,8 +234,6 @@ docker image prune -a -f
 # Remove generated files
 
 rm -rf ~/supply-chain-labs
-```
-
 ```
 
 ## Troubleshooting
@@ -263,7 +252,6 @@ rm -rf ~/supply-chain-labs
 **Solution:**
 
 ```bash
-
 # Check cluster status
 
 kubectl cluster-info
@@ -277,14 +265,11 @@ kubectl config current-context
 kubectl get nodes
 ```
 
-```
-
 ### Issue: Registry authentication fails
 
 **Solution:**
 
 ```bash
-
 # Verify Docker login
 
 docker login
@@ -298,14 +283,11 @@ kubectl get secret regcred -o yaml
 docker pull <image>
 ```
 
-```
-
 ### Issue: Admission controller not blocking
 
 **Solution:**
 
 ```bash
-
 # Check admission controller status
 
 kubectl get pods -n kyverno
@@ -317,8 +299,6 @@ kubectl get clusterpolicy
 # Check policy violations
 
 kubectl describe clusterpolicy <policy-name>
-```
-
 ```
 
 ## Additional Resources
@@ -333,7 +313,6 @@ kubectl describe clusterpolicy <policy-name>
 ### Sample Images
 
 ```bash
-
 # Vulnerable images for testing
 
 docker.io/vulnerables/web-dvwa
@@ -344,8 +323,6 @@ docker.io/vulnerables/metasploit-vulnerability
 
 gcr.io/distroless/static-debian12
 gcr.io/distroless/base-debian12
-```
-
 ```
 
 ### Practice Repositories

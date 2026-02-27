@@ -39,14 +39,11 @@ spec:
     command: ["sh", "-c", "sleep 3600"]
 ```
 
-```
-
 ### Container-Level Security Context
 
 Applied to specific container (overrides pod-level):
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -61,8 +58,6 @@ spec:
     securityContext:        # Container-level: overrides pod setting
       runAsUser: 2000       # This container runs as user 2000
       allowPrivilegeEscalation: false
-```
-
 ```
 
 **Priority**: Container-level settings override pod-level settings.
@@ -81,7 +76,6 @@ Running containers as root (UID 0) is a security risk:
 ### Set User and Group IDs
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -96,8 +90,6 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 **Fields Explained**:
 
 - **runAsUser**: Specifies the user ID (UID) for container processes
@@ -107,7 +99,6 @@ spec:
 ### Verify Running User
 
 ```bash
-
 # Create a test pod
 
 kubectl run user-test --image=busybox:1.36 --rm -it -- sh
@@ -129,14 +120,11 @@ kubectl run user-test --image=busybox:1.36 --rm -it \
 uid=1000 gid=3000 groups=3000
 ```
 
-```
-
 ### Setting in Dockerfile
 
 Configure non-root in container image:
 
 ```dockerfile
-
 FROM nginx:1.27
 
 # Create non-root user
@@ -154,8 +142,6 @@ USER appuser
 EXPOSE 8080
 ```
 
-```
-
 **Best Practice**: Set `USER` in Dockerfile AND enforce with `runAsNonRoot: true` in pod spec.
 
 ## Filesystem Security
@@ -165,7 +151,6 @@ EXPOSE 8080
 Prevent container from writing to root filesystem:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -192,8 +177,6 @@ spec:
     emptyDir: {}
 ```
 
-```
-
 **Why This Matters**:
 
 - Prevents malware persistence
@@ -212,7 +195,6 @@ spec:
 Set group ownership for mounted volumes:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -234,8 +216,6 @@ spec:
       claimName: my-pvc
 ```
 
-```
-
 **How fsGroup Works**:
 
 - When pod starts, Kubernetes changes volume ownership to `fsGroup` GID
@@ -245,7 +225,6 @@ spec:
 **Verify**:
 
 ```bash
-
 kubectl exec fsgroup-demo -- ls -ld /data
 
 # Output: drwxrwsr-x 2 root 2000 4096 Feb 27 10:00 /data
@@ -254,14 +233,11 @@ kubectl exec fsgroup-demo -- ls -ld /data
 
 ```
 
-```
-
 ### Supplementary Groups
 
 Add additional group IDs to container process:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -276,17 +252,12 @@ spec:
     command: ["sh", "-c", "sleep 3600"]
 ```
 
-```
-
 **Verify**:
 
 ```bash
-
 kubectl exec supplemental-groups-demo -- id
 
 # Output: uid=0(root) gid=0(root) groups=0(root),2000,4000,5000
-
-```
 
 ```
 
@@ -316,7 +287,6 @@ Linux capabilities divide root privileges into distinct units. Instead of giving
 By default, containers get these capabilities:
 
 ```
-
 CAP_CHOWN
 CAP_DAC_OVERRIDE
 CAP_FOWNER
@@ -333,12 +303,10 @@ CAP_AUDIT_WRITE
 CAP_SETFCAP
 
 ```
-```
 
 ### Dropping All Capabilities
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -353,14 +321,11 @@ spec:
         - ALL    # Drop all capabilities
 ```
 
-```
-
 **Best Practice**: Drop all, then add only what's needed.
 
 ### Adding Required Capabilities
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -377,8 +342,6 @@ spec:
         - NET_BIND_SERVICE         # Add only needed capability
 ```
 
-```
-
 **Use Case**: Nginx needs to bind to port 80 (< 1024), requires `NET_BIND_SERVICE`.
 
 ### Dangerous Capabilities to Avoid
@@ -386,7 +349,6 @@ spec:
 Never grant these in production:
 
 ```yaml
-
 # DANGEROUS - Don't use!
 
 securityContext:
@@ -398,12 +360,9 @@ securityContext:
     - DAC_READ_SEARCH  # Bypass file read permissions
 ```
 
-```
-
 ### Checking Container Capabilities
 
 ```bash
-
 # Check capabilities in running container
 
 kubectl exec my-pod -- grep Cap /proc/1/status
@@ -417,14 +376,11 @@ kubectl exec my-pod -- cat /proc/1/status | grep CapEff
 
 ```
 
-```
-
 ## Privilege Escalation
 
 ### Preventing Privilege Escalation
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -435,8 +391,6 @@ spec:
     image: nginx:1.27
     securityContext:
       allowPrivilegeEscalation: false    # Prevent setuid binaries
-```
-
 ```
 
 **What This Prevents**:
@@ -456,7 +410,6 @@ spec:
 ### Privileged Containers (Avoid!)
 
 ```yaml
-
 # DANGEROUS - Avoid in production!
 
 apiVersion: v1
@@ -471,8 +424,6 @@ spec:
       privileged: true    # All capabilities, no restrictions
 ```
 
-```
-
 **Privileged Containers**:
 
 - Get all Linux capabilities
@@ -485,7 +436,6 @@ spec:
 ### SELinux Options
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -502,14 +452,11 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 **Note**: Requires SELinux-enabled nodes (common in RHEL, Fedora).
 
 ### AppArmor Profiles
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -520,8 +467,6 @@ spec:
   containers:
   - name: app
     image: nginx:1.27
-```
-
 ```
 
 **AppArmor Profile Types**:
@@ -535,7 +480,6 @@ spec:
 Seccomp (Secure Computing Mode) restricts system calls:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -549,8 +493,6 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 **Seccomp Profile Types**:
 
 - `RuntimeDefault`: Default profile (recommended)
@@ -560,7 +502,6 @@ spec:
 **Custom Seccomp Profile**:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -575,14 +516,11 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 ## Complete Security Context Example
 
 Combining all best practices:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -624,14 +562,11 @@ spec:
     emptyDir: {}
 ```
 
-```
-
 ## Common Patterns
 
 ### Pattern 1: Web Server (Nginx)
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -667,12 +602,9 @@ spec:
     emptyDir: {}
 ```
 
-```
-
 ### Pattern 2: Database (PostgreSQL)
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -705,12 +637,9 @@ spec:
       claimName: postgres-pvc
 ```
 
-```
-
 ### Pattern 3: Batch Job
 
 ```yaml
-
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -736,12 +665,9 @@ spec:
       restartPolicy: Never
 ```
 
-```
-
 ### Pattern 4: Init Container with Different Context
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -782,8 +708,6 @@ spec:
     emptyDir: {}
 ```
 
-```
-
 ## Troubleshooting Security Contexts
 
 ### Common Issues
@@ -791,12 +715,10 @@ spec:
 #### 1. Permission Denied Errors
 
 ```
-
 Error: failed to create containerd task: failed to create shim task:
 OCI runtime create failed: container_linux.go:380: starting container
 process caused: exec: "nginx": permission denied
 
-```
 ```
 
 **Causes**:
@@ -808,7 +730,6 @@ process caused: exec: "nginx": permission denied
 **Solutions**:
 
 ```bash
-
 # Check file permissions in image
 
 docker run --rm -it nginx:1.27 ls -la /usr/sbin/nginx
@@ -821,21 +742,16 @@ kubectl get pod my-pod -o jsonpath='{.spec.securityContext}'
 
 ```
 
-```
-
 #### 2. Container Crashes on Startup
 
 ```
-
 Error: mkdir: cannot create directory '/tmp/app': Read-only file system
 
-```
 ```
 
 **Solution**: Add emptyDir volumes for writable paths:
 
 ```yaml
-
 securityContext:
   readOnlyRootFilesystem: true
 volumeMounts:
@@ -846,15 +762,11 @@ volumes:
   emptyDir: {}
 ```
 
-```
-
 #### 3. Port Binding Fails
 
 ```
-
 Error: bind: permission denied (port 80)
 
-```
 ```
 
 **Causes**:
@@ -865,7 +777,6 @@ Error: bind: permission denied (port 80)
 **Solutions**:
 
 ```yaml
-
 # Option 1: Add capability
 
 securityContext:
@@ -878,41 +789,30 @@ ports:
 - containerPort: 8080    # Port > 1024
 ```
 
-```
-
 #### 4. runAsNonRoot Validation Fails
 
 ```
-
 Error: container has runAsNonRoot and image will run as root
 
-```
 ```
 
 **Solution**: Override user in pod spec:
 
 ```yaml
-
 securityContext:
   runAsUser: 1000        # Explicit non-root user
   runAsNonRoot: true
 ```
 
-```
-
 Or fix Dockerfile:
 
 ```dockerfile
-
 USER 1000
-```
-
 ```
 
 ### Debugging Commands
 
 ```bash
-
 # Check current user in container
 
 kubectl exec my-pod -- id
@@ -944,26 +844,20 @@ kubectl get pod my-pod -o jsonpath='{.spec.containers[0].securityContext}' | jq
 kubectl exec my-pod -- ps aux
 ```
 
-```
-
 ## Security Context Best Practices
 
 ### 1. Always Run as Non-Root
 
 ```yaml
-
 securityContext:
   runAsUser: 1000
   runAsGroup: 1000
   runAsNonRoot: true    # Enforce
 ```
 
-```
-
 ### 2. Use Read-Only Root Filesystem
 
 ```yaml
-
 securityContext:
   readOnlyRootFilesystem: true
 
@@ -971,12 +865,9 @@ securityContext:
 
 ```
 
-```
-
 ### 3. Drop All Capabilities
 
 ```yaml
-
 securityContext:
   capabilities:
     drop: [ALL]
@@ -985,33 +876,24 @@ securityContext:
 
 ```
 
-```
-
 ### 4. Prevent Privilege Escalation
 
 ```yaml
-
 securityContext:
   allowPrivilegeEscalation: false
-```
-
 ```
 
 ### 5. Use Seccomp Profiles
 
 ```yaml
-
 securityContext:
   seccompProfile:
     type: RuntimeDefault
 ```
 
-```
-
 ### 6. Apply Pod-Level Defaults
 
 ```yaml
-
 spec:
   securityContext:       # Pod-level defaults
     runAsNonRoot: true
@@ -1024,12 +906,9 @@ spec:
         drop: [ALL]
 ```
 
-```
-
 ### 7. Document Security Requirements
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1044,14 +923,11 @@ spec:
 
 ```
 
-```
-
 ## Security Context Priority
 
 When both pod and container security contexts are set:
 
 ```yaml
-
 spec:
   securityContext:                  # Pod-level
     runAsUser: 1000
@@ -1067,8 +943,6 @@ spec:
 
     # No container-level context
     # runAsUser: 1000, fsGroup: 2000 (inherited from pod)
-
-```
 
 ```
 
@@ -1115,7 +989,6 @@ spec:
 ### Minimal Secure Configuration
 
 ```yaml
-
 securityContext:
   runAsNonRoot: true
   runAsUser: 1000
@@ -1125,8 +998,6 @@ securityContext:
     drop: [ALL]
   seccompProfile:
     type: RuntimeDefault
-```
-
 ```
 
 ### Common Capability Requirements

@@ -121,7 +121,6 @@ Implement comprehensive image security including scanning, signing, and policy e
 ### Quick Start - Create Lab Cluster
 
 ```bash
-
 # Using Kind
 
 cat <<EOF | kind create cluster --name kcsa-lab --config=-
@@ -148,12 +147,9 @@ kubectl cluster-info
 kubectl get nodes
 ```
 
-```
-
 ### Install Common Tools
 
 ```bash
-
 # Install Helm
 
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
@@ -177,12 +173,9 @@ trivy version
 cosign version
 ```
 
-```
-
 ### Create Lab Namespaces
 
 ```bash
-
 # Create namespaces for labs
 
 kubectl create namespace lab-secrets
@@ -195,8 +188,6 @@ kubectl create namespace lab-images
 
 kubectl label namespace lab-admission policy=enforced
 kubectl label namespace lab-gatekeeper policy=restricted
-```
-
 ```
 
 ## Lab Progression
@@ -236,7 +227,6 @@ kubectl label namespace lab-gatekeeper policy=restricted
 **Solution**:
 
 ```bash
-
 # Check Falco driver is loaded
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i "driver loaded"
@@ -246,14 +236,11 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i "driver loaded"
 kubectl describe daemonset falco -n falco | grep driver
 ```
 
-```
-
 ### Issue: Admission webhook timeouts
 
 **Solution**:
 
 ```bash
-
 # Increase webhook timeout
 
 kubectl patch validatingwebhookconfiguration <name> \
@@ -261,14 +248,11 @@ kubectl patch validatingwebhookconfiguration <name> \
   -p='[{"op": "replace", "path": "/webhooks/0/timeoutSeconds", "value":10}]'
 ```
 
-```
-
 ### Issue: Image pull failures
 
 **Solution**:
 
 ```bash
-
 # Check image pull secrets
 
 kubectl get secrets
@@ -283,8 +267,6 @@ kubectl create secret docker-registry regcred \
   --docker-password=mypassword
 ```
 
-```
-
 ## Cleanup
 
 ### Lab-Specific Cleanup
@@ -294,7 +276,6 @@ Each lab includes cleanup instructions in its respective file.
 ### Complete Lab Environment Cleanup
 
 ```bash
-
 # Delete lab namespaces
 
 kubectl delete namespace lab-secrets
@@ -311,8 +292,6 @@ helm uninstall gatekeeper -n gatekeeper-system
 # Delete cluster (if using Kind)
 
 kind delete cluster --name kcsa-lab
-```
-
 ```
 
 ## Additional Practice

@@ -77,7 +77,6 @@ Admission controllers are powerful plugins that intercept requests to the Kubern
 ### Viewing Enabled Admission Controllers
 
 ```bash
-
 # Check currently enabled admission controllers
 
 kubectl exec -n kube-system kube-apiserver-<node-name> -- kube-apiserver -h | grep enable-admission-plugins
@@ -85,8 +84,6 @@ kubectl exec -n kube-system kube-apiserver-<node-name> -- kube-apiserver -h | gr
 # Or check the kube-apiserver manifest
 
 cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep admission-plugins
-```
-
 ```
 
 ## Built-in Admission Controllers
@@ -100,18 +97,14 @@ Enforces Pod Security Standards at the namespace level.
 **Enabling PodSecurity:**
 
 ```yaml
-
 # In kube-apiserver.yaml
 
 - --enable-admission-plugins=NodeRestriction,PodSecurity
 ```
 
-```
-
 **Using PodSecurity:**
 
 ```bash
-
 # Apply enforce level
 
 kubectl label namespace default pod-security.kubernetes.io/enforce=baseline
@@ -123,8 +116,6 @@ kubectl label namespace default pod-security.kubernetes.io/warn=restricted
 # Apply audit level (logs violations)
 
 kubectl label namespace default pod-security.kubernetes.io/audit=restricted
-```
-
 ```
 
 **Three Security Levels:**
@@ -146,12 +137,9 @@ Limits the Node and Pod objects a kubelet can modify.
 **Enabling:**
 
 ```yaml
-
 # In kube-apiserver.yaml
 
 - --enable-admission-plugins=NodeRestriction
-```
-
 ```
 
 ### 3. ResourceQuota
@@ -161,7 +149,6 @@ Enforces resource consumption limits per namespace.
 **Example ResourceQuota:**
 
 ```yaml
-
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -177,8 +164,6 @@ spec:
     pods: "20"
 ```
 
-```
-
 ### 4. LimitRanger
 
 Sets default resource limits and enforces limit constraints.
@@ -186,7 +171,6 @@ Sets default resource limits and enforces limit constraints.
 **Example LimitRange:**
 
 ```yaml
-
 apiVersion: v1
 kind: LimitRange
 metadata:
@@ -214,8 +198,6 @@ spec:
     type: PersistentVolumeClaim
 ```
 
-```
-
 ### 5. ServiceAccount
 
 Automatically injects ServiceAccount tokens into pods.
@@ -223,18 +205,14 @@ Automatically injects ServiceAccount tokens into pods.
 **Enabling:**
 
 ```yaml
-
 # Usually enabled by default
 
 - --enable-admission-plugins=ServiceAccount
 ```
 
-```
-
 **Example:**
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -247,8 +225,6 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 ### 6. NamespaceLifecycle
 
 Prevents creation of objects in terminating or non-existent namespaces.
@@ -256,12 +232,9 @@ Prevents creation of objects in terminating or non-existent namespaces.
 **Enabling:**
 
 ```yaml
-
 # Usually enabled by default
 
 - --enable-admission-plugins=NamespaceLifecycle
-```
-
 ```
 
 ### 7. DefaultStorageClass
@@ -275,21 +248,15 @@ Denies `exec` and `attach` commands to pods with privileged containers or host a
 **Enabling:**
 
 ```yaml
-
 - --enable-admission-plugins=DenyEscalatingExec
-```
-
 ```
 
 ### Recommended Admission Controllers for Security
 
 ```yaml
-
 # In /etc/kubernetes/manifests/kube-apiserver.yaml
 
 - --enable-admission-plugins=NodeRestriction,PodSecurity,ResourceQuota,LimitRanger,ServiceAccount,NamespaceLifecycle,MutatingAdmissionWebhook,ValidatingAdmissionWebhook
-```
-
 ```
 
 ## Dynamic Admission Control
@@ -303,7 +270,6 @@ Validates requests and accepts or rejects them.
 **Example ValidatingWebhookConfiguration:**
 
 ```yaml
-
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
@@ -330,12 +296,9 @@ webhooks:
       policy: enforced
 ```
 
-```
-
 **Webhook Server Response:**
 
 ```json
-
 {
   "apiVersion": "admission.k8s.io/v1",
   "kind": "AdmissionReview",
@@ -350,8 +313,6 @@ webhooks:
 }
 ```
 
-```
-
 ### MutatingWebhookConfiguration
 
 Modifies requests before they're validated and persisted.
@@ -359,7 +320,6 @@ Modifies requests before they're validated and persisted.
 **Example MutatingWebhookConfiguration:**
 
 ```yaml
-
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
@@ -386,12 +346,9 @@ webhooks:
       sidecar-injection: enabled
 ```
 
-```
-
 **Webhook Server Response (with JSON Patch):**
 
 ```json
-
 {
   "apiVersion": "admission.k8s.io/v1",
   "kind": "AdmissionReview",
@@ -404,14 +361,11 @@ webhooks:
 }
 ```
 
-```
-
 ### Creating a Simple Webhook
 
 #### 1. Webhook Server (Python Example)
 
 ```python
-
 from flask import Flask, request, jsonify
 import base64
 import json
@@ -458,12 +412,9 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8443, ssl_context='adhoc')
 ```
 
-```
-
 #### 2. Deploy Webhook Server
 
 ```yaml
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -507,12 +458,9 @@ spec:
     targetPort: 8443
 ```
 
-```
-
 #### 3. Generate TLS Certificates
 
 ```bash
-
 # Generate CA key and cert
 
 openssl genrsa -out ca.key 2048
@@ -559,8 +507,6 @@ kubectl create secret tls webhook-certs \
 cat ca.crt | base64 | tr -d '\n'
 ```
 
-```
-
 ## OPA Gatekeeper
 
 Open Policy Agent (OPA) Gatekeeper is a popular admission controller that uses the Rego policy language.
@@ -568,7 +514,6 @@ Open Policy Agent (OPA) Gatekeeper is a popular admission controller that uses t
 ### Installation
 
 ```bash
-
 # Install Gatekeeper
 
 kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
@@ -579,8 +524,6 @@ kubectl get pods -n gatekeeper-system
 kubectl get crd | grep gatekeeper
 ```
 
-```
-
 ### Key Concepts
 
 #### 1. ConstraintTemplate
@@ -588,7 +531,6 @@ kubectl get crd | grep gatekeeper
 Defines the schema and logic for a policy.
 
 ```yaml
-
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -620,14 +562,11 @@ spec:
         }
 ```
 
-```
-
 #### 2. Constraint
 
 Instantiates a ConstraintTemplate with specific parameters.
 
 ```yaml
-
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sRequiredLabels
 metadata:
@@ -641,8 +580,6 @@ spec:
     labels: ["owner", "environment"]
 ```
 
-```
-
 ### Common Gatekeeper Policies
 
 #### Policy 1: Deny Privileged Containers
@@ -650,7 +587,6 @@ spec:
 **ConstraintTemplate:**
 
 ```yaml
-
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -678,12 +614,9 @@ spec:
         }
 ```
 
-```
-
 **Constraint:**
 
 ```yaml
-
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sPSPPrivilegedContainer
 metadata:
@@ -698,14 +631,11 @@ spec:
         policy: restricted
 ```
 
-```
-
 #### Policy 2: Require Resource Limits
 
 **ConstraintTemplate:**
 
 ```yaml
-
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -733,12 +663,9 @@ spec:
         }
 ```
 
-```
-
 **Constraint:**
 
 ```yaml
-
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sRequiredResources
 metadata:
@@ -750,14 +677,11 @@ spec:
         kinds: ["Pod"]
 ```
 
-```
-
 #### Policy 3: Allowed Container Registries
 
 **ConstraintTemplate:**
 
 ```yaml
-
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -793,12 +717,9 @@ spec:
         }
 ```
 
-```
-
 **Constraint:**
 
 ```yaml
-
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sAllowedRepos
 metadata:
@@ -815,12 +736,9 @@ spec:
       - "registry.mycompany.com/"
 ```
 
-```
-
 ### Testing Gatekeeper Policies
 
 ```bash
-
 # Test with compliant pod
 
 kubectl run test-compliant \
@@ -835,12 +753,9 @@ kubectl run test-noncompliant \
   --dry-run=server
 ```
 
-```
-
 ### Audit Mode
 
 ```yaml
-
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sPSPPrivilegedContainer
 metadata:
@@ -853,16 +768,11 @@ spec:
         kinds: ["Pod"]
 ```
 
-```
-
 View audit results:
 
 ```bash
-
 kubectl get constraints
 kubectl describe k8spspprivilegedcontainer deny-privileged-containers
-```
-
 ```
 
 ## Kyverno
@@ -872,7 +782,6 @@ Kyverno is a Kubernetes-native policy engine that uses YAML instead of a new lan
 ### Installation
 
 ```bash
-
 # Install Kyverno
 
 kubectl create -f https://github.com/kyverno/kyverno/releases/download/v1.11.0/install.yaml
@@ -882,12 +791,9 @@ kubectl create -f https://github.com/kyverno/kyverno/releases/download/v1.11.0/i
 kubectl get pods -n kyverno
 ```
 
-```
-
 ### Kyverno Policy Structure
 
 ```yaml
-
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -910,14 +816,11 @@ spec:
             app: "?*"
 ```
 
-```
-
 ### Common Kyverno Policies
 
 #### Policy 1: Add Default Network Policy
 
 ```yaml
-
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -943,12 +846,9 @@ spec:
           - Ingress
 ```
 
-```
-
 #### Policy 2: Require Non-Root Containers
 
 ```yaml
-
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -972,12 +872,9 @@ spec:
               runAsNonRoot: true
 ```
 
-```
-
 #### Policy 3: Mutate - Add Security Context
 
 ```yaml
-
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -1005,8 +902,6 @@ spec:
                 - ALL
 ```
 
-```
-
 ## Best Practices
 
 ### 1. Start with Audit Mode
@@ -1014,7 +909,6 @@ spec:
 Test policies in audit/dryrun mode before enforcing.
 
 ```yaml
-
 # Gatekeeper
 
 spec:
@@ -1026,14 +920,11 @@ spec:
   validationFailureAction: Audit
 ```
 
-```
-
 ### 2. Use Namespace Selectors
 
 Apply policies selectively to avoid disrupting system namespaces.
 
 ```yaml
-
 spec:
   match:
     kinds:
@@ -1046,24 +937,18 @@ spec:
         values: ["enabled"]
 ```
 
-```
-
 ### 3. Set Appropriate Timeouts
 
 ```yaml
-
 webhooks:
 - name: my-webhook
   timeoutSeconds: 10  # Don't set too high
   failurePolicy: Ignore  # or Fail, depending on criticality
 ```
 
-```
-
 ### 4. Monitor Webhook Performance
 
 ```bash
-
 # Check webhook latency
 
 kubectl get validatingwebhookconfigurations -o yaml | grep -A 5 metrics
@@ -1072,8 +957,6 @@ kubectl get validatingwebhookconfigurations -o yaml | grep -A 5 metrics
 
 kubectl top pods -n gatekeeper-system
 kubectl top pods -n kyverno
-```
-
 ```
 
 ### 5. Implement Progressive Rollout
@@ -1087,7 +970,6 @@ kubectl top pods -n kyverno
 ### 6. Document Policies
 
 ```yaml
-
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sPSPPrivilegedContainer
 metadata:
@@ -1099,8 +981,6 @@ metadata:
     documentation: "https://wiki.example.com/k8s-security-policies"
 ```
 
-```
-
 ### 7. Version Control Policies
 
 Store all policies in Git and use GitOps for deployment.
@@ -1108,7 +988,6 @@ Store all policies in Git and use GitOps for deployment.
 ### 8. Test Policies Before Deployment
 
 ```bash
-
 # Gatekeeper: Use gator CLI
 
 gator test -f constraints/ -f templates/
@@ -1118,14 +997,11 @@ gator test -f constraints/ -f templates/
 kyverno apply policy.yaml --resource deployment.yaml
 ```
 
-```
-
 ## Troubleshooting
 
 ### Webhook Not Called
 
 ```bash
-
 # Check webhook configuration
 
 kubectl get validatingwebhookconfigurations
@@ -1140,12 +1016,9 @@ kubectl run test --image=curlimages/curl --rm -it -- curl -k https://webhook-ser
 kubectl logs -n kube-system kube-apiserver-<node> | grep webhook
 ```
 
-```
-
 ### Certificate Issues
 
 ```bash
-
 # Verify certificate
 
 openssl x509 -in webhook-server.crt -text -noout
@@ -1159,12 +1032,9 @@ openssl x509 -in webhook-server.crt -text | grep DNS
 openssl s_client -connect webhook-service.webhook-system.svc:443 -CAfile ca.crt
 ```
 
-```
-
 ### Policy Not Enforcing
 
 ```bash
-
 # Gatekeeper: Check constraint status
 
 kubectl get constraints
@@ -1184,12 +1054,9 @@ kubectl describe clusterpolicy require-labels
 kubectl logs -n kyverno -l app.kubernetes.io/name=kyverno
 ```
 
-```
-
 ### Debugging Admission Denials
 
 ```bash
-
 # Create resource with verbose output
 
 kubectl create -f pod.yaml -v=8
@@ -1204,12 +1071,9 @@ kubectl get events --sort-by='.lastTimestamp' | grep admission
 sudo cat /var/log/kubernetes/audit/audit.log | grep admission
 ```
 
-```
-
 ### Performance Issues
 
 ```bash
-
 # Check webhook response times
 
 kubectl get --raw /metrics | grep apiserver_admission_webhook_admission_duration_seconds
@@ -1217,8 +1081,6 @@ kubectl get --raw /metrics | grep apiserver_admission_webhook_admission_duration
 # Check webhook failures
 
 kubectl get --raw /metrics | grep apiserver_admission_webhook_rejection_count
-```
-
 ```
 
 ## Summary

@@ -26,7 +26,6 @@ Master pod and container security contexts to implement defense-in-depth securit
 ## Lab Setup
 
 ```bash
-
 # Create lab namespace
 
 kubectl create namespace sec-ctx-lab
@@ -36,14 +35,11 @@ kubectl create namespace sec-ctx-lab
 kubectl get namespace sec-ctx-lab
 ```
 
-```
-
 ## Exercises
 
 ### Exercise 1: Default Security Context (Baseline)
 
 ```bash
-
 # Create pod without security context
 
 kubectl run default-pod --image=nginx:1.27 -n sec-ctx-lab
@@ -80,14 +76,11 @@ kubectl exec -it default-pod -n sec-ctx-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 2: Run as Non-Root User
 
 ```yaml
-
 # Save as non-root-pod.yaml
 
 apiVersion: v1
@@ -107,9 +100,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply pod
 
 kubectl apply -f non-root-pod.yaml
@@ -134,14 +124,11 @@ kubectl exec -it non-root-pod -n sec-ctx-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 3: Enforce Non-Root (Validation)
 
 ```yaml
-
 # Save as enforce-non-root.yaml
 
 apiVersion: v1
@@ -161,9 +148,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Try to apply (should fail if nginx runs as root)
 
 kubectl apply -f enforce-non-root.yaml
@@ -200,14 +184,11 @@ EOF
 kubectl wait --for=condition=ready pod/enforce-non-root-success -n sec-ctx-lab --timeout=60s
 ```
 
-```
-
 ---
 
 ### Exercise 4: Read-Only Root Filesystem
 
 ```yaml
-
 # Save as readonly-fs-pod.yaml
 
 apiVersion: v1
@@ -241,9 +222,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply
 
 kubectl apply -f readonly-fs-pod.yaml
@@ -275,14 +253,11 @@ kubectl exec -it readonly-fs-pod -n sec-ctx-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 5: Drop All Capabilities
 
 ```yaml
-
 # Save as drop-caps-pod.yaml
 
 apiVersion: v1
@@ -305,9 +280,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply
 
 kubectl apply -f drop-caps-pod.yaml
@@ -332,14 +304,11 @@ kubectl exec -it default-pod -n sec-ctx-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 6: Add Specific Capabilities
 
 ```yaml
-
 # Save as net-bind-pod.yaml
 
 apiVersion: v1
@@ -364,9 +333,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply
 
 kubectl apply -f net-bind-pod.yaml
@@ -389,14 +355,11 @@ kubectl exec -it net-bind-pod -n sec-ctx-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 7: Prevent Privilege Escalation
 
 ```yaml
-
 # Save as no-privilege-escalation.yaml
 
 apiVersion: v1
@@ -420,9 +383,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply
 
 kubectl apply -f no-privilege-escalation.yaml
@@ -447,14 +407,11 @@ kubectl exec -it default-pod -n sec-ctx-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 8: fsGroup for Volume Permissions
 
 ```yaml
-
 # Save as fsgroup-pod.yaml
 
 apiVersion: v1
@@ -481,9 +438,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply
 
 kubectl apply -f fsgroup-pod.yaml
@@ -518,14 +472,11 @@ kubectl exec -it fsgroup-pod -n sec-ctx-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 9: Seccomp Profile
 
 ```yaml
-
 # Save as seccomp-pod.yaml
 
 apiVersion: v1
@@ -551,9 +502,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply
 
 kubectl apply -f seccomp-pod.yaml
@@ -578,14 +526,11 @@ kubectl exec -it default-pod -n sec-ctx-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 10: Complete Secure Pod
 
 ```yaml
-
 # Save as fully-secure-pod.yaml
 
 apiVersion: v1
@@ -629,9 +574,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply
 
 kubectl apply -f fully-secure-pod.yaml
@@ -666,14 +608,11 @@ kubectl exec -it fully-secure-pod -n sec-ctx-lab -- \
   curl -s http://localhost | head -5
 ```
 
-```
-
 ---
 
 ### Exercise 11: Container vs Pod Security Context
 
 ```yaml
-
 # Save as override-security-context.yaml
 
 apiVersion: v1
@@ -700,9 +639,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply
 
 kubectl apply -f override-security-context.yaml
@@ -725,14 +661,11 @@ kubectl exec -it override-context-pod -n sec-ctx-lab -c container2 -- id
 
 ```
 
-```
-
 ---
 
 ## Verification
 
 ```bash
-
 # 1. Check all pods
 
 kubectl get pods -n sec-ctx-lab
@@ -765,14 +698,11 @@ kubectl exec -it seccomp-pod -n sec-ctx-lab -- \
   grep "Seccomp:\s*2" /proc/1/status
 ```
 
-```
-
 ## Troubleshooting Guide
 
 ### Issue: Permission Denied Errors
 
 ```bash
-
 # Check user/group
 
 kubectl get pod <pod> -n sec-ctx-lab -o jsonpath='{.spec.securityContext}'
@@ -788,12 +718,9 @@ securityContext:
     add: ["CHOWN", "DAC_OVERRIDE"]
 ```
 
-```
-
 ### Issue: Read-Only Filesystem Crashes
 
 ```bash
-
 # Identify writable paths needed
 
 kubectl logs <pod> -n sec-ctx-lab
@@ -808,12 +735,9 @@ volumeMounts:
   mountPath: /tmp
 ```
 
-```
-
 ### Issue: Port Binding Fails
 
 ```bash
-
 # Add NET_BIND_SERVICE capability
 
 securityContext:
@@ -822,12 +746,9 @@ securityContext:
     add: ["NET_BIND_SERVICE"]
 ```
 
-```
-
 ## Cleanup
 
 ```bash
-
 # Delete namespace
 
 kubectl delete namespace sec-ctx-lab
@@ -837,8 +758,6 @@ kubectl delete namespace sec-ctx-lab
 kubectl get namespace sec-ctx-lab
 
 # Expected: NotFound
-
-```
 
 ```
 

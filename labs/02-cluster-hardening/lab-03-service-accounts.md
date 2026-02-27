@@ -25,7 +25,6 @@ Master ServiceAccount creation, configuration, and security best practices. Lear
 ## Lab Setup
 
 ```bash
-
 # Create lab namespace
 
 kubectl create namespace sa-lab
@@ -35,14 +34,11 @@ kubectl create namespace sa-lab
 kubectl get namespace sa-lab
 ```
 
-```
-
 ## Exercises
 
 ### Exercise 1: Explore Default ServiceAccount
 
 ```bash
-
 # Check default ServiceAccount
 
 kubectl get serviceaccount default -n sa-lab
@@ -84,14 +80,11 @@ kubectl exec -it default-sa-pod -n sa-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 2: Create Custom ServiceAccount
 
 ```bash
-
 # Create ServiceAccount
 
 kubectl create serviceaccount my-app-sa -n sa-lab
@@ -121,14 +114,11 @@ EOF
 kubectl get serviceaccounts -n sa-lab
 ```
 
-```
-
 ---
 
 ### Exercise 3: Grant Permissions to ServiceAccount
 
 ```bash
-
 # Create Role for pod reading
 
 kubectl create role pod-reader \
@@ -159,14 +149,11 @@ kubectl auth can-i delete pods \
 
 ```
 
-```
-
 ---
 
 ### Exercise 4: Use ServiceAccount in Pod
 
 ```yaml
-
 # Save as pod-with-sa.yaml
 
 apiVersion: v1
@@ -183,9 +170,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply pod
 
 kubectl apply -f pod-with-sa.yaml
@@ -210,8 +194,6 @@ kubectl exec -it app-with-sa -n sa-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 5: Disable Token Automounting
@@ -219,7 +201,6 @@ kubectl exec -it app-with-sa -n sa-lab -- \
 **Scenario**: Static web server doesn't need API access.
 
 ```yaml
-
 # Save as no-token-sa.yaml
 
 apiVersion: v1
@@ -242,9 +223,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply
 
 kubectl apply -f no-token-sa.yaml
@@ -262,14 +240,11 @@ kubectl exec -it no-token-pod -n sa-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 6: Override Automounting at Pod Level
 
 ```yaml
-
 # Save as override-automount.yaml
 
 apiVersion: v1
@@ -295,9 +270,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply
 
 kubectl apply -f override-automount.yaml
@@ -334,14 +306,11 @@ kubectl exec -it allow-mount-pod -n sa-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 7: ServiceAccount for ConfigMap Access
 
 ```bash
-
 # Create test ConfigMaps
 
 kubectl create configmap app-config \
@@ -406,14 +375,11 @@ kubectl exec -it config-reader-pod -n sa-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 8: Bound ServiceAccount Tokens (Projected Volumes)
 
 ```yaml
-
 # Save as projected-token-pod.yaml
 
 apiVersion: v1
@@ -442,9 +408,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Apply
 
 kubectl apply -f projected-token-pod.yaml
@@ -470,14 +433,11 @@ kubectl exec -it projected-token-pod -n sa-lab -- \
   cut -d. -f2 | base64 -d 2>/dev/null || echo "Token content"
 ```
 
-```
-
 ---
 
 ### Exercise 9: Cross-Namespace ServiceAccount Access
 
 ```bash
-
 # Create another namespace
 
 kubectl create namespace sa-lab-2
@@ -517,8 +477,6 @@ kubectl exec -it app-with-sa -n sa-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 10: Least Privilege ServiceAccount
@@ -526,7 +484,6 @@ kubectl exec -it app-with-sa -n sa-lab -- \
 **Scenario**: Application needs specific ConfigMap and one Secret.
 
 ```yaml
-
 # Save as least-privilege-sa.yaml
 
 apiVersion: v1
@@ -572,9 +529,6 @@ roleRef:
 ```
 
 ```
-
-```bash
-
 # Create test secret
 
 kubectl create secret generic app-secret \
@@ -623,14 +577,11 @@ kubectl auth can-i get secret/other-secret \
 
 ```
 
-```
-
 ---
 
 ## Verification
 
 ```bash
-
 # 1. List all ServiceAccounts
 
 kubectl get serviceaccounts -n sa-lab
@@ -665,12 +616,9 @@ kubectl auth can-i list pods \
 
 ```
 
-```
-
 ## Cleanup
 
 ```bash
-
 # Delete namespaces (cascades all resources)
 
 kubectl delete namespace sa-lab
@@ -681,8 +629,6 @@ kubectl delete namespace sa-lab-2
 kubectl get namespace sa-lab sa-lab-2
 
 # Expected: NotFound errors
-
-```
 
 ```
 

@@ -20,7 +20,6 @@
 Every namespace has a `default` ServiceAccount automatically created:
 
 ```bash
-
 # List service accounts in a namespace
 
 kubectl get serviceaccounts -n default
@@ -31,14 +30,11 @@ NAME      SECRETS   AGE
 default   0         10d
 ```
 
-```
-
 ### Automatic Token Mounting
 
 By default, Kubernetes automatically mounts a ServiceAccount token into every pod:
 
 ```bash
-
 # Check mounted token in a pod
 
 kubectl exec -it my-pod -- ls -la /var/run/secrets/kubernetes.io/serviceaccount/
@@ -55,8 +51,6 @@ lrwxrwxrwx 1 root root   16 Feb 27 10:00 namespace -> ..data/namespace
 lrwxrwxrwx 1 root root   12 Feb 27 10:00 token -> ..data/token
 ```
 
-```
-
 **Three Files Mounted**:
 
 1. **token**: JWT bearer token for API authentication
@@ -68,7 +62,6 @@ lrwxrwxrwx 1 root root   12 Feb 27 10:00 token -> ..data/token
 ServiceAccount tokens are JSON Web Tokens (JWT) containing:
 
 ```json
-
 {
   "iss": "kubernetes/serviceaccount",
   "kubernetes.io/serviceaccount/namespace": "default",
@@ -77,8 +70,6 @@ ServiceAccount tokens are JSON Web Tokens (JWT) containing:
   "kubernetes.io/serviceaccount/service-account.uid": "uuid-here",
   "sub": "system:serviceaccount:default:default"
 }
-```
-
 ```
 
 **Key Claims**:
@@ -92,7 +83,6 @@ ServiceAccount tokens are JSON Web Tokens (JWT) containing:
 ### Method 1: kubectl Command
 
 ```bash
-
 # Create a ServiceAccount
 
 kubectl create serviceaccount my-app-sa -n production
@@ -106,12 +96,9 @@ kubectl get sa my-app-sa -n production
 kubectl describe sa my-app-sa -n production
 ```
 
-```
-
 ### Method 2: YAML Manifest
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -123,15 +110,10 @@ metadata:
     description: "ServiceAccount for my-application pods"
 ```
 
-```
-
 Apply with:
 
 ```bash
-
 kubectl apply -f serviceaccount.yaml
-```
-
 ```
 
 ## Using ServiceAccounts in Pods
@@ -139,7 +121,6 @@ kubectl apply -f serviceaccount.yaml
 ### Assigning ServiceAccount to Pod
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -152,12 +133,9 @@ spec:
     image: myapp:1.0
 ```
 
-```
-
 ### ServiceAccount in Deployment
 
 ```yaml
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -179,14 +157,11 @@ spec:
         image: myapp:1.0
 ```
 
-```
-
 ### Default Behavior
 
 If no ServiceAccount is specified, pods use the `default` ServiceAccount:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -198,8 +173,6 @@ spec:
   containers:
   - name: nginx
     image: nginx:1.27
-```
-
 ```
 
 ## ServiceAccount Token Projection (Bound Tokens)
@@ -218,7 +191,6 @@ spec:
 ### Projected Volume Token
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -243,8 +215,6 @@ spec:
           audience: api
 ```
 
-```
-
 **Benefits**:
 
 - Tokens expire automatically (no long-lived credentials)
@@ -257,7 +227,6 @@ spec:
 Modern Kubernetes automatically uses projected tokens:
 
 ```bash
-
 # Check token in a pod (v1.22+)
 
 kubectl exec -it my-pod -- cat /var/run/secrets/kubernetes.io/serviceaccount/token
@@ -268,8 +237,6 @@ kubectl exec -it my-pod -- cat /var/run/secrets/kubernetes.io/serviceaccount/tok
   cut -d. -f2 | base64 -d | jq .exp
 ```
 
-```
-
 ## Disabling Token Automounting
 
 **Security Best Practice**: Disable automounting for pods that don't need API access.
@@ -277,7 +244,6 @@ kubectl exec -it my-pod -- cat /var/run/secrets/kubernetes.io/serviceaccount/tok
 ### Disable at ServiceAccount Level
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -286,12 +252,9 @@ metadata:
 automountServiceAccountToken: false  # Disable for all pods using this SA
 ```
 
-```
-
 ### Disable at Pod Level
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -305,12 +268,9 @@ spec:
     image: myapp:1.0
 ```
 
-```
-
 ### Disable at Deployment Level
 
 ```yaml
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -332,8 +292,6 @@ spec:
         image: nginx:1.27
 ```
 
-```
-
 **Decision Matrix**:
 
 | Application Type | Mount Token? |
@@ -352,7 +310,6 @@ ServiceAccounts are subjects in RBAC and can be granted permissions via RoleBind
 ### Example: ConfigMap Reader ServiceAccount
 
 ```yaml
-
 # 1. Create ServiceAccount
 
 apiVersion: v1
@@ -406,12 +363,9 @@ spec:
     image: myapp:1.0
 ```
 
-```
-
 ### Example: Cross-Namespace Access
 
 ```yaml
-
 # ServiceAccount in namespace 'app'
 
 apiVersion: v1
@@ -452,12 +406,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Testing ServiceAccount Permissions
 
 ```bash
-
 # Test as ServiceAccount
 
 kubectl auth can-i get configmaps \
@@ -471,8 +422,6 @@ kubectl auth can-i --list \
   --namespace=production
 ```
 
-```
-
 ## Using ServiceAccount Tokens from Within Pods
 
 ### Accessing Kubernetes API
@@ -480,7 +429,6 @@ kubectl auth can-i --list \
 Applications can read the mounted token to authenticate:
 
 ```bash
-
 # From within a pod
 
 TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
@@ -494,12 +442,9 @@ curl --cacert $CACERT \
   https://kubernetes.default.svc/api/v1/namespaces/$NAMESPACE/pods
 ```
 
-```
-
 ### Example: Python Client
 
 ```python
-
 from kubernetes import client, config
 
 # Load in-cluster config (uses mounted ServiceAccount token)
@@ -517,12 +462,9 @@ for pod in pods.items:
     print(pod.metadata.name)
 ```
 
-```
-
 ### Example: Go Client
 
 ```go
-
 package main
 
 import (
@@ -558,8 +500,6 @@ func main() {
 }
 ```
 
-```
-
 ## ServiceAccount Token Security
 
 ### Token Lifetime
@@ -582,7 +522,6 @@ func main() {
 Limit what ServiceAccount can do:
 
 ```yaml
-
 # Minimal permissions example
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -597,14 +536,11 @@ rules:
   verbs: ["get"]  # Only read, not modify
 ```
 
-```
-
 ### Token Rotation
 
 For bound tokens, rotation is automatic. For legacy tokens:
 
 ```bash
-
 # Delete old token secret (forces new token generation)
 
 kubectl delete secret <serviceaccount-token-secret>
@@ -613,12 +549,9 @@ kubectl delete secret <serviceaccount-token-secret>
 
 ```
 
-```
-
 ### Detecting Token Usage
 
 ```bash
-
 # Check which pods use a ServiceAccount
 
 kubectl get pods -n production -o json | \
@@ -630,14 +563,11 @@ kubectl logs -n kube-system kube-apiserver-<node> | \
   grep "system:serviceaccount:production:my-app-sa"
 ```
 
-```
-
 ## Common ServiceAccount Patterns
 
 ### Pattern 1: Read-Only Monitoring
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -669,12 +599,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Pattern 2: CI/CD Deployer
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -709,12 +636,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Pattern 3: Job with Cleanup Permissions
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -770,12 +694,9 @@ spec:
             -o name | xargs kubectl delete
 ```
 
-```
-
 ### Pattern 4: No API Access (Static App)
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -805,8 +726,6 @@ spec:
         image: nginx:1.27
 ```
 
-```
-
 ## Troubleshooting ServiceAccounts
 
 ### Common Issues
@@ -816,16 +735,13 @@ spec:
 **Symptoms**:
 
 ```
-
 Error: Forbidden: User "system:serviceaccount:default:default" cannot list pods
 
-```
 ```
 
 **Solutions**:
 
 ```bash
-
 # Check if token is mounted
 
 kubectl exec -it my-pod -- ls /var/run/secrets/kubernetes.io/serviceaccount/
@@ -848,8 +764,6 @@ kubectl create rolebinding sa-binding \
   --namespace=<namespace>
 ```
 
-```
-
 #### 2. Token Not Mounted
 
 **Symptoms**: `/var/run/secrets/kubernetes.io/serviceaccount/` directory empty or missing
@@ -863,7 +777,6 @@ kubectl create rolebinding sa-binding \
 **Solutions**:
 
 ```bash
-
 # Check pod spec
 
 kubectl get pod my-pod -o yaml | grep -A2 automountServiceAccountToken
@@ -877,8 +790,6 @@ kubectl get sa my-sa -o yaml | grep automountServiceAccountToken
 kubectl get sa my-sa -n production
 ```
 
-```
-
 #### 3. Permission Denied After Granting Access
 
 **Causes**:
@@ -890,7 +801,6 @@ kubectl get sa my-sa -n production
 **Solutions**:
 
 ```bash
-
 # Verify RoleBinding
 
 kubectl describe rolebinding my-binding -n production
@@ -904,8 +814,6 @@ kubectl get rolebinding my-binding -n production -o yaml
 kubectl rollout restart deployment my-app -n production
 ```
 
-```
-
 #### 4. Cross-Namespace Access Not Working
 
 **Example**: ServiceAccount in namespace `app` cannot access resources in namespace `data`
@@ -913,7 +821,6 @@ kubectl rollout restart deployment my-app -n production
 **Solution**: Create RoleBinding in target namespace:
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -929,12 +836,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Debugging Commands
 
 ```bash
-
 # List ServiceAccounts
 
 kubectl get sa -n <namespace>
@@ -968,8 +872,6 @@ kubectl exec -it <pod> -- cat /var/run/secrets/kubernetes.io/serviceaccount/toke
   cut -d. -f2 | base64 -d | jq
 ```
 
-```
-
 ## Security Best Practices
 
 ### 1. Use Custom ServiceAccounts
@@ -977,7 +879,6 @@ kubectl exec -it <pod> -- cat /var/run/secrets/kubernetes.io/serviceaccount/toke
 Don't rely on the `default` ServiceAccount:
 
 ```yaml
-
 # BAD - uses default SA
 
 spec:
@@ -994,12 +895,9 @@ spec:
     image: myapp:1.0
 ```
 
-```
-
 ### 2. Disable Automounting When Not Needed
 
 ```yaml
-
 # Application doesn't call Kubernetes API
 
 apiVersion: apps/v1
@@ -1015,12 +913,9 @@ spec:
         image: nginx:1.27
 ```
 
-```
-
 ### 3. Apply Least Privilege
 
 ```yaml
-
 # BAD - too permissive
 
 rules:
@@ -1037,12 +932,9 @@ rules:
   verbs: ["get"]
 ```
 
-```
-
 ### 4. Use Bound Tokens (v1.22+)
 
 ```yaml
-
 # Prefer projected volumes with expiration
 
 volumes:
@@ -1054,12 +946,9 @@ volumes:
         expirationSeconds: 3600
 ```
 
-```
-
 ### 5. Audit ServiceAccount Usage
 
 ```bash
-
 # List all ServiceAccounts
 
 kubectl get sa --all-namespaces
@@ -1078,12 +967,9 @@ for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
 done
 ```
 
-```
-
 ### 6. Document ServiceAccount Purpose
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -1098,12 +984,9 @@ metadata:
     team: platform
 ```
 
-```
-
 ### 7. Regular Permission Reviews
 
 ```bash
-
 # List all RoleBindings for ServiceAccounts
 
 kubectl get rolebindings,clusterrolebindings --all-namespaces -o json | \
@@ -1117,12 +1000,9 @@ kubectl get clusterrolebindings -o json | \
     .roleRef.name=="cluster-admin") | .metadata.name'
 ```
 
-```
-
 ### 8. Separate Workload ServiceAccounts
 
 ```yaml
-
 # One ServiceAccount per application/workload
 
 ---
@@ -1145,8 +1025,6 @@ metadata:
   namespace: production
 ```
 
-```
-
 ## ServiceAccount Token API
 
 ### TokenRequest API
@@ -1154,14 +1032,11 @@ metadata:
 Request short-lived tokens programmatically:
 
 ```bash
-
 # Request a token
 
 kubectl create token <serviceaccount-name> \
   --duration=1h \
   --namespace=<namespace>
-```
-
 ```
 
 **Features**:
@@ -1174,7 +1049,6 @@ kubectl create token <serviceaccount-name> \
 ### Example: External Token Request
 
 ```bash
-
 # Create 1-hour token for CI/CD
 
 TOKEN=$(kubectl create token cicd-deployer \
@@ -1185,8 +1059,6 @@ TOKEN=$(kubectl create token cicd-deployer \
 
 curl -H "Authorization: Bearer $TOKEN" \
   https://kubernetes-api-server/api/v1/namespaces/production/pods
-```
-
 ```
 
 ## Migration from Legacy Tokens
@@ -1200,7 +1072,6 @@ curl -H "Authorization: Bearer $TOKEN" \
 ### Checking Token Type
 
 ```bash
-
 # Check if using projected token
 
 kubectl get pod my-pod -o yaml | grep -A5 "serviceAccountToken"
@@ -1212,14 +1083,11 @@ kubectl get pod my-pod -o yaml | grep -A5 "serviceAccountToken"
 
 ```
 
-```
-
 ## Quick Reference
 
 ### Common Commands
 
 ```bash
-
 # Create ServiceAccount
 
 kubectl create serviceaccount <name> -n <namespace>
@@ -1246,26 +1114,19 @@ kubectl auth can-i <verb> <resource> \
   --as=system:serviceaccount:<namespace>:<sa-name>
 ```
 
-```
-
 ### ServiceAccount Subject Format
 
 ```
-
 system:serviceaccount:<namespace>:<serviceaccount-name>
 
-```
 ```
 
 Examples:
 
 ```
-
 system:serviceaccount:default:default
 system:serviceaccount:production:my-app-sa
 system:serviceaccount:monitoring:prometheus
-```
-
 ```
 
 ## Exam Tips

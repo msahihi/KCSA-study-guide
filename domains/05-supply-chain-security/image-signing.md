@@ -68,7 +68,6 @@ Cosign is a CNCF project that provides container signing, verification, and stor
 ### Linux (Binary)
 
 ```bash
-
 # Download latest release
 
 COSIGN_VERSION=$(curl -s https://api.github.com/repos/sigstore/cosign/releases/latest | grep tag_name | cut -d '"' -f 4 | tr -d 'v')
@@ -77,40 +76,28 @@ chmod +x cosign-linux-amd64
 sudo mv cosign-linux-amd64 /usr/local/bin/cosign
 ```
 
-```
-
 ### macOS (Homebrew)
 
 ```bash
-
 brew install cosign
-```
-
 ```
 
 ### Linux (apt)
 
 ```bash
-
 wget -O- https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-2.2.3-1.x86_64.rpm
 sudo rpm -ivh cosign-2.2.3-1.x86_64.rpm
-```
-
 ```
 
 ### Verify Installation
 
 ```bash
-
 cosign version
-```
-
 ```
 
 Expected output:
 
 ```
-
 GitVersion:    2.2.3
 GitCommit:     a989b1e67cf9913bb0e5e5cf16be0bbf4c7ae70c
 GitTreeState:  clean
@@ -120,7 +107,6 @@ Compiler:      gc
 Platform:      linux/amd64
 
 ```
-```
 
 ## Key Pair Signing
 
@@ -129,10 +115,7 @@ Platform:      linux/amd64
 Generate a new signing key pair:
 
 ```bash
-
 cosign generate-key-pair
-```
-
 ```
 
 This creates two files:
@@ -143,13 +126,11 @@ This creates two files:
 You'll be prompted for a password to encrypt the private key:
 
 ```
-
 Enter password for private key:
 Enter password for private key again:
 Private key written to cosign.key
 Public key written to cosign.pub
 
-```
 ```
 
 **Important**: Store the private key securely:
@@ -164,20 +145,15 @@ Public key written to cosign.pub
 Sign a container image:
 
 ```bash
-
 cosign sign --key cosign.key myregistry.com/myapp:v1.0
-```
-
 ```
 
 You'll be prompted for the private key password:
 
 ```
-
 Enter password for private key:
 Pushing signature to: myregistry.com/myapp:sha256-abc123.sig
 
-```
 ```
 
 The signature is stored in the same registry as the image.
@@ -187,16 +163,12 @@ The signature is stored in the same registry as the image.
 Verify the image signature using the public key:
 
 ```bash
-
 cosign verify --key cosign.pub myregistry.com/myapp:v1.0
-```
-
 ```
 
 Successful verification output:
 
 ```json
-
 [
   {
     "critical": {
@@ -222,15 +194,11 @@ Successful verification output:
 ]
 ```
 
-```
-
 If verification fails:
 
 ```
-
 Error: no matching signatures
 
-```
 ```
 
 ## Keyless Signing with Sigstore
@@ -249,10 +217,7 @@ Keyless signing eliminates the need to manage private keys by using OIDC (OpenID
 ### Sign Image (Keyless)
 
 ```bash
-
 cosign sign myregistry.com/myapp:v1.0
-```
-
 ```
 
 This will:
@@ -265,7 +230,6 @@ This will:
 Example output:
 
 ```
-
 Generating ephemeral keys...
 Retrieving signed certificate...
 
@@ -285,32 +249,25 @@ tlog entry created with index: 12345678
 Pushing signature to: myregistry.com/myapp
 
 ```
-```
 
 ### Verify Keyless Signature
 
 Verify without needing a public key:
 
 ```bash
-
 cosign verify \
   --certificate-identity user@example.com \
   --certificate-oidc-issuer https://github.com/login/oauth \
   myregistry.com/myapp:v1.0
 ```
 
-```
-
 Or verify against specific OIDC claims:
 
 ```bash
-
 cosign verify \
   --certificate-identity-regexp ".*@example\\.com" \
   --certificate-oidc-issuer https://accounts.google.com \
   myregistry.com/myapp:v1.0
-```
-
 ```
 
 ## Advanced Signing Scenarios
@@ -318,7 +275,6 @@ cosign verify \
 ### Sign Multiple Images
 
 ```bash
-
 # Sign with the same key
 
 cosign sign --key cosign.key \
@@ -327,14 +283,11 @@ cosign sign --key cosign.key \
   myregistry.com/myapp:latest
 ```
 
-```
-
 ### Sign with Annotations
 
 Add metadata to signatures:
 
 ```bash
-
 cosign sign --key cosign.key \
   -a env=production \
   -a team=platform \
@@ -342,17 +295,12 @@ cosign sign --key cosign.key \
   myregistry.com/myapp:v1.0
 ```
 
-```
-
 Verify with annotation check:
 
 ```bash
-
 cosign verify --key cosign.pub \
   -a env=production \
   myregistry.com/myapp:v1.0
-```
-
 ```
 
 ### Sign Image Digest
@@ -360,7 +308,6 @@ cosign verify --key cosign.pub \
 Sign using image digest (recommended for immutability):
 
 ```bash
-
 # Get image digest
 
 IMAGE_DIGEST=$(docker inspect myregistry.com/myapp:v1.0 --format='{{.RepoDigests}}')
@@ -370,12 +317,9 @@ IMAGE_DIGEST=$(docker inspect myregistry.com/myapp:v1.0 --format='{{.RepoDigests
 cosign sign --key cosign.key myregistry.com/myapp@sha256:abc123...
 ```
 
-```
-
 ### Attach SBOM to Image
 
 ```bash
-
 # Generate SBOM
 
 trivy image -f spdx-json -o sbom.json myapp:v1.0
@@ -389,12 +333,9 @@ cosign attach sbom --sbom sbom.json myapp:v1.0
 cosign sign --key cosign.key $(cosign triangulate myapp:v1.0)
 ```
 
-```
-
 ### Attach and Sign Attestations
 
 ```bash
-
 # Create attestation
 
 cosign attest --key cosign.key \
@@ -409,8 +350,6 @@ cosign verify-attestation --key cosign.pub \
   myregistry.com/myapp:v1.0
 ```
 
-```
-
 ## Hardware Token Support
 
 ### YubiKey Signing
@@ -418,25 +357,18 @@ cosign verify-attestation --key cosign.pub \
 Generate key on YubiKey:
 
 ```bash
-
 cosign generate-key-pair --kms yubikey://
-```
-
 ```
 
 Sign with YubiKey:
 
 ```bash
-
 cosign sign --key yubikey:// myregistry.com/myapp:v1.0
-```
-
 ```
 
 ### PIV/PKCS11 Support
 
 ```bash
-
 # Sign with PIV token
 
 cosign sign --key piv://slot-id=9c myregistry.com/myapp:v1.0
@@ -446,14 +378,11 @@ cosign sign --key piv://slot-id=9c myregistry.com/myapp:v1.0
 cosign sign --key pkcs11:token=mytoken;object=mykey myregistry.com/myapp:v1.0
 ```
 
-```
-
 ## Cloud KMS Integration
 
 ### AWS KMS
 
 ```bash
-
 # Create key in AWS KMS
 
 aws kms create-key --description "Cosign signing key"
@@ -467,39 +396,28 @@ cosign sign --key awskms:///arn:aws:kms:region:account:key/key-id myregistry.com
 cosign verify --key awskms:///arn:aws:kms:region:account:key/key-id myregistry.com/myapp:v1.0
 ```
 
-```
-
 ### Google Cloud KMS
 
 ```bash
-
 # Sign with GCP KMS
 
 cosign sign --key gcpkms://projects/PROJECT/locations/LOCATION/keyRings/RING/cryptoKeys/KEY myregistry.com/myapp:v1.0
 ```
 
-```
-
 ### Azure Key Vault
 
 ```bash
-
 # Sign with Azure Key Vault
 
 cosign sign --key azurekms://vault-name.vault.azure.net/keys/key-name/key-version myregistry.com/myapp:v1.0
 ```
 
-```
-
 ### HashiCorp Vault
 
 ```bash
-
 # Sign with Vault Transit
 
 cosign sign --key hashivault://transit/keys/my-key myregistry.com/myapp:v1.0
-```
-
 ```
 
 ## Policy Enforcement with Admission Controllers
@@ -509,7 +427,6 @@ cosign sign --key hashivault://transit/keys/my-key myregistry.com/myapp:v1.0
 Create a policy to require signed images:
 
 ```yaml
-
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -536,12 +453,9 @@ spec:
               -----END PUBLIC KEY-----
 ```
 
-```
-
 Test the policy:
 
 ```bash
-
 # This will succeed (signed image)
 
 kubectl run nginx --image=myregistry.com/myapp:signed
@@ -551,12 +465,9 @@ kubectl run nginx --image=myregistry.com/myapp:signed
 kubectl run nginx --image=myregistry.com/myapp:unsigned
 ```
 
-```
-
 ### Kubernetes Policy with OPA Gatekeeper
 
 ```yaml
-
 apiVersion: templates.gatekeeper.sh/v1beta1
 kind: ConstraintTemplate
 metadata:
@@ -585,23 +496,17 @@ spec:
         }
 ```
 
-```
-
 ### Policy Controller (Sigstore)
 
 Install Policy Controller:
 
 ```bash
-
 kubectl apply -f https://github.com/sigstore/policy-controller/releases/latest/download/release.yaml
-```
-
 ```
 
 Create a ClusterImagePolicy:
 
 ```yaml
-
 apiVersion: policy.sigstore.dev/v1beta1
 kind: ClusterImagePolicy
 metadata:
@@ -617,8 +522,6 @@ spec:
         subject: user@example.com
 ```
 
-```
-
 ## Signature Storage and Discovery
 
 ### Where Signatures Are Stored
@@ -626,17 +529,14 @@ spec:
 Cosign stores signatures in the same OCI registry as images:
 
 ```
-
 myregistry.com/myapp:v1.0           # Original image
 myregistry.com/myapp:sha256-abc.sig  # Signature
 
-```
 ```
 
 ### List Signatures
 
 ```bash
-
 # View signature tags
 
 cosign triangulate myregistry.com/myapp:v1.0
@@ -646,14 +546,11 @@ cosign triangulate myregistry.com/myapp:v1.0
 cosign verify --key cosign.pub myregistry.com/myapp:v1.0
 ```
 
-```
-
 ### Copy Signed Images
 
 When copying images, copy signatures too:
 
 ```bash
-
 # Using crane (part of go-containerregistry)
 
 crane copy --all-tags myregistry.com/myapp registry2.com/myapp
@@ -663,14 +560,11 @@ crane copy --all-tags myregistry.com/myapp registry2.com/myapp
 cosign copy myregistry.com/myapp:v1.0 registry2.com/myapp:v1.0
 ```
 
-```
-
 ## CI/CD Integration
 
 ### GitHub Actions
 
 ```yaml
-
 name: Build and Sign Image
 
 on:
@@ -712,12 +606,9 @@ jobs:
           COSIGN_EXPERIMENTAL: 1
 ```
 
-```
-
 ### GitLab CI
 
 ```yaml
-
 sign-image:
   stage: sign
   image: gcr.io/projectsigstore/cosign:latest
@@ -730,12 +621,9 @@ sign-image:
     COSIGN_PASSWORD: $COSIGN_KEY_PASSWORD
 ```
 
-```
-
 ### Jenkins Pipeline
 
 ```groovy
-
 pipeline {
     agent any
 
@@ -763,8 +651,6 @@ pipeline {
 }
 ```
 
-```
-
 ## Best Practices
 
 ### 1. Sign Immutable Tags
@@ -772,7 +658,6 @@ pipeline {
 Always sign using digest, not mutable tags:
 
 ```bash
-
 # Bad: Tags can be overwritten
 
 cosign sign --key cosign.key myapp:latest
@@ -780,8 +665,6 @@ cosign sign --key cosign.key myapp:latest
 # Good: Digest is immutable
 
 cosign sign --key cosign.key myapp@sha256:abc123...
-```
-
 ```
 
 ### 2. Key Management
@@ -815,7 +698,6 @@ Use keyless signing in automated pipelines:
 Always verify signatures before deployment:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -842,8 +724,6 @@ spec:
       name: cosign-public-keys
 ```
 
-```
-
 ### 5. Implement Defense in Depth
 
 Combine signing with other security measures:
@@ -860,7 +740,6 @@ Combine signing with other security measures:
 Log all signing operations:
 
 ```bash
-
 # Sign with logging
 
 cosign sign --key cosign.key myapp:v1.0 2>&1 | tee sign-$(date +%Y%m%d).log
@@ -874,14 +753,11 @@ cosign sign --key cosign.key \
   myapp:v1.0
 ```
 
-```
-
 ### 7. Automated Verification
 
 Create verification scripts:
 
 ```bash
-
 #!/bin/bash
 # verify-deployment.sh
 
@@ -899,8 +775,6 @@ else
 fi
 ```
 
-```
-
 ## Troubleshooting
 
 ### Issue: "Error: signing: sign: no provider found"
@@ -910,7 +784,6 @@ fi
 **Solution:**
 
 ```bash
-
 # Specify key path explicitly
 
 cosign sign --key ./cosign.key myapp:v1.0
@@ -921,8 +794,6 @@ export COSIGN_KEY_PATH=./cosign.key
 cosign sign myapp:v1.0
 ```
 
-```
-
 ### Issue: "Error: image reference must be specified"
 
 **Cause**: Missing or incorrect image reference
@@ -930,7 +801,6 @@ cosign sign myapp:v1.0
 **Solution:**
 
 ```bash
-
 # Include full registry path
 
 cosign sign --key cosign.key myregistry.com/myapp:v1.0
@@ -940,8 +810,6 @@ cosign sign --key cosign.key myregistry.com/myapp:v1.0
 cosign sign --key cosign.key myapp:v1.0
 ```
 
-```
-
 ### Issue: "Error: no matching signatures"
 
 **Cause**: Image not signed or signature mismatch
@@ -949,7 +817,6 @@ cosign sign --key cosign.key myapp:v1.0
 **Solution:**
 
 ```bash
-
 # Check if image is signed
 
 cosign triangulate myapp:v1.0
@@ -963,8 +830,6 @@ cosign verify --key cosign.pub --allow-insecure-registry myapp:v1.0
 cosign verify --key cosign.pub myapp@sha256:abc123...
 ```
 
-```
-
 ### Issue: Keyless signing browser doesn't open
 
 **Cause**: Running in non-interactive environment
@@ -972,7 +837,6 @@ cosign verify --key cosign.pub myapp@sha256:abc123...
 **Solution:**
 
 ```bash
-
 # Use COSIGN_EXPERIMENTAL environment
 
 COSIGN_EXPERIMENTAL=1 cosign sign myapp:v1.0
@@ -982,8 +846,6 @@ COSIGN_EXPERIMENTAL=1 cosign sign myapp:v1.0
 cosign sign --identity-token=$OIDC_TOKEN myapp:v1.0
 ```
 
-```
-
 ### Issue: "Error: registry authentication failed"
 
 **Cause**: Not logged into registry
@@ -991,7 +853,6 @@ cosign sign --identity-token=$OIDC_TOKEN myapp:v1.0
 **Solution:**
 
 ```bash
-
 # Login first
 
 docker login myregistry.com
@@ -1006,8 +867,6 @@ cosign sign --key cosign.key \
   --registry-username user \
   --registry-password pass \
   myapp:v1.0
-```
-
 ```
 
 ## Key Points to Remember
@@ -1052,7 +911,7 @@ cosign sign --key cosign.key \
 ### Learning Resources
 
 - [Sigstore Blog](https://blog.sigstore.dev/)
-- [CNCF Supply Chain Security](https://www.cncf.io/blog/tag/supply-chain-security/)
+- [CNCF Supply Chain Security Best Practices](https://tag-security.cncf.io/blog/software-supply-chain-security-best-practices-v2/)
 
 ## Next Steps
 
@@ -1066,7 +925,6 @@ cosign sign --key cosign.key \
 ### Essential Commands
 
 ```bash
-
 # Generate key pair
 
 cosign generate-key-pair
@@ -1102,8 +960,6 @@ cosign sign --key cosign.key -a env=prod myapp:v1.0
 # Verify with annotations
 
 cosign verify --key cosign.pub -a env=prod myapp:v1.0
-```
-
 ```
 
 ---

@@ -34,8 +34,6 @@ To check if your cluster supports NetworkPolicy:
 kubectl api-resources | grep networkpolicies
 ```
 
-```
-
 ## How Network Policies Work
 
 ### Basic Concepts
@@ -67,7 +65,6 @@ NetworkPolicies can allow traffic based on three identifiers:
 ### Basic Structure
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -94,8 +91,6 @@ spec:
       port: 443
 ```
 
-```
-
 ## Common Network Policy Patterns
 
 ### 1. Default Deny All Traffic
@@ -105,7 +100,6 @@ This is the recommended starting point for any namespace. It denies all ingress 
 **Deny All Ingress:**
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -117,12 +111,9 @@ spec:
   - Ingress
 ```
 
-```
-
 **Deny All Egress:**
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -134,12 +125,9 @@ spec:
   - Egress
 ```
 
-```
-
 **Deny All Ingress and Egress:**
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -152,14 +140,11 @@ spec:
   - Egress
 ```
 
-```
-
 ### 2. Allow Specific Ingress Traffic
 
 Allow incoming traffic only from pods with specific labels:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -182,8 +167,6 @@ spec:
       port: 8080
 ```
 
-```
-
 **Explanation:**
 
 - This policy applies to pods labeled `app: backend` and `tier: api`
@@ -196,7 +179,6 @@ spec:
 Allow traffic from all pods in a specific namespace:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -218,15 +200,10 @@ spec:
       port: 9090
 ```
 
-```
-
 **Important**: The namespace must have the label `name: monitoring` for this to work. You can add labels to namespaces:
 
 ```bash
-
 kubectl label namespace monitoring name=monitoring
-```
-
 ```
 
 ### 4. Allow Traffic from Multiple Sources
@@ -234,7 +211,6 @@ kubectl label namespace monitoring name=monitoring
 Use multiple `from` entries to allow traffic from different sources:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -262,14 +238,11 @@ spec:
       port: 5432
 ```
 
-```
-
 ### 5. Allow Egress to External Services
 
 Allow pods to reach external services (e.g., external APIs, databases):
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -300,8 +273,6 @@ spec:
       port: 53
 ```
 
-```
-
 **Important**: Always allow DNS when using egress policies, or your pods won't be able to resolve domain names!
 
 ### 6. Allow DNS Only
@@ -309,7 +280,6 @@ spec:
 A common pattern to allow only DNS queries:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -336,14 +306,11 @@ spec:
       port: 53
 ```
 
-```
-
 ### 7. Allow Traffic to Specific Port Range
 
 Allow traffic on a range of ports:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -366,8 +333,6 @@ spec:
       endPort: 8090  # Ports 8080-8090
 ```
 
-```
-
 **Note**: The `endPort` field is available in Kubernetes 1.25+.
 
 ## Complex Scenarios
@@ -379,7 +344,6 @@ Here's how to secure a typical three-tier application (frontend, backend, databa
 **1. Frontend Policy:**
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -419,12 +383,9 @@ spec:
       port: 53
 ```
 
-```
-
 **2. Backend Policy:**
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -463,12 +424,9 @@ spec:
       port: 53
 ```
 
-```
-
 **3. Database Policy:**
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -500,14 +458,11 @@ spec:
       port: 53
 ```
 
-```
-
 ### Namespace Isolation
 
 Isolate all namespaces from each other, allowing only specific cross-namespace communication:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -526,8 +481,6 @@ spec:
           name: monitoring  # Allow monitoring namespace
 ```
 
-```
-
 ## Testing Network Policies
 
 ### Verification Steps
@@ -535,17 +488,13 @@ spec:
 1. **Check if policy exists:**
 
 ```bash
-
 kubectl get networkpolicies -n production
 kubectl describe networkpolicy <policy-name> -n production
-```
-
 ```
 
 1. **Test connectivity before applying policy:**
 
 ```bash
-
 kubectl run test-pod --image=busybox -it --rm --restart=Never -- sh
 
 # Inside the pod:
@@ -553,21 +502,15 @@ kubectl run test-pod --image=busybox -it --rm --restart=Never -- sh
 wget -O- http://backend-service:8080
 ```
 
-```
-
 1. **Apply the policy:**
 
 ```bash
-
 kubectl apply -f network-policy.yaml
-```
-
 ```
 
 1. **Test connectivity after applying policy:**
 
 ```bash
-
 kubectl run test-pod --image=busybox -it --rm --restart=Never -- sh
 
 # Should timeout if policy is working:
@@ -575,43 +518,31 @@ kubectl run test-pod --image=busybox -it --rm --restart=Never -- sh
 wget -O- --timeout=5 http://backend-service:8080
 ```
 
-```
-
 ### Troubleshooting Tools
 
 **1. Use a debug container:**
 
 ```bash
-
 kubectl run netpol-test \
   --image=nicolaka/netshoot \
   -it --rm -- bash
 ```
 
-```
-
 **2. Check pod labels:**
 
 ```bash
-
 kubectl get pods --show-labels -n production
-```
-
 ```
 
 **3. Describe the NetworkPolicy:**
 
 ```bash
-
 kubectl describe networkpolicy <policy-name> -n production
-```
-
 ```
 
 **4. Check CNI plugin logs:**
 
 ```bash
-
 # For Calico:
 
 kubectl logs -n kube-system -l k8s-app=calico-node
@@ -619,8 +550,6 @@ kubectl logs -n kube-system -l k8s-app=calico-node
 # For Cilium:
 
 kubectl logs -n kube-system -l k8s-app=cilium
-```
-
 ```
 
 ## Common Pitfalls
@@ -632,7 +561,6 @@ kubectl logs -n kube-system -l k8s-app=cilium
 **Solution**: Always include DNS in egress rules:
 
 ```yaml
-
 egress:
 - to:
   - namespaceSelector:
@@ -646,14 +574,11 @@ egress:
     port: 53
 ```
 
-```
-
 ### 2. AND vs OR Logic
 
 **AND logic** (both conditions must match):
 
 ```yaml
-
 - from:
   - namespaceSelector:
       matchLabels:
@@ -663,12 +588,9 @@ egress:
         app: frontend
 ```
 
-```
-
 **OR logic** (either condition can match):
 
 ```yaml
-
 - from:
   - namespaceSelector:
       matchLabels:
@@ -678,14 +600,11 @@ egress:
         app: frontend
 ```
 
-```
-
 ### 3. Missing policyTypes
 
 If you don't specify `policyTypes`, the behavior depends on whether you have ingress/egress rules:
 
 ```yaml
-
 # This only affects ingress (implicit)
 
 spec:
@@ -693,12 +612,9 @@ spec:
   ingress: []
 ```
 
-```
-
 **Best practice**: Always explicitly specify `policyTypes`:
 
 ```yaml
-
 spec:
   podSelector: {}
   policyTypes:
@@ -706,17 +622,12 @@ spec:
   - Egress
 ```
 
-```
-
 ### 4. CNI Plugin Not Installed
 
 NetworkPolicies won't work without a compatible CNI plugin. Check your cluster:
 
 ```bash
-
 kubectl get pods -n kube-system | grep -E "calico|cilium|weave"
-```
-
 ```
 
 ### 5. Namespace Labels
@@ -724,11 +635,8 @@ kubectl get pods -n kube-system | grep -E "calico|cilium|weave"
 When using `namespaceSelector`, ensure namespaces have the required labels:
 
 ```bash
-
 kubectl get namespaces --show-labels
 kubectl label namespace <namespace> <key>=<value>
-```
-
 ```
 
 ## Best Practices
@@ -740,12 +648,9 @@ kubectl label namespace <namespace> <key>=<value>
 1. **Document Your Policies**: Use annotations to explain why a policy exists:
 
 ```yaml
-
 metadata:
   annotations:
     description: "Allows frontend pods to communicate with backend API"
-```
-
 ```
 
 1. **Test in Non-Production**: Test NetworkPolicies in development environments first.
@@ -808,7 +713,6 @@ metadata:
 ### Common Commands
 
 ```bash
-
 # List NetworkPolicies
 
 kubectl get networkpolicies -n <namespace>
@@ -835,12 +739,9 @@ kubectl get networkpolicy <name> -n <namespace> -o yaml
 kubectl run test --image=busybox -it --rm -- wget -O- http://service:port
 ```
 
-```
-
 ### Example Label Strategy
 
 ```yaml
-
 # Application labels
 
 app: backend
@@ -853,8 +754,6 @@ team: platform
 network-zone: dmz
 network-zone: internal
 network-zone: restricted
-```
-
 ```
 
 ---

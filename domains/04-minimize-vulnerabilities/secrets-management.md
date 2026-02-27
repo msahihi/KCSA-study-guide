@@ -23,7 +23,6 @@ Kubernetes Secrets are objects that store sensitive information separately from 
 ### Types of Secrets
 
 ```yaml
-
 # Opaque (generic) Secret - most common type
 
 apiVersion: v1
@@ -34,8 +33,6 @@ type: Opaque
 data:
   username: YWRtaW4=        # base64 encoded
   password: cGFzc3dvcmQxMjM= # base64 encoded
-```
-
 ```
 
 **Secret Types:**
@@ -54,18 +51,14 @@ data:
 #### Method 1: From Literal Values
 
 ```bash
-
 kubectl create secret generic my-app-secret \
   --from-literal=db-username=admin \
   --from-literal=db-password=supersecret123
 ```
 
-```
-
 #### Method 2: From Files
 
 ```bash
-
 # Create files with secret data
 
 echo -n 'admin' > ./username.txt
@@ -82,12 +75,9 @@ kubectl create secret generic my-app-secret \
 rm ./username.txt ./password.txt
 ```
 
-```
-
 #### Method 3: From YAML Manifest
 
 ```yaml
-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -102,12 +92,9 @@ data:
   password: c3VwZXJzZWNyZXQxMjM=
 ```
 
-```
-
 **Encoding values:**
 
 ```bash
-
 echo -n 'admin' | base64
 
 # Output: YWRtaW4=
@@ -118,12 +105,9 @@ echo -n 'supersecret123' | base64
 
 ```
 
-```
-
 #### Method 4: Using stringData (No Base64 Required)
 
 ```yaml
-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -137,14 +121,11 @@ stringData:
   password: supersecret123
 ```
 
-```
-
 ### Using Secrets in Pods
 
 #### As Environment Variables
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -166,12 +147,9 @@ spec:
           key: password
 ```
 
-```
-
 #### As Volume Mounts (Recommended)
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -190,12 +168,9 @@ spec:
       secretName: my-app-secret
 ```
 
-```
-
 **Accessing mounted secrets:**
 
 ```bash
-
 # Inside the container
 
 cat /etc/secrets/username
@@ -208,12 +183,9 @@ cat /etc/secrets/password
 
 ```
 
-```
-
 #### Mounting Specific Keys
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -238,12 +210,9 @@ spec:
         mode: 0400  # Set file permissions
 ```
 
-```
-
 ### Viewing and Decoding Secrets
 
 ```bash
-
 # List secrets
 
 kubectl get secrets
@@ -263,8 +232,6 @@ kubectl get secret my-app-secret -o jsonpath='{.data.username}' | base64 -d
 kubectl get secret my-app-secret -o json | jq -r '.data | map_values(@base64d)'
 ```
 
-```
-
 ## Encryption at Rest
 
 By default, Kubernetes Secrets are stored in etcd as **base64-encoded** (NOT encrypted). Base64 is encoding, not encryption. Anyone with access to etcd can read all Secrets.
@@ -281,7 +248,6 @@ By default, Kubernetes Secrets are stored in etcd as **base64-encoded** (NOT enc
 #### Step 1: Create Encryption Configuration File
 
 ```yaml
-
 # /etc/kubernetes/enc/encryption-config.yaml
 
 apiVersion: apiserver.config.k8s.io/v1
@@ -297,12 +263,9 @@ resources:
       - identity: {}  # Fallback to plaintext (for reading old data)
 ```
 
-```
-
 #### Step 2: Generate Encryption Key
 
 ```bash
-
 # Generate a random 32-byte key and base64 encode it
 
 head -c 32 /dev/urandom | base64
@@ -311,12 +274,9 @@ head -c 32 /dev/urandom | base64
 
 ```
 
-```
-
 #### Step 3: Create Directory and File
 
 ```bash
-
 # On the control plane node
 
 sudo mkdir -p /etc/kubernetes/enc
@@ -343,23 +303,17 @@ sudo chmod 600 /etc/kubernetes/enc/encryption-config.yaml
 sudo chown root:root /etc/kubernetes/enc/encryption-config.yaml
 ```
 
-```
-
 #### Step 4: Configure kube-apiserver
 
 Edit the kube-apiserver manifest:
 
 ```bash
-
 sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
-```
-
 ```
 
 Add the following to the `kube-apiserver` container spec:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -399,12 +353,9 @@ spec:
 
 ```
 
-```
-
 #### Step 5: Wait for kube-apiserver to Restart
 
 ```bash
-
 # Watch for the kube-apiserver pod to restart
 
 kubectl get pods -n kube-system -w | grep kube-apiserver
@@ -414,12 +365,9 @@ kubectl get pods -n kube-system -w | grep kube-apiserver
 kubectl get pod kube-apiserver-<node-name> -n kube-system -o yaml | grep encryption
 ```
 
-```
-
 #### Step 6: Encrypt Existing Secrets
 
 ```bash
-
 # Re-encrypt all existing secrets
 
 kubectl get secrets --all-namespaces -o json | kubectl replace -f -
@@ -437,8 +385,6 @@ sudo ETCDCTL_API=3 etcdctl \
 
 ```
 
-```
-
 ### Encryption Providers
 
 Kubernetes supports multiple encryption providers:
@@ -446,14 +392,11 @@ Kubernetes supports multiple encryption providers:
 #### 1. AES-CBC (aescbc)
 
 ```yaml
-
 providers:
   - aescbc:
       keys:
         - name: key1
           secret: <BASE64_32_BYTE_KEY>
-```
-
 ```
 
 - Symmetric encryption using AES in CBC mode
@@ -464,14 +407,11 @@ providers:
 #### 2. AES-GCM (aesgcm)
 
 ```yaml
-
 providers:
   - aesgcm:
       keys:
         - name: key1
           secret: <BASE64_32_BYTE_KEY>
-```
-
 ```
 
 - AES in GCM mode (authenticated encryption)
@@ -482,14 +422,11 @@ providers:
 #### 3. Secretbox
 
 ```yaml
-
 providers:
   - secretbox:
       keys:
         - name: key1
           secret: <BASE64_32_BYTE_KEY>
-```
-
 ```
 
 - Uses XSalsa20 and Poly1305
@@ -499,15 +436,12 @@ providers:
 #### 4. KMS (Key Management Service)
 
 ```yaml
-
 providers:
   - kms:
       name: myKmsPlugin
       endpoint: unix:///var/run/kmsplugin/socket.sock
       cachesize: 100
       timeout: 3s
-```
-
 ```
 
 - Integrates with external KMS (AWS KMS, Azure Key Vault, GCP KMS, HashiCorp Vault)
@@ -518,11 +452,8 @@ providers:
 #### 5. Identity (No Encryption)
 
 ```yaml
-
 providers:
   - identity: {}
-```
-
 ```
 
 - No encryption (plaintext)
@@ -533,7 +464,6 @@ providers:
 #### Step 1: Add New Key at the Beginning
 
 ```yaml
-
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
 resources:
@@ -549,12 +479,9 @@ resources:
       - identity: {}
 ```
 
-```
-
 #### Step 2: Restart kube-apiserver
 
 ```bash
-
 # Update the encryption config file
 
 sudo vi /etc/kubernetes/enc/encryption-config.yaml
@@ -565,21 +492,15 @@ sudo vi /etc/kubernetes/enc/encryption-config.yaml
 kubectl get pods -n kube-system -w | grep kube-apiserver
 ```
 
-```
-
 #### Step 3: Re-encrypt All Secrets with New Key
 
 ```bash
-
 kubectl get secrets --all-namespaces -o json | kubectl replace -f -
-```
-
 ```
 
 #### Step 4: Remove Old Key (After Verification)
 
 ```yaml
-
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
 resources:
@@ -591,8 +512,6 @@ resources:
             - name: key2  # Only new key
               secret: <NEW_BASE64_32_BYTE_KEY>
       - identity: {}
-```
-
 ```
 
 ## External Secrets Management
@@ -620,7 +539,6 @@ The External Secrets Operator extends Kubernetes with Custom Resources for synci
 #### Installation
 
 ```bash
-
 # Add Helm repository
 
 helm repo add external-secrets https://charts.external-secrets.io
@@ -634,12 +552,9 @@ helm install external-secrets \
   --create-namespace
 ```
 
-```
-
 #### AWS Secrets Manager Example
 
 ```yaml
-
 # SecretStore - Defines connection to AWS Secrets Manager
 
 apiVersion: external-secrets.io/v1beta1
@@ -685,12 +600,9 @@ spec:
       property: password
 ```
 
-```
-
 #### HashiCorp Vault Example
 
 ```yaml
-
 # SecretStore for Vault
 
 apiVersion: external-secrets.io/v1beta1
@@ -734,8 +646,6 @@ spec:
       property: password
 ```
 
-```
-
 ## Secrets Store CSI Driver
 
 The Secrets Store CSI Driver allows Kubernetes to mount secrets stored in external secret stores as volumes into pods.
@@ -743,18 +653,15 @@ The Secrets Store CSI Driver allows Kubernetes to mount secrets stored in extern
 ### Architecture
 
 ```
-
 Pod → CSI Driver → External Secret Store (Vault, AWS, Azure, GCP)
                 ↓
             tmpfs Volume (in-memory)
 
 ```
-```
 
 ### Installation
 
 ```bash
-
 # Install Secrets Store CSI Driver
 
 helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
@@ -767,12 +674,9 @@ helm install csi-secrets-store \
 kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
 ```
 
-```
-
 ### Usage Example
 
 ```yaml
-
 # SecretProviderClass - Defines how to fetch secrets
 
 apiVersion: secrets-store.csi.x-k8s.io/v1
@@ -818,12 +722,9 @@ spec:
         secretProviderClass: "aws-secrets"
 ```
 
-```
-
 ### Syncing to Kubernetes Secrets
 
 ```yaml
-
 apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
 metadata:
@@ -849,8 +750,6 @@ spec:
             objectAlias: dbPassword
 ```
 
-```
-
 ## RBAC for Secrets
 
 ### Principle of Least Privilege
@@ -860,7 +759,6 @@ Grant minimum required permissions for accessing Secrets.
 ### Read-Only Access
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -888,12 +786,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Full Access (Use Sparingly)
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -920,12 +815,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Deny Secrets Access
 
 ```yaml
-
 # Use ClusterRole with no permissions
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -949,12 +841,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Audit Secrets Access
 
 ```bash
-
 # View who accessed secrets (requires audit logging)
 
 kubectl get events --sort-by='.lastTimestamp' | grep -i secret
@@ -963,8 +852,6 @@ kubectl get events --sort-by='.lastTimestamp' | grep -i secret
 
 kubectl auth can-i get secrets --as=system:serviceaccount:default:my-app-sa
 kubectl auth can-i list secrets --as=system:serviceaccount:default:my-app-sa -n default
-```
-
 ```
 
 ## Best Practices
@@ -1000,7 +887,6 @@ Always encrypt Secrets in etcd, especially in production environments.
 ### 6. Never Commit Secrets to Git
 
 ```bash
-
 # Use .gitignore
 
 echo "secrets/" >> .gitignore
@@ -1013,8 +899,6 @@ git secrets --install
 git secrets --register-aws
 ```
 
-```
-
 ### 7. Use Separate Secrets per Application
 
 Don't create one large Secret for multiple applications.
@@ -1022,7 +906,6 @@ Don't create one large Secret for multiple applications.
 ### 8. Set Resource Quotas
 
 ```yaml
-
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -1033,8 +916,6 @@ spec:
     secrets: "10"
 ```
 
-```
-
 ### 9. Monitor Secret Access
 
 Enable audit logging to track Secret access patterns.
@@ -1042,7 +923,6 @@ Enable audit logging to track Secret access patterns.
 ### 10. Use Immutable Secrets (Kubernetes 1.21+)
 
 ```yaml
-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -1052,19 +932,14 @@ data:
   password: c3VwZXJzZWNyZXQ=
 ```
 
-```
-
 ## Common Pitfalls
 
 ### 1. Base64 is Not Encryption
 
 ```bash
-
 # Easily decoded
 
 kubectl get secret my-secret -o jsonpath='{.data.password}' | base64 -d
-```
-
 ```
 
 **Solution:** Enable encryption at rest.
@@ -1072,12 +947,9 @@ kubectl get secret my-secret -o jsonpath='{.data.password}' | base64 -d
 ### 2. Secrets Visible in Pod Spec
 
 ```bash
-
 # Environment variables are visible
 
 kubectl get pod my-pod -o yaml
-```
-
 ```
 
 **Solution:** Use volume mounts and restrict RBAC.
@@ -1090,15 +962,12 @@ Never bake secrets into container images.
 ### 4. Overly Permissive RBAC
 
 ```yaml
-
 # BAD: Grants access to all secrets
 
 rules:
 - apiGroups: [""]
   resources: ["secrets"]
   verbs: ["*"]
-```
-
 ```
 
 **Solution:** Use specific resourceNames and verbs.
@@ -1111,12 +980,9 @@ Old, unused secrets remain in the cluster.
 ### 6. Plain Text in Logs
 
 ```bash
-
 # BAD: Logging secret values
 
 echo "Password is: $DB_PASSWORD"
-```
-
 ```
 
 **Solution:** Never log secret values.
@@ -1131,7 +997,6 @@ Using same secrets for dev, staging, and production.
 ### Verify Encryption at Rest
 
 ```bash
-
 # Create a test secret
 
 kubectl create secret generic encryption-test --from-literal=key=value
@@ -1149,12 +1014,9 @@ sudo ETCDCTL_API=3 etcdctl \
 
 ```
 
-```
-
 ### Test Secret Access
 
 ```bash
-
 # Create test ServiceAccount
 
 kubectl create serviceaccount test-sa
@@ -1178,12 +1040,9 @@ kubectl auth can-i get secrets --as=system:serviceaccount:default:test-sa --reso
 
 ```
 
-```
-
 ### Test Secret Mounting
 
 ```bash
-
 # Create pod with secret
 
 kubectl run test-pod --image=nginx:1.27 \
@@ -1209,8 +1068,6 @@ kubectl run test-pod --image=nginx:1.27 \
 
 kubectl exec test-pod -- ls /etc/secrets
 kubectl exec test-pod -- cat /etc/secrets/username
-```
-
 ```
 
 ## Summary

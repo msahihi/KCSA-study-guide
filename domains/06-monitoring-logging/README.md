@@ -222,26 +222,18 @@ Falco is the de facto standard for Kubernetes runtime security and is heavily fe
   priority: WARNING
 ```
 
-```
-
 **Macros**: Reusable condition snippets
 
 ```yaml
-
 - macro: spawned_process
   condition: evt.type = execve and evt.dir=<
-```
-
 ```
 
 **Lists**: Reusable collections
 
 ```yaml
-
 - list: shell_binaries
   items: [bash, sh, zsh, csh]
-```
-
 ```
 
 ### Falco Detection Methods
@@ -273,7 +265,6 @@ Falco is the de facto standard for Kubernetes runtime security and is heavily fe
 ### Essential Audit Policy Pattern
 
 ```yaml
-
 apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
@@ -298,8 +289,6 @@ rules:
     resources:
     - group: ""
       resources: ["endpoints", "services"]
-```
-
 ```
 
 ## Practical Skills Required
@@ -367,7 +356,6 @@ Complete these labs in order to build practical skills:
 ### Essential Commands
 
 ```bash
-
 # Audit logs (if configured to log to file)
 
 sudo cat /var/log/kubernetes/audit.log | jq
@@ -396,12 +384,9 @@ kubectl port-forward -n monitoring svc/prometheus 9090:9090
 kubectl get pod kube-apiserver-controlplane -n kube-system -o yaml | grep audit
 ```
 
-```
-
 ### Sample Audit Policy
 
 ```yaml
-
 apiVersion: audit.k8s.io/v1
 kind: Policy
 omitStages:
@@ -436,12 +421,9 @@ rules:
     verbs: ["get", "list", "watch"]
 ```
 
-```
-
 ### Common Falco Rules
 
 ```yaml
-
 # Detect shell in container
 
 - rule: Shell in Container
@@ -476,12 +458,9 @@ rules:
   priority: CRITICAL
 ```
 
-```
-
 ### Analyzing Audit Logs with jq
 
 ```bash
-
 # Find all secret access
 
 cat audit.log | jq 'select(.objectRef.resource=="secrets")'
@@ -497,8 +476,6 @@ cat audit.log | jq 'select(.verb=="create" and .objectRef.resource=="pods" and .
 # Find all actions by a specific user
 
 cat audit.log | jq 'select(.user.username=="suspicious-user")'
-```
-
 ```
 
 ## Common Pitfalls and Tips
@@ -545,7 +522,6 @@ cat audit.log | jq 'select(.user.username=="suspicious-user")'
 **Detection Strategy**:
 
 ```yaml
-
 # Falco rule for crypto mining
 
 - rule: Cryptocurrency Mining Activity
@@ -556,8 +532,6 @@ cat audit.log | jq 'select(.user.username=="suspicious-user")'
     proc.name in (xmrig, minerd, ethminer)
   output: Crypto mining detected (container=%container.name proc=%proc.cmdline)
   priority: CRITICAL
-```
-
 ```
 
 **Additional Indicators**:
@@ -578,12 +552,9 @@ cat audit.log | jq 'select(.user.username=="suspicious-user")'
 - Volume analysis: Excessive secret reads
 
 ```bash
-
 # Find excessive secret access
 
 cat audit.log | jq 'select(.objectRef.resource=="secrets") | .user.username' | sort | uniq -c | sort -rn
-```
-
 ```
 
 ### Scenario 3: Container Escape Attempt
@@ -593,7 +564,6 @@ cat audit.log | jq 'select(.objectRef.resource=="secrets") | .user.username' | s
 **Detection Strategy**:
 
 ```yaml
-
 # Falco rules for container escape
 
 - rule: Container Escape - Mount Host
@@ -610,8 +580,6 @@ cat audit.log | jq 'select(.objectRef.resource=="secrets") | .user.username' | s
     container.privileged=true and
     not trusted_containers
   priority: CRITICAL
-```
-
 ```
 
 **Response Actions**:
@@ -677,7 +645,6 @@ cat audit.log | jq 'select(.objectRef.resource=="secrets") | .user.username' | s
 ### Establishing Baselines
 
 ```bash
-
 # Normal pod count by namespace
 
 kubectl get pods -A --no-headers | awk '{print $1}' | sort | uniq -c
@@ -695,14 +662,11 @@ kubectl get sa -A --no-headers | wc -l
 cat audit.log | jq -r '.requestURI' | sort | uniq -c | sort -rn | head -20
 ```
 
-```
-
 ## Integration Patterns
 
 ### Falco + AlertManager + Slack
 
 ```yaml
-
 # Falco output to AlertManager
 
 json_output: true
@@ -725,12 +689,9 @@ receivers:
     channel: '#security-alerts'
 ```
 
-```
-
 ### Audit Logs + Elasticsearch + Kibana
 
 ```yaml
-
 # Fluentd config for audit logs
 
 <source>
@@ -753,12 +714,9 @@ receivers:
 </match>
 ```
 
-```
-
 ### Prometheus + Falco Exporter
 
 ```yaml
-
 # ServiceMonitor for Falco metrics
 
 apiVersion: monitoring.coreos.com/v1
@@ -773,8 +731,6 @@ spec:
   endpoints:
   - port: metrics
     interval: 30s
-```
-
 ```
 
 ## Study Checklist
@@ -813,15 +769,13 @@ Before moving to the next domain, ensure you can:
 
 ### Learning Resources
 
-- [Falco Rules Repository](https://github.com/falcosecurity/rules)
-- [CNCF Falco Security Hub](https://securityhub.dev/)
 - [Kubernetes Audit Log Examples](https://github.com/kubernetes/kubernetes/tree/master/cluster/gce/gci/configure-helper.sh)
-- [Sysdig Falco Guide](https://sysdig.com/learn-cloud-native/falco/)
+- [Falco Official Guide](https://falco.org/docs/)
 
 ### Practice Resources
 
-- [Falco Playground](https://falco.org/docs/getting-started/try-falco/)
-- [Kubernetes Security Scenarios](https://katacoda.com/appscode/courses/kubernetes-security)
+- [Falco Playground](https://play.falco.org/)
+- [Falco Getting Started](https://falco.org/docs/getting-started/)
 - [KCSA Practice Questions](https://killer.sh/kcsa)
 
 ## Next Steps

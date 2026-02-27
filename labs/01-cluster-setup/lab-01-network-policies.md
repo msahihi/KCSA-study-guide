@@ -41,25 +41,18 @@ kubectl create namespace lab-netpol
 kubectl config set-context --current --namespace=lab-netpol
 ```
 
-```
-
 Verify namespace creation:
 
 ```bash
-
 kubectl get namespace lab-netpol
-```
-
 ```
 
 Expected output:
 
 ```
-
 NAME         STATUS   AGE
 lab-netpol   Active   5s
 
-```
 ```
 
 ### Step 2: Deploy the Three-Tier Application
@@ -67,7 +60,6 @@ lab-netpol   Active   5s
 Create a file named `app-deployment.yaml`:
 
 ```yaml
-
 ---
 
 # Frontend Deployment
@@ -204,30 +196,21 @@ spec:
   type: ClusterIP
 ```
 
-```
-
 Apply the deployment:
 
 ```bash
-
 kubectl apply -f app-deployment.yaml
-```
-
 ```
 
 Verify all pods are running:
 
 ```bash
-
 kubectl get pods -n lab-netpol
-```
-
 ```
 
 Expected output:
 
 ```
-
 NAME                        READY   STATUS    RESTARTS   AGE
 frontend-xxxxx-yyyyy        1/1     Running   0          30s
 frontend-xxxxx-zzzzz        1/1     Running   0          30s
@@ -235,7 +218,6 @@ backend-xxxxx-yyyyy         1/1     Running   0          30s
 backend-xxxxx-zzzzz         1/1     Running   0          30s
 database-xxxxx-yyyyy        1/1     Running   0          30s
 
-```
 ```
 
 ## Exercise 1: Test Default Behavior (No Network Policies)
@@ -245,19 +227,13 @@ Before implementing network policies, let's verify that all pods can communicate
 ### Step 1: Deploy a Test Pod
 
 ```bash
-
 kubectl run test-pod --image=busybox:1.36 -n lab-netpol -- sleep 3600
-```
-
 ```
 
 Wait for the pod to be ready:
 
 ```bash
-
 kubectl wait --for=condition=ready pod/test-pod -n lab-netpol --timeout=60s
-```
-
 ```
 
 ### Step 2: Test Connectivity to All Services
@@ -265,10 +241,7 @@ kubectl wait --for=condition=ready pod/test-pod -n lab-netpol --timeout=60s
 Test frontend access:
 
 ```bash
-
 kubectl exec -n lab-netpol test-pod -- wget -O- --timeout=2 http://frontend
-```
-
 ```
 
 Expected output: HTML content from nginx
@@ -276,10 +249,7 @@ Expected output: HTML content from nginx
 Test backend access:
 
 ```bash
-
 kubectl exec -n lab-netpol test-pod -- wget -O- --timeout=2 http://backend:8080
-```
-
 ```
 
 Expected output: "Backend API Response"
@@ -287,10 +257,7 @@ Expected output: "Backend API Response"
 Test database access:
 
 ```bash
-
 kubectl exec -n lab-netpol test-pod -- nc -zv database 5432
-```
-
 ```
 
 Expected output: "database (10.x.x.x:5432) open"
@@ -300,20 +267,14 @@ Expected output: "database (10.x.x.x:5432) open"
 Get a frontend pod name:
 
 ```bash
-
 FRONTEND_POD=$(kubectl get pod -n lab-netpol -l app=frontend -o jsonpath='{.items[0].metadata.name}')
 echo $FRONTEND_POD
-```
-
 ```
 
 Test frontend → backend:
 
 ```bash
-
 kubectl exec -n lab-netpol $FRONTEND_POD -- wget -O- --timeout=2 http://backend:8080
-```
-
 ```
 
 Expected output: "Backend API Response"
@@ -321,20 +282,14 @@ Expected output: "Backend API Response"
 Get a backend pod name:
 
 ```bash
-
 BACKEND_POD=$(kubectl get pod -n lab-netpol -l app=backend -o jsonpath='{.items[0].metadata.name}')
 echo $BACKEND_POD
-```
-
 ```
 
 Test backend → database:
 
 ```bash
-
 kubectl exec -n lab-netpol $BACKEND_POD -- nc -zv database 5432
-```
-
 ```
 
 Expected output: "database (10.x.x.x:5432) open"
@@ -350,7 +305,6 @@ Now let's implement a default deny policy that blocks all ingress traffic.
 Create a file named `default-deny-ingress.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -362,31 +316,22 @@ spec:
   - Ingress
 ```
 
-```
-
 Apply the policy:
 
 ```bash
-
 kubectl apply -f default-deny-ingress.yaml
-```
-
 ```
 
 Verify the policy:
 
 ```bash
-
 kubectl get networkpolicy -n lab-netpol
 kubectl describe networkpolicy default-deny-ingress -n lab-netpol
-```
-
 ```
 
 Expected output:
 
 ```
-
 Name:         default-deny-ingress
 Namespace:    lab-netpol
 Created on:   2024-01-15 10:00:00 +0000 UTC
@@ -400,46 +345,35 @@ Spec:
   Policy Types: Ingress
 
 ```
-```
 
 ### Step 2: Test Connectivity After Default Deny
 
 Try accessing frontend (should timeout):
 
 ```bash
-
 kubectl exec -n lab-netpol test-pod -- wget -O- --timeout=2 http://frontend
-```
-
 ```
 
 Expected output:
 
 ```
-
 wget: download timed out
 command terminated with exit code 1
 
-```
 ```
 
 Try accessing backend (should timeout):
 
 ```bash
-
 kubectl exec -n lab-netpol test-pod -- wget -O- --timeout=2 http://backend:8080
-```
-
 ```
 
 Expected output:
 
 ```
-
 wget: download timed out
 command terminated with exit code 1
 
-```
 ```
 
 **Important**: Egress traffic from test-pod still works (DNS queries, outbound connections), but ingress to all pods is now blocked.
@@ -447,20 +381,15 @@ command terminated with exit code 1
 ### Step 3: Verify Frontend Cannot Reach Backend
 
 ```bash
-
 kubectl exec -n lab-netpol $FRONTEND_POD -- wget -O- --timeout=2 http://backend:8080
-```
-
 ```
 
 Expected output:
 
 ```
-
 wget: download timed out
 command terminated with exit code 1
 
-```
 ```
 
 **Observation**: The default deny policy has isolated all pods. Now we'll selectively allow required traffic.
@@ -474,7 +403,6 @@ Let's allow external traffic to reach the frontend.
 Create a file named `frontend-allow-ingress.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -495,15 +423,10 @@ spec:
       port: 80
 ```
 
-```
-
 Apply the policy:
 
 ```bash
-
 kubectl apply -f frontend-allow-ingress.yaml
-```
-
 ```
 
 ### Step 2: Verify Frontend Access
@@ -511,10 +434,7 @@ kubectl apply -f frontend-allow-ingress.yaml
 Test from test-pod:
 
 ```bash
-
 kubectl exec -n lab-netpol test-pod -- wget -O- --timeout=2 http://frontend
-```
-
 ```
 
 Expected output: HTML content from nginx (success!)
@@ -522,10 +442,7 @@ Expected output: HTML content from nginx (success!)
 Test from backend pod:
 
 ```bash
-
 kubectl exec -n lab-netpol $BACKEND_POD -- wget -O- --timeout=2 http://frontend
-```
-
 ```
 
 Expected output: HTML content from nginx
@@ -539,7 +456,6 @@ Expected output: HTML content from nginx
 Create a file named `backend-allow-from-frontend.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -563,15 +479,10 @@ spec:
       port: 5678
 ```
 
-```
-
 Apply the policy:
 
 ```bash
-
 kubectl apply -f backend-allow-from-frontend.yaml
-```
-
 ```
 
 ### Step 2: Verify Backend Access
@@ -579,10 +490,7 @@ kubectl apply -f backend-allow-from-frontend.yaml
 Test from frontend (should work):
 
 ```bash
-
 kubectl exec -n lab-netpol $FRONTEND_POD -- wget -O- --timeout=2 http://backend:8080
-```
-
 ```
 
 Expected output: "Backend API Response"
@@ -590,10 +498,7 @@ Expected output: "Backend API Response"
 Test from test-pod (should fail):
 
 ```bash
-
 kubectl exec -n lab-netpol test-pod -- wget -O- --timeout=2 http://backend:8080
-```
-
 ```
 
 Expected output: Timeout (blocked because test-pod doesn't have the required labels)
@@ -607,7 +512,6 @@ Expected output: Timeout (blocked because test-pod doesn't have the required lab
 Create a file named `database-allow-from-backend.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -631,15 +535,10 @@ spec:
       port: 5432
 ```
 
-```
-
 Apply the policy:
 
 ```bash
-
 kubectl apply -f database-allow-from-backend.yaml
-```
-
 ```
 
 ### Step 2: Verify Database Access
@@ -647,10 +546,7 @@ kubectl apply -f database-allow-from-backend.yaml
 Test from backend (should work):
 
 ```bash
-
 kubectl exec -n lab-netpol $BACKEND_POD -- nc -zv database 5432
-```
-
 ```
 
 Expected output: "database (10.x.x.x:5432) open"
@@ -658,10 +554,7 @@ Expected output: "database (10.x.x.x:5432) open"
 Test from frontend (should fail):
 
 ```bash
-
 kubectl exec -n lab-netpol $FRONTEND_POD -- nc -zv database 5432 2>&1 | head -1
-```
-
 ```
 
 Expected output: Connection timeout or "nc: bad address 'database'" (blocked)
@@ -669,10 +562,7 @@ Expected output: Connection timeout or "nc: bad address 'database'" (blocked)
 Test from test-pod (should fail):
 
 ```bash
-
 kubectl exec -n lab-netpol test-pod -- nc -zv database 5432
-```
-
 ```
 
 Expected output: Timeout
@@ -688,7 +578,6 @@ Now let's control outbound traffic using egress policies.
 Create a file named `default-deny-egress.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -700,15 +589,10 @@ spec:
   - Egress
 ```
 
-```
-
 Apply the policy:
 
 ```bash
-
 kubectl apply -f default-deny-egress.yaml
-```
-
 ```
 
 ### Step 2: Test Egress Block
@@ -716,10 +600,7 @@ kubectl apply -f default-deny-egress.yaml
 Try DNS resolution from test-pod (should fail):
 
 ```bash
-
 kubectl exec -n lab-netpol test-pod -- nslookup kubernetes.default
-```
-
 ```
 
 Expected output: Timeout (DNS is blocked)
@@ -731,7 +612,6 @@ Expected output: Timeout (DNS is blocked)
 Create a file named `allow-dns-egress.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -756,24 +636,16 @@ spec:
       port: 53
 ```
 
-```
-
 Apply the policy:
 
 ```bash
-
 kubectl apply -f allow-dns-egress.yaml
-```
-
 ```
 
 ### Step 4: Verify DNS Works
 
 ```bash
-
 kubectl exec -n lab-netpol test-pod -- nslookup kubernetes.default
-```
-
 ```
 
 Expected output: DNS resolution succeeds
@@ -785,7 +657,6 @@ Frontend egress policy (allow to backend):
 Create a file named `frontend-egress.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -819,14 +690,11 @@ spec:
       port: 53
 ```
 
-```
-
 Backend egress policy (allow to database):
 
 Create a file named `backend-egress.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -860,16 +728,11 @@ spec:
       port: 53
 ```
 
-```
-
 Apply both policies:
 
 ```bash
-
 kubectl apply -f frontend-egress.yaml
 kubectl apply -f backend-egress.yaml
-```
-
 ```
 
 ### Step 6: Verify Complete Policy
@@ -877,7 +740,6 @@ kubectl apply -f backend-egress.yaml
 Test the full chain:
 
 ```bash
-
 # Frontend can reach backend
 
 kubectl exec -n lab-netpol $FRONTEND_POD -- wget -O- --timeout=2 http://backend:8080
@@ -891,8 +753,6 @@ kubectl exec -n lab-netpol $BACKEND_POD -- nc -zv database 5432
 kubectl exec -n lab-netpol $FRONTEND_POD -- nc -zv database 5432 -w 2
 ```
 
-```
-
 Expected: First two succeed, third fails.
 
 ## Exercise 7: Cross-Namespace Communication
@@ -902,30 +762,21 @@ Let's create a monitoring namespace that needs access to our application.
 ### Step 1: Create Monitoring Namespace
 
 ```bash
-
 kubectl create namespace monitoring
 kubectl label namespace monitoring name=monitoring
-```
-
 ```
 
 ### Step 2: Deploy Monitoring Pod
 
 ```bash
-
 kubectl run prometheus -n monitoring --image=prom/prometheus:v2.45.0 -- sleep 3600
 kubectl wait --for=condition=ready pod/prometheus -n monitoring --timeout=60s
-```
-
 ```
 
 ### Step 3: Test Cross-Namespace Access (Currently Blocked)
 
 ```bash
-
 kubectl exec -n monitoring prometheus -- wget -O- --timeout=2 http://backend.lab-netpol.svc.cluster.local:8080
-```
-
 ```
 
 Expected output: Timeout (blocked by default deny)
@@ -935,7 +786,6 @@ Expected output: Timeout (blocked by default deny)
 Create a file named `backend-allow-monitoring.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -958,24 +808,16 @@ spec:
       port: 5678
 ```
 
-```
-
 Apply the policy:
 
 ```bash
-
 kubectl apply -f backend-allow-monitoring.yaml
-```
-
 ```
 
 ### Step 5: Verify Monitoring Access
 
 ```bash
-
 kubectl exec -n monitoring prometheus -- wget -O- --timeout=2 http://backend.lab-netpol.svc.cluster.local:8080
-```
-
 ```
 
 Expected output: "Backend API Response"
@@ -991,7 +833,6 @@ Let's allow the frontend to access an external API.
 Create a file named `frontend-egress-external.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1030,21 +871,15 @@ spec:
       port: 53
 ```
 
-```
-
 Apply the policy:
 
 ```bash
-
 kubectl apply -f frontend-egress-external.yaml
-```
-
 ```
 
 ### Step 2: Test External Access
 
 ```bash
-
 # This should work (allowed IP)
 
 kubectl exec -n lab-netpol $FRONTEND_POD -- nc -zv 8.8.8.8 443 -w 2
@@ -1054,23 +889,17 @@ kubectl exec -n lab-netpol $FRONTEND_POD -- nc -zv 8.8.8.8 443 -w 2
 kubectl exec -n lab-netpol $FRONTEND_POD -- nc -zv 1.1.1.1 443 -w 2
 ```
 
-```
-
 ## Verification and Testing
 
 ### View All Network Policies
 
 ```bash
-
 kubectl get networkpolicies -n lab-netpol
-```
-
 ```
 
 Expected output:
 
 ```
-
 NAME                          POD-SELECTOR       AGE
 default-deny-ingress          <none>             10m
 default-deny-egress           <none>             5m
@@ -1084,15 +913,11 @@ backend-allow-monitoring      app=backend        2m
 frontend-egress-external      app=frontend       1m
 
 ```
-```
 
 ### Describe a Network Policy
 
 ```bash
-
 kubectl describe networkpolicy backend-allow-from-frontend -n lab-netpol
-```
-
 ```
 
 ### Test Complete Traffic Flow
@@ -1100,7 +925,6 @@ kubectl describe networkpolicy backend-allow-from-frontend -n lab-netpol
 Create a comprehensive test script:
 
 ```bash
-
 cat > test-netpol.sh << 'EOF'
 
 #!/bin/bash
@@ -1154,8 +978,6 @@ chmod +x test-netpol.sh
 ./test-netpol.sh
 ```
 
-```
-
 Expected output: All tests pass.
 
 ## Challenge Questions
@@ -1179,7 +1001,6 @@ Test your understanding:
    <summary>Click to see answer</summary>
 
    ```yaml
-
    egress:
    - to:
 
@@ -1206,7 +1027,6 @@ Test your understanding:
 1. **What's the difference between these two policies?**
 
    ```yaml
-
    # Policy A
 
    - from:
@@ -1245,13 +1065,10 @@ Test your understanding:
    You cannot disable a NetworkPolicy without deleting it. However, you can modify the podSelector to match no pods:
 
    ```yaml
-
    spec:
      podSelector:
        matchLabels:
          nonexistent: label
-   ```
-
    ```
 
    Or simply delete and keep the YAML file for later reapplication.
@@ -1268,7 +1085,6 @@ Test your understanding:
 1. Check if CNI supports NetworkPolicy:
 
    ```bash
-
    kubectl get pods -n kube-system | grep -E "calico|cilium|weave"
 
    ```
@@ -1276,7 +1092,6 @@ Test your understanding:
 1. Verify NetworkPolicy exists:
 
    ```bash
-
    kubectl get networkpolicy -n lab-netpol
 
    ```
@@ -1284,7 +1099,6 @@ Test your understanding:
 1. Check pod labels match selectors:
 
    ```bash
-
    kubectl get pods -n lab-netpol --show-labels
 
    ```
@@ -1298,7 +1112,6 @@ Test your understanding:
 1. Ensure DNS egress is allowed:
 
    ```bash
-
    kubectl get networkpolicy allow-dns-egress -n lab-netpol -o yaml
 
    ```
@@ -1306,7 +1119,6 @@ Test your understanding:
 1. Verify kube-dns labels:
 
    ```bash
-
    kubectl get pods -n kube-system -l k8s-app=kube-dns --show-labels
 
    ```
@@ -1314,7 +1126,6 @@ Test your understanding:
 1. Test DNS directly:
 
    ```bash
-
    kubectl exec -n lab-netpol test-pod -- nslookup kubernetes.default
 
    ```
@@ -1328,7 +1139,6 @@ Test your understanding:
 1. Verify namespace has required labels:
 
    ```bash
-
    kubectl get namespace monitoring --show-labels
 
    ```
@@ -1336,7 +1146,6 @@ Test your understanding:
 1. Add labels if missing:
 
    ```bash
-
    kubectl label namespace monitoring name=monitoring
 
    ```
@@ -1344,7 +1153,6 @@ Test your understanding:
 1. Check NetworkPolicy includes namespaceSelector:
 
    ```bash
-
    kubectl describe networkpolicy backend-allow-monitoring -n lab-netpol
 
    ```
@@ -1354,7 +1162,6 @@ Test your understanding:
 Remove all lab resources:
 
 ```bash
-
 # Delete monitoring namespace
 
 kubectl delete namespace monitoring
@@ -1372,15 +1179,10 @@ rm -f test-netpol.sh
 kubectl config set-context --current --namespace=default
 ```
 
-```
-
 Verify cleanup:
 
 ```bash
-
 kubectl get namespaces | grep -E "lab-netpol|monitoring"
-```
-
 ```
 
 Expected output: No results
@@ -1395,7 +1197,6 @@ Deploy two frontend applications (web and mobile-api) that both need to access t
 <summary>Click for solution</summary>
 
 ```yaml
-
 # Both frontends can access backend
 
 apiVersion: networking.k8s.io/v1
@@ -1430,8 +1231,6 @@ spec:
           tier: external  # Only external traffic, not other frontends
 ```
 
-```
-
 </details>
 
 ### Challenge 2: Implement Zero-Trust Namespace
@@ -1442,7 +1241,6 @@ Create policies where every service must explicitly allow traffic - no default a
 <summary>Click for solution</summary>
 
 ```yaml
-
 # Start with deny all
 
 apiVersion: networking.k8s.io/v1
@@ -1458,8 +1256,6 @@ spec:
 
 # Then add specific allows for each service
 # (Use policies from earlier exercises)
-
-```
 
 ```
 

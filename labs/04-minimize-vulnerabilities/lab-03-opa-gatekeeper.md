@@ -18,7 +18,6 @@ Deploy OPA Gatekeeper and implement security policies using ConstraintTemplates 
 ## Step 1: Install OPA Gatekeeper
 
 ```bash
-
 # Add Gatekeeper Helm repository
 
 helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
@@ -45,16 +44,11 @@ kubectl wait --for=condition=ready pod \
   --timeout=120s
 ```
 
-```
-
 ## Step 2: Create Test Namespace
 
 ```bash
-
 kubectl create namespace lab-gatekeeper
 kubectl label namespace lab-gatekeeper policy=restricted
-```
-
 ```
 
 ## Step 3: Require Labels Policy
@@ -64,7 +58,6 @@ kubectl label namespace lab-gatekeeper policy=restricted
 Create `k8srequiredlabels-template.yaml`:
 
 ```yaml
-
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -127,9 +120,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 kubectl apply -f k8srequiredlabels-template.yaml
 
 # Verify template
@@ -138,14 +128,11 @@ kubectl get constrainttemplates
 kubectl describe constrainttemplate k8srequiredlabels
 ```
 
-```
-
 ### 3.2 Create Constraint
 
 Create `require-labels-constraint.yaml`:
 
 ```yaml
-
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sRequiredLabels
 metadata:
@@ -167,9 +154,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 kubectl apply -f require-labels-constraint.yaml
 
 # Check constraint status
@@ -178,12 +162,9 @@ kubectl get k8srequiredlabels
 kubectl describe k8srequiredlabels pods-must-have-owner
 ```
 
-```
-
 ### 3.3 Test the Policy
 
 ```bash
-
 # Test: Pod without required labels (should fail)
 
 kubectl run test-no-labels --image=nginx:1.27 -n lab-gatekeeper
@@ -208,8 +189,6 @@ kubectl run test-invalid-env \
 
 ```
 
-```
-
 ## Step 4: Deny Privileged Containers
 
 ### 4.1 Create ConstraintTemplate
@@ -217,7 +196,6 @@ kubectl run test-invalid-env \
 Create `k8spspprivileged-template.yaml`:
 
 ```yaml
-
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -252,12 +230,7 @@ spec:
 ```
 
 ```
-
-```bash
-
 kubectl apply -f k8spspprivileged-template.yaml
-```
-
 ```
 
 ### 4.2 Create Constraint
@@ -265,7 +238,6 @@ kubectl apply -f k8spspprivileged-template.yaml
 Create `deny-privileged-constraint.yaml`:
 
 ```yaml
-
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sPSPPrivilegedContainer
 metadata:
@@ -280,9 +252,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 kubectl apply -f deny-privileged-constraint.yaml
 
 # Test privileged container
@@ -297,8 +266,6 @@ kubectl run test-privileged \
 
 ```
 
-```
-
 ## Step 5: Require Resource Limits
 
 ### 5.1 Create ConstraintTemplate
@@ -306,7 +273,6 @@ kubectl run test-privileged \
 Create `k8srequiredresources-template.yaml`:
 
 ```yaml
-
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -347,18 +313,12 @@ spec:
 ```
 
 ```
-
-```bash
-
 kubectl apply -f k8srequiredresources-template.yaml
-```
-
 ```
 
 ### 5.2 Create Constraint
 
 ```yaml
-
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sRequiredResources
 metadata:
@@ -372,12 +332,9 @@ spec:
       - lab-gatekeeper
 ```
 
-```
-
 Save as `require-resources-constraint.yaml` and apply:
 
 ```bash
-
 kubectl apply -f require-resources-constraint.yaml
 
 # Test without resources
@@ -391,8 +348,6 @@ kubectl run test-no-resources \
 
 ```
 
-```
-
 ## Step 6: Allowed Container Registries
 
 ### 6.1 Create ConstraintTemplate
@@ -400,7 +355,6 @@ kubectl run test-no-resources \
 Create `k8sallowedrepos-template.yaml`:
 
 ```yaml
-
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -439,18 +393,12 @@ spec:
 ```
 
 ```
-
-```bash
-
 kubectl apply -f k8sallowedrepos-template.yaml
-```
-
 ```
 
 ### 6.2 Create Constraint
 
 ```yaml
-
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sAllowedRepos
 metadata:
@@ -469,12 +417,9 @@ spec:
       - "registry.k8s.io/"
 ```
 
-```
-
 Save as `allowed-repos-constraint.yaml` and apply:
 
 ```bash
-
 kubectl apply -f allowed-repos-constraint.yaml
 
 # Test with disallowed registry
@@ -488,12 +433,9 @@ kubectl run test-bad-registry \
 
 ```
 
-```
-
 ## Step 7: Audit Existing Resources
 
 ```bash
-
 # Check constraint status (shows violations)
 
 kubectl get constraints
@@ -507,12 +449,9 @@ kubectl get k8srequiredlabels pods-must-have-owner -o yaml
 kubectl describe k8srequiredlabels pods-must-have-owner | grep -A 10 "Total Violations"
 ```
 
-```
-
 ## Step 8: Dry-Run Mode (Audit Only)
 
 ```bash
-
 # Change enforcement action to dryrun
 
 kubectl patch k8srequiredlabels pods-must-have-owner \
@@ -532,8 +471,6 @@ kubectl run test-violation \
 kubectl describe k8srequiredlabels pods-must-have-owner
 ```
 
-```
-
 ## Challenge Exercises
 
 1. Create policy to require `readOnlyRootFilesystem: true`
@@ -544,7 +481,6 @@ kubectl describe k8srequiredlabels pods-must-have-owner
 ## Troubleshooting
 
 ```bash
-
 # Check Gatekeeper logs
 
 kubectl logs -n gatekeeper-system -l control-plane=controller-manager
@@ -557,8 +493,6 @@ kubectl describe <constraint-type> <constraint-name>
 # Test policy with dry-run
 
 kubectl apply --dry-run=server -f pod.yaml
-```
-
 ```
 
 ## Lab Summary
@@ -575,13 +509,10 @@ You learned:
 ## Cleanup
 
 ```bash
-
 kubectl delete namespace lab-gatekeeper
 kubectl delete constrainttemplates --all
 helm uninstall gatekeeper -n gatekeeper-system
 kubectl delete namespace gatekeeper-system
-```
-
 ```
 
 ---

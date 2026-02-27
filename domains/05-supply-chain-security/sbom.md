@@ -85,8 +85,6 @@ Organizations without SBOMs face:
 }
 ```
 
-```
-
 ### CycloneDX
 
 **Overview:**
@@ -101,7 +99,6 @@ Organizations without SBOMs face:
 **Example (CycloneDX JSON):**
 
 ```json
-
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
@@ -160,8 +157,6 @@ Organizations without SBOMs face:
 }
 ```
 
-```
-
 ### SWID (Software Identification Tags)
 
 **Overview:**
@@ -179,28 +174,19 @@ Less commonly used for containers, more for enterprise asset management.
 **Generate SPDX SBOM:**
 
 ```bash
-
 trivy image --format spdx-json --output sbom.spdx.json nginx:1.26
-```
-
 ```
 
 **Generate CycloneDX SBOM:**
 
 ```bash
-
 trivy image --format cyclonedx --output sbom.cdx.json nginx:1.26
-```
-
 ```
 
 **With GitHub integration:**
 
 ```bash
-
 trivy image --format github nginx:1.26
-```
-
 ```
 
 ### Syft
@@ -210,7 +196,6 @@ Syft is a CLI tool from Anchore for generating SBOMs.
 **Installation:**
 
 ```bash
-
 # Linux/macOS
 
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
@@ -224,12 +209,9 @@ brew install syft
 syft version
 ```
 
-```
-
 **Generate SBOM:**
 
 ```bash
-
 # SPDX JSON
 
 syft nginx:1.26 -o spdx-json=sbom.spdx.json
@@ -249,12 +231,9 @@ syft nginx:1.26 \
   -o cyclonedx-json=sbom.cdx.json
 ```
 
-```
-
 **Scan Sources:**
 
 ```bash
-
 # Container image
 
 syft nginx:1.26
@@ -276,26 +255,18 @@ syft oci-dir:/path/to/oci
 syft registry:myregistry.com/myapp:v1.0
 ```
 
-```
-
 ### Tern
 
 **Installation:**
 
 ```bash
-
 pip install tern
-```
-
 ```
 
 **Generate SBOM:**
 
 ```bash
-
 tern report -i nginx:1.26 -f spdxjson -o sbom.json
-```
-
 ```
 
 ### Docker SBOM (docker sbom)
@@ -303,10 +274,7 @@ tern report -i nginx:1.26 -f spdxjson -o sbom.json
 Docker Desktop includes SBOM generation (experimental):
 
 ```bash
-
 docker sbom nginx:1.26
-```
-
 ```
 
 ## SBOM Components
@@ -342,24 +310,19 @@ docker sbom nginx:1.26
 Standardized way to identify software packages:
 
 ```
-
 pkg:type/namespace/name@version?qualifiers#subpath
 
-```
 ```
 
 **Examples:**
 
 ```
-
 pkg:deb/debian/openssl@3.0.13?arch=amd64
 pkg:npm/lodash@4.17.21
 pkg:pypi/requests@2.31.0
 pkg:golang/github.com/sirupsen/logrus@v1.9.3
 pkg:docker/nginx@1.26.0
 pkg:maven/org.springframework/spring-core@6.1.3
-```
-
 ```
 
 ## Analyzing SBOMs
@@ -369,7 +332,6 @@ pkg:maven/org.springframework/spring-core@6.1.3
 **List all packages:**
 
 ```bash
-
 # SPDX
 
 jq '.packages[] | {name: .name, version: .versionInfo}' sbom.spdx.json
@@ -379,12 +341,9 @@ jq '.packages[] | {name: .name, version: .versionInfo}' sbom.spdx.json
 jq '.components[] | {name: .name, version: .version}' sbom.cdx.json
 ```
 
-```
-
 **Find specific package:**
 
 ```bash
-
 # SPDX
 
 jq '.packages[] | select(.name == "openssl")' sbom.spdx.json
@@ -394,12 +353,9 @@ jq '.packages[] | select(.name == "openssl")' sbom.spdx.json
 jq '.components[] | select(.name == "openssl")' sbom.cdx.json
 ```
 
-```
-
 **Count packages:**
 
 ```bash
-
 # SPDX
 
 jq '.packages | length' sbom.spdx.json
@@ -409,12 +365,9 @@ jq '.packages | length' sbom.spdx.json
 jq '.components | length' sbom.cdx.json
 ```
 
-```
-
 **List licenses:**
 
 ```bash
-
 # SPDX
 
 jq '.packages[] | {name: .name, license: .licenseConcluded}' sbom.spdx.json | grep -v "NOASSERTION"
@@ -424,14 +377,11 @@ jq '.packages[] | {name: .name, license: .licenseConcluded}' sbom.spdx.json | gr
 jq '.components[] | {name: .name, licenses: .licenses}' sbom.cdx.json
 ```
 
-```
-
 ### SBOM Analysis Tools
 
 **grype (Anchore):**
 
 ```bash
-
 # Install
 
 curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
@@ -445,12 +395,9 @@ grype sbom:./sbom.spdx.json
 grype sbom:./sbom.spdx.json --fail-on critical
 ```
 
-```
-
 **Trivy SBOM Scanning:**
 
 ```bash
-
 # Scan SBOM
 
 trivy sbom sbom.spdx.json
@@ -462,8 +409,6 @@ trivy sbom --severity HIGH,CRITICAL sbom.spdx.json
 # JSON output
 
 trivy sbom -f json -o results.json sbom.spdx.json
-```
-
 ```
 
 **Dependency-Track:**
@@ -481,7 +426,6 @@ Web-based SBOM analysis platform:
 ### GitHub Actions
 
 ```yaml
-
 name: Generate and Upload SBOM
 
 on:
@@ -529,12 +473,9 @@ jobs:
           cosign attach sbom --sbom sbom.spdx.json myapp:${{ github.sha }}
 ```
 
-```
-
 ### GitLab CI
 
 ```yaml
-
 stages:
   - build
   - sbom
@@ -561,12 +502,9 @@ scan-sbom:
     - generate-sbom
 ```
 
-```
-
 ### Jenkins Pipeline
 
 ```groovy
-
 pipeline {
     agent any
 
@@ -603,8 +541,6 @@ pipeline {
 }
 ```
 
-```
-
 ## SBOM Storage and Distribution
 
 ### 1. OCI Registry (Recommended)
@@ -612,7 +548,6 @@ pipeline {
 Attach SBOM to image using Cosign:
 
 ```bash
-
 # Attach SBOM
 
 cosign attach sbom --sbom sbom.spdx.json myapp:v1.0
@@ -624,8 +559,6 @@ cosign download sbom myapp:v1.0 > downloaded-sbom.json
 # Verify SBOM signature
 
 cosign verify --key cosign.pub $(cosign triangulate --type sbom myapp:v1.0)
-```
-
 ```
 
 ### 2. Artifact Repository
@@ -650,7 +583,6 @@ Dedicated SBOM management:
 Commit SBOMs to Git:
 
 ```bash
-
 # Generate SBOM
 
 syft myapp:v1.0 -o spdx-json=sboms/myapp-v1.0.spdx.json
@@ -662,8 +594,6 @@ git commit -m "Add SBOM for myapp v1.0"
 git push
 ```
 
-```
-
 ## SBOM Use Cases
 
 ### 1. Vulnerability Response
@@ -671,7 +601,6 @@ git push
 When CVE-2024-1234 in OpenSSL is disclosed:
 
 ```bash
-
 # Query all SBOMs
 
 for sbom in sboms/*.json; do
@@ -680,19 +609,14 @@ for sbom in sboms/*.json; do
 done
 ```
 
-```
-
 ### 2. License Compliance
 
 Check for copyleft licenses:
 
 ```bash
-
 # Find GPL licenses
 
 jq '.packages[] | select(.licenseConcluded | contains("GPL")) | {name: .name, license: .licenseConcluded}' sbom.spdx.json
-```
-
 ```
 
 ### 3. Supply Chain Audit
@@ -700,7 +624,6 @@ jq '.packages[] | select(.licenseConcluded | contains("GPL")) | {name: .name, li
 Track component sources:
 
 ```bash
-
 # List all suppliers
 
 jq '.packages[] | .supplier' sbom.spdx.json | sort -u
@@ -710,12 +633,9 @@ jq '.packages[] | .supplier' sbom.spdx.json | sort -u
 jq '.packages[] | select(.supplier == "Organization: Debian") | .name' sbom.spdx.json
 ```
 
-```
-
 ### 4. Dependency Analysis
 
 ```bash
-
 # Count dependencies by type
 
 jq '.components | group_by(.type) | map({type: .[0].type, count: length})' sbom.cdx.json
@@ -723,8 +643,6 @@ jq '.components | group_by(.type) | map({type: .[0].type, count: length})' sbom.
 # Find outdated packages
 
 jq '.components[] | select(.version | test("^0\\.[0-9]")) | {name: .name, version: .version}' sbom.cdx.json
-```
-
 ```
 
 ## SBOM Best Practices
@@ -775,7 +693,6 @@ Update SBOMs when:
 Sign and verify SBOMs:
 
 ```bash
-
 # Sign SBOM with Cosign
 
 cosign sign-blob --key cosign.key sbom.spdx.json > sbom.spdx.json.sig
@@ -783,8 +700,6 @@ cosign sign-blob --key cosign.key sbom.spdx.json > sbom.spdx.json.sig
 # Verify signature
 
 cosign verify-blob --key cosign.pub --signature sbom.spdx.json.sig sbom.spdx.json
-```
-
 ```
 
 ### 7. SBOM Retention
@@ -815,7 +730,6 @@ The NTIA Minimum Elements for SBOM defines baseline requirements:
 Tools like sbomqs assess SBOM quality:
 
 ```bash
-
 # Install
 
 go install github.com/interlynk-io/sbomqs@latest
@@ -825,12 +739,9 @@ go install github.com/interlynk-io/sbomqs@latest
 sbomqs score sbom.spdx.json
 ```
 
-```
-
 Output:
 
 ```
-
 SBOM Quality Score: 7.2/10
 
 Compliance:
@@ -846,7 +757,6 @@ Recommendations:
 - Add license for unlicensed components
 
 ```
-```
 
 ## Troubleshooting
 
@@ -857,7 +767,6 @@ Recommendations:
 **Solution:**
 
 ```bash
-
 # Try different tool
 
 syft nginx:1.26 -o spdx-json  # If Trivy fails
@@ -870,8 +779,6 @@ tar xf nginx.tar
 syft dir:. -o spdx-json
 ```
 
-```
-
 ### Issue: Incomplete SBOM
 
 **Cause**: Missing package managers or metadata
@@ -879,15 +786,12 @@ syft dir:. -o spdx-json
 **Solution:**
 
 ```bash
-
 # Use multiple tools and merge
 
 syft nginx:1.26 -o spdx-json=sbom-syft.json
 trivy image --format spdx-json -o sbom-trivy.json nginx:1.26
 
 # Manually review and combine
-
-```
 
 ```
 
@@ -898,7 +802,6 @@ trivy image --format spdx-json -o sbom-trivy.json nginx:1.26
 **Solution:**
 
 ```bash
-
 # Compress SBOM
 
 gzip sbom.spdx.json
@@ -906,8 +809,6 @@ gzip sbom.spdx.json
 # Store summary only
 
 jq '{metadata, summary: {packageCount: (.packages | length)}}' sbom.spdx.json
-```
-
 ```
 
 ## Key Points to Remember
@@ -966,7 +867,6 @@ jq '{metadata, summary: {packageCount: (.packages | length)}}' sbom.spdx.json
 ## Quick Reference
 
 ```bash
-
 # Generate SBOM with Trivy
 
 trivy image --format spdx-json -o sbom.json nginx:1.26
@@ -1002,8 +902,6 @@ jq '.packages | length' sbom.spdx.json
 # Find package
 
 jq '.packages[] | select(.name == "openssl")' sbom.spdx.json
-```
-
 ```
 
 ---

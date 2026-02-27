@@ -28,7 +28,6 @@ Learn the fundamentals of Role-Based Access Control (RBAC) in Kubernetes by crea
 ### 1. Create Lab Namespace
 
 ```bash
-
 # Create namespace for this lab
 
 kubectl create namespace rbac-lab
@@ -42,12 +41,9 @@ kubectl get namespace rbac-lab
 kubectl config set-context --current --namespace=rbac-lab
 ```
 
-```
-
 ### 2. Create Test Resources
 
 ```bash
-
 # Create some pods for testing permissions
 
 kubectl run pod1 --image=nginx:1.27 -n rbac-lab
@@ -67,12 +63,9 @@ kubectl expose deployment nginx-deploy --port=80 --target-port=80 -n rbac-lab
 kubectl get pods,deployments,services -n rbac-lab
 ```
 
-```
-
 **Expected Output**:
 
 ```
-
 NAME                               READY   STATUS    RESTARTS   AGE
 pod/pod1                           1/1     Running   0          10s
 pod/pod2                           1/1     Running   0          9s
@@ -87,7 +80,6 @@ NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
 service/nginx-deploy   ClusterIP   10.96.xxx.xxx   <none>        80/TCP    2s
 
 ```
-```
 
 ## Exercises
 
@@ -100,7 +92,6 @@ service/nginx-deploy   ClusterIP   10.96.xxx.xxx   <none>        80/TCP    2s
 **Steps**:
 
 ```bash
-
 # Method 1: Using kubectl create
 
 kubectl create role pod-reader \
@@ -121,12 +112,9 @@ kubectl describe role pod-reader -n rbac-lab
 kubectl get role pod-reader -n rbac-lab -o yaml
 ```
 
-```
-
 **Expected Output** (describe):
 
 ```
-
 Name:         pod-reader
 Labels:       <none>
 Annotations:  <none>
@@ -136,12 +124,10 @@ PolicyRule:
   pods       []                 []              [get list watch]
 
 ```
-```
 
 **Alternative Method (YAML)**:
 
 ```yaml
-
 # Save as pod-reader-role.yaml
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -155,29 +141,21 @@ rules:
   verbs: ["get", "list", "watch"]
 ```
 
-```
-
 Apply:
 
 ```bash
-
 kubectl apply -f pod-reader-role.yaml
-```
-
 ```
 
 **Verification**:
 
 ```bash
-
 # Check role exists
 
 kubectl get role pod-reader -n rbac-lab
 
 # Should show: NAME         CREATED AT
 #              pod-reader   2026-02-27T10:00:00Z
-
-```
 
 ```
 
@@ -190,7 +168,6 @@ kubectl get role pod-reader -n rbac-lab
 **Steps**:
 
 ```bash
-
 # Create ServiceAccount
 
 kubectl create serviceaccount pod-reader-sa -n rbac-lab
@@ -211,12 +188,9 @@ kubectl create rolebinding pod-reader-binding \
 kubectl describe rolebinding pod-reader-binding -n rbac-lab
 ```
 
-```
-
 **Expected Output** (describe):
 
 ```
-
 Name:         pod-reader-binding
 Labels:       <none>
 Annotations:  <none>
@@ -229,12 +203,10 @@ Subjects:
   ServiceAccount  pod-reader-sa   rbac-lab
 
 ```
-```
 
 **Alternative YAML Method**:
 
 ```yaml
-
 # serviceaccount.yaml
 
 apiVersion: v1
@@ -261,8 +233,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ---
 
 ### Exercise 3: Test ServiceAccount Permissions
@@ -272,7 +242,6 @@ roleRef:
 **Steps**:
 
 ```bash
-
 # Test if ServiceAccount can list pods
 
 kubectl auth can-i list pods \
@@ -312,18 +281,14 @@ kubectl auth can-i --list \
   --namespace=rbac-lab
 ```
 
-```
-
 **Expected Output** (--list):
 
 ```
-
 Resources                                   Non-Resource URLs   Resource Names   Verbs
 pods                                        []                  []               [get list watch]
 selfsubjectaccessreviews.authorization...   []                  []               [create]
 selfsubjectrulesreviews.authorization...    []                  []               [create]
 
-```
 ```
 
 ---
@@ -335,7 +300,6 @@ selfsubjectrulesreviews.authorization...    []                  []              
 **Steps**:
 
 ```yaml
-
 # Save as pod-reader-pod.yaml
 
 apiVersion: v1
@@ -353,12 +317,9 @@ spec:
     - "3600"
 ```
 
-```
-
 Apply:
 
 ```bash
-
 kubectl apply -f pod-reader-pod.yaml
 
 # Wait for pod to be ready
@@ -382,8 +343,6 @@ kubectl exec -it pod-reader-pod -n rbac-lab -- \
 
 ```
 
-```
-
 ---
 
 ### Exercise 5: Create a Deployment Manager Role
@@ -393,7 +352,6 @@ kubectl exec -it pod-reader-pod -n rbac-lab -- \
 **Steps**:
 
 ```yaml
-
 # Save as deployment-manager-role.yaml
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -413,12 +371,9 @@ rules:
   verbs: ["get", "list"]
 ```
 
-```
-
 Apply:
 
 ```bash
-
 kubectl apply -f deployment-manager-role.yaml
 
 # Verify
@@ -426,12 +381,9 @@ kubectl apply -f deployment-manager-role.yaml
 kubectl describe role deployment-manager -n rbac-lab
 ```
 
-```
-
 **Expected Output**:
 
 ```
-
 Name:         deployment-manager
 Namespace:    rbac-lab
 PolicyRule:
@@ -442,7 +394,6 @@ PolicyRule:
   pods              []                 []              [get list]
 
 ```
-```
 
 ---
 
@@ -451,7 +402,6 @@ PolicyRule:
 **Steps**:
 
 ```bash
-
 # Create ServiceAccount
 
 kubectl create serviceaccount deploy-manager-sa -n rbac-lab
@@ -485,8 +435,6 @@ kubectl auth can-i delete pods \
 
 ```
 
-```
-
 ---
 
 ### Exercise 7: Granular Permissions with resourceNames
@@ -496,7 +444,6 @@ kubectl auth can-i delete pods \
 **Steps**:
 
 ```yaml
-
 # Save as specific-configmap-role.yaml
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -512,9 +459,6 @@ rules:
 ```
 
 ```
-
-```bash
-
 # Create test ConfigMaps
 
 kubectl create configmap app-config --from-literal=key1=value1 -n rbac-lab
@@ -558,8 +502,6 @@ kubectl auth can-i list configmaps \
 
 ```
 
-```
-
 ---
 
 ### Exercise 8: Combining Multiple Rules
@@ -569,7 +511,6 @@ kubectl auth can-i list configmaps \
 **Steps**:
 
 ```yaml
-
 # Save as app-admin-role.yaml
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -605,9 +546,6 @@ rules:
 ```
 
 ```
-
-```bash
-
 # Apply role
 
 kubectl apply -f app-admin-role.yaml
@@ -643,8 +581,6 @@ kubectl auth can-i delete services --as=system:serviceaccount:rbac-lab:app-admin
 
 ```
 
-```
-
 ---
 
 ### Exercise 9: Troubleshooting RBAC Issues
@@ -654,7 +590,6 @@ kubectl auth can-i delete services --as=system:serviceaccount:rbac-lab:app-admin
 **Scenario 1: Missing API Group**
 
 ```yaml
-
 # Save as broken-role-1.yaml
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -669,9 +604,6 @@ rules:
 ```
 
 ```
-
-```bash
-
 # Apply broken role
 
 kubectl apply -f broken-role-1.yaml
@@ -707,12 +639,9 @@ kubectl auth can-i get deployments \
 
 ```
 
-```
-
 **Scenario 2: Wrong Namespace in RoleBinding**
 
 ```bash
-
 # Create role in rbac-lab namespace
 
 kubectl create role test-role \
@@ -754,8 +683,6 @@ kubectl auth can-i get pods \
 
 ```
 
-```
-
 ---
 
 ## Verification
@@ -763,7 +690,6 @@ kubectl auth can-i get pods \
 Run these commands to verify your lab completion:
 
 ```bash
-
 # 1. Check all created roles
 
 kubectl get roles -n rbac-lab
@@ -818,8 +744,6 @@ kubectl auth can-i get configmap/other-config \
 
 ```
 
-```
-
 ## Solutions
 
 All exercise solutions are provided inline above. Key concepts:
@@ -827,7 +751,6 @@ All exercise solutions are provided inline above. Key concepts:
 ### Solution 1: Pod Reader Role
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -839,12 +762,9 @@ rules:
   verbs: ["get", "list", "watch"]
 ```
 
-```
-
 ### Solution 2: RoleBinding to ServiceAccount
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -860,17 +780,12 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Testing Pattern
 
 ```bash
-
 kubectl auth can-i <verb> <resource> \
   --as=system:serviceaccount:<namespace>:<sa-name> \
   --namespace=<namespace>
-```
-
 ```
 
 ## Troubleshooting
@@ -889,7 +804,6 @@ kubectl auth can-i <verb> <resource> \
 ### Issue: Can't find API group for resource
 
 ```bash
-
 # List all resources with their API groups
 
 kubectl api-resources | grep <resource-name>
@@ -904,8 +818,6 @@ kubectl api-resources | grep deployments
 
 ```
 
-```
-
 ### Issue: resourceNames not working
 
 **Remember**: `resourceNames` only works with specific verbs (get, update, delete, etc.), not with list or watch.
@@ -913,7 +825,6 @@ kubectl api-resources | grep deployments
 **Fix**: Add separate rule for list without resourceNames:
 
 ```yaml
-
 rules:
 - apiGroups: [""]
   resources: ["configmaps"]
@@ -924,12 +835,9 @@ rules:
   verbs: ["get", "update"]  # Specific resource operations
 ```
 
-```
-
 ## Cleanup
 
 ```bash
-
 # Delete all lab resources
 
 kubectl delete namespace rbac-lab
@@ -943,8 +851,6 @@ kubectl get namespace rbac-lab
 # Reset context if you changed it
 
 kubectl config set-context --current --namespace=default
-```
-
 ```
 
 ## Key Takeaways

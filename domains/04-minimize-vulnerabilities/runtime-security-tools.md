@@ -105,7 +105,6 @@ Falco is the de facto standard for Kubernetes runtime security, using eBPF to mo
 #### Method 1: Helm (Recommended)
 
 ```bash
-
 # Add Falco Helm repository
 
 helm repo add falcosecurity https://falcosecurity.github.io/charts
@@ -125,12 +124,9 @@ kubectl get pods -n falco
 kubectl logs -n falco -l app.kubernetes.io/name=falco -f
 ```
 
-```
-
 #### Method 2: Kubernetes Manifests
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -238,8 +234,6 @@ spec:
           path: /etc
 ```
 
-```
-
 ### Falco Rules
 
 Falco uses a rule-based system to detect suspicious behavior.
@@ -247,7 +241,6 @@ Falco uses a rule-based system to detect suspicious behavior.
 #### Rule Structure
 
 ```yaml
-
 - rule: Shell in Container
   desc: Detect shell execution in a container
   condition: >
@@ -271,14 +264,11 @@ Falco uses a rule-based system to detect suspicious behavior.
   tags: [container, shell, mitre_execution]
 ```
 
-```
-
 #### Default Rules (Examples)
 
 **1. Shell in Container:**
 
 ```yaml
-
 - rule: Terminal shell in container
   desc: A shell was used as the entrypoint/exec point into a container
   condition: >
@@ -295,12 +285,9 @@ Falco uses a rule-based system to detect suspicious behavior.
   tags: [container, shell, mitre_execution]
 ```
 
-```
-
 **2. Sensitive File Access:**
 
 ```yaml
-
 - rule: Read sensitive file untrusted
   desc: Detect attempts to read sensitive files
   condition: >
@@ -317,12 +304,9 @@ Falco uses a rule-based system to detect suspicious behavior.
   tags: [filesystem, mitre_credential_access]
 ```
 
-```
-
 **3. Privilege Escalation:**
 
 ```yaml
-
 - rule: Change thread namespace
   desc: Detect attempts to change namespaces (potential container escape)
   condition: >
@@ -338,14 +322,11 @@ Falco uses a rule-based system to detect suspicious behavior.
   tags: [container, mitre_privilege_escalation]
 ```
 
-```
-
 #### Custom Rules
 
 **Example: Detect Cryptocurrency Mining:**
 
 ```yaml
-
 - list: crypto_miners
   items: [xmrig, ethminer, ccminer, cpuminer]
 
@@ -365,12 +346,9 @@ Falco uses a rule-based system to detect suspicious behavior.
   tags: [malware, cryptocurrency]
 ```
 
-```
-
 **Example: Detect Port Scanning:**
 
 ```yaml
-
 - rule: Outbound Port Scanning
   desc: Detect potential port scanning activity
   condition: >
@@ -387,14 +365,11 @@ Falco uses a rule-based system to detect suspicious behavior.
   tags: [network, mitre_discovery]
 ```
 
-```
-
 ### Configuring Falco
 
 #### Falco Configuration File
 
 ```yaml
-
 # /etc/falco/falco.yaml
 
 rules_file:
@@ -442,12 +417,9 @@ grpc_output:
   enabled: false
 ```
 
-```
-
 #### ConfigMap for Custom Rules
 
 ```yaml
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -470,12 +442,9 @@ data:
       tags: [container, process]
 ```
 
-```
-
 ### Viewing Falco Alerts
 
 ```bash
-
 # View real-time alerts
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco -f
@@ -493,14 +462,11 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "priority=CRITICAL"
 kubectl logs -n falco -l app.kubernetes.io/name=falco > falco-alerts.log
 ```
 
-```
-
 ### Testing Falco
 
 #### Test 1: Shell in Container
 
 ```bash
-
 # Create test pod
 
 kubectl run test-shell --image=nginx:1.27
@@ -514,12 +480,9 @@ kubectl exec -it test-shell -- /bin/bash
 
 ```
 
-```
-
 #### Test 2: Sensitive File Access
 
 ```bash
-
 # Trigger alert: read /etc/shadow
 
 kubectl exec test-shell -- cat /etc/shadow
@@ -529,12 +492,9 @@ kubectl exec test-shell -- cat /etc/shadow
 
 ```
 
-```
-
 #### Test 3: Network Activity
 
 ```bash
-
 # Trigger alert: unexpected network connection
 
 kubectl exec test-shell -- nc -v google.com 80
@@ -544,14 +504,11 @@ kubectl exec test-shell -- nc -v google.com 80
 
 ```
 
-```
-
 ### Integrating Falco with Alert Systems
 
 #### Falcosidekick (Alert Router)
 
 ```bash
-
 # Install Falcosidekick
 
 helm install falcosidekick falcosecurity/falcosidekick \
@@ -568,8 +525,6 @@ helm upgrade falco falcosecurity/falco \
   --set falcosidekick.fullfqdn=falcosidekick:2801
 ```
 
-```
-
 ## Seccomp - Secure Computing Mode
 
 Seccomp restricts system calls that a container can make to the kernel.
@@ -577,12 +532,10 @@ Seccomp restricts system calls that a container can make to the kernel.
 ### How Seccomp Works
 
 ```
-
 Container Process → Seccomp Filter → Kernel
                          ↓
                    Allow/Deny syscall
 
-```
 ```
 
 ### Default Seccomp Profile
@@ -602,7 +555,6 @@ Docker/containerd use a default seccomp profile that blocks ~44 dangerous syscal
 #### Using RuntimeDefault Profile
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -616,14 +568,11 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 #### Using Localhost Profile
 
 **Step 1: Create Custom Profile**
 
 ```json
-
 {
   "defaultAction": "SCMP_ACT_ERRNO",
   "architectures": ["SCMP_ARCH_X86_64"],
@@ -651,24 +600,18 @@ spec:
 }
 ```
 
-```
-
 **Step 2: Place Profile on Nodes**
 
 ```bash
-
 # On each node
 
 sudo mkdir -p /var/lib/kubelet/seccomp/profiles
 sudo cp custom-profile.json /var/lib/kubelet/seccomp/profiles/custom.json
 ```
 
-```
-
 **Step 3: Use Profile in Pod**
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -683,12 +626,9 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 #### Unconfined Profile (Not Recommended)
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -702,12 +642,9 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 ### Testing Seccomp
 
 ```bash
-
 # Create pod without seccomp
 
 kubectl run test-no-seccomp --image=alpine --command -- sleep 3600
@@ -729,8 +666,6 @@ kubectl exec test-seccomp -- mount /dev/sda1 /mnt
 kubectl exec test-no-seccomp -- mount /dev/sda1 /mnt
 ```
 
-```
-
 ## AppArmor - Application Security Profiles
 
 AppArmor is a Linux Security Module (LSM) that restricts program capabilities using per-program profiles.
@@ -738,7 +673,6 @@ AppArmor is a Linux Security Module (LSM) that restricts program capabilities us
 ### Checking AppArmor Status
 
 ```bash
-
 # Check if AppArmor is enabled (on node)
 
 sudo systemctl status apparmor
@@ -755,12 +689,9 @@ cat /sys/module/apparmor/parameters/enabled
 
 ```
 
-```
-
 ### AppArmor Profile Structure
 
 ```bash
-
 # /etc/apparmor.d/docker-nginx
 
 #include <tunables/global>
@@ -803,14 +734,11 @@ profile docker-nginx flags=(attach_disconnected,mediate_deleted) {
 }
 ```
 
-```
-
 ### Using AppArmor in Kubernetes
 
 #### Step 1: Load Profile on Nodes
 
 ```bash
-
 # On each node
 
 sudo cat > /etc/apparmor.d/k8s-restricted <<EOF
@@ -844,12 +772,9 @@ sudo apparmor_parser -r /etc/apparmor.d/k8s-restricted
 sudo aa-status | grep k8s-restricted
 ```
 
-```
-
 #### Step 2: Apply to Pod
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -862,12 +787,9 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 #### Alternative: Runtime/Default Profile
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -880,12 +802,9 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 ### Testing AppArmor
 
 ```bash
-
 # Create pod with AppArmor
 
 kubectl apply -f apparmor-pod.yaml
@@ -901,8 +820,6 @@ kubectl exec apparmor-pod -- cat /etc/shadow
 sudo journalctl -xe | grep audit | grep apparmor
 ```
 
-```
-
 ## SELinux - Security-Enhanced Linux
 
 SELinux provides mandatory access control (MAC) enforcement.
@@ -916,7 +833,6 @@ SELinux provides mandatory access control (MAC) enforcement.
 ### Checking SELinux Status
 
 ```bash
-
 # Check SELinux status (on node)
 
 getenforce
@@ -930,12 +846,9 @@ sestatus
 sudo ausearch -m avc -ts recent
 ```
 
-```
-
 ### Using SELinux in Kubernetes
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -950,8 +863,6 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 **Common SELinux Types:**
 
 - `container_t`: Default for containers
@@ -963,7 +874,6 @@ spec:
 ### 1. Enable Multiple Security Layers
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -987,8 +897,6 @@ spec:
       readOnlyRootFilesystem: true
 ```
 
-```
-
 ### 2. Deploy Falco as DaemonSet
 
 Ensure Falco runs on every node for complete coverage.
@@ -998,7 +906,6 @@ Ensure Falco runs on every node for complete coverage.
 Start with default rules, then customize for your environment:
 
 ```yaml
-
 - list: allowed_images
   items: ["nginx", "redis", "postgres"]
 
@@ -1011,8 +918,6 @@ Start with default rules, then customize for your environment:
   priority: WARNING
 ```
 
-```
-
 ### 4. Use RuntimeDefault Seccomp
 
 Always set `seccompProfile.type: RuntimeDefault` unless you have specific requirements.
@@ -1022,12 +927,9 @@ Always set `seccompProfile.type: RuntimeDefault` unless you have specific requir
 Test profiles in non-production before enforcing:
 
 ```bash
-
 # Test in dry-run mode
 
 kubectl apply --dry-run=server -f pod-with-security.yaml
-```
-
 ```
 
 ### 6. Monitor and Alert
@@ -1041,7 +943,6 @@ Integrate Falco with your incident response workflow:
 ### 7. Regular Rule Updates
 
 ```bash
-
 # Update Falco rules
 
 helm upgrade falco falcosecurity/falco \
@@ -1053,14 +954,11 @@ helm upgrade falco falcosecurity/falco \
 kubectl apply -f falco-custom-rules.yaml
 ```
 
-```
-
 ## Troubleshooting
 
 ### Falco Not Detecting Events
 
 ```bash
-
 # Check Falco is running
 
 kubectl get pods -n falco
@@ -1083,12 +981,9 @@ sudo lsmod | grep falco
   priority: INFO
 ```
 
-```
-
 ### Seccomp Profile Not Applied
 
 ```bash
-
 # Check pod security context
 
 kubectl get pod <pod-name> -o jsonpath='{.spec.securityContext.seccompProfile}'
@@ -1105,12 +1000,9 @@ grep CONFIG_SECCOMP /boot/config-$(uname -r)
 sudo journalctl -xe | grep seccomp
 ```
 
-```
-
 ### AppArmor Profile Issues
 
 ```bash
-
 # Check profile is loaded (on node)
 
 sudo aa-status | grep <profile-name>
@@ -1128,12 +1020,9 @@ sudo journalctl -xe | grep apparmor
 kubectl get pod <pod-name> -o yaml | grep apparmor
 ```
 
-```
-
 ### SELinux Denials
 
 ```bash
-
 # View SELinux denials (on node)
 
 sudo ausearch -m avc -ts recent
@@ -1145,8 +1034,6 @@ sudo audit2allow -a
 # Check pod SELinux context
 
 kubectl exec <pod-name> -- id -Z
-```
-
 ```
 
 ## Summary

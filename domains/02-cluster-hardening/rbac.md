@@ -89,8 +89,6 @@ rules:
   verbs: ["get", "watch", "list"]
 ```
 
-```
-
 **Key Fields**:
 
 - `apiGroups`: API groups that contain the resources (e.g., `""` for core, `apps` for Deployments)
@@ -102,7 +100,6 @@ rules:
 **Defines permissions across the entire cluster or for cluster-scoped resources**
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -111,8 +108,6 @@ rules:
 - apiGroups: [""]
   resources: ["secrets"]
   verbs: ["get", "watch", "list"]
-```
-
 ```
 
 **Use Cases**:
@@ -126,7 +121,6 @@ rules:
 **Binds a Role or ClusterRole to subjects within a namespace**
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -142,8 +136,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 **Important**: A RoleBinding can reference a ClusterRole but only grants permissions within the binding's namespace.
 
 ### 4. ClusterRoleBinding (Cluster-wide)
@@ -151,7 +143,6 @@ roleRef:
 **Binds a ClusterRole to subjects across the entire cluster**
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -166,8 +157,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ## Subjects: Who Gets Permissions
 
 ### User
@@ -175,13 +164,10 @@ roleRef:
 **External human users** (not stored in Kubernetes)
 
 ```yaml
-
 subjects:
 - kind: User
   name: jane@example.com
   apiGroup: rbac.authorization.k8s.io
-```
-
 ```
 
 ### Group
@@ -189,13 +175,10 @@ subjects:
 **Collection of users** (managed by authentication system)
 
 ```yaml
-
 subjects:
 - kind: Group
   name: system:developers
   apiGroup: rbac.authorization.k8s.io
-```
-
 ```
 
 **Common Groups**:
@@ -210,13 +193,10 @@ subjects:
 **Kubernetes-managed accounts for pods**
 
 ```yaml
-
 subjects:
 - kind: ServiceAccount
   name: my-service-account
   namespace: production
-```
-
 ```
 
 ## API Groups and Resources
@@ -226,7 +206,6 @@ subjects:
 Resources without a group prefix:
 
 ```yaml
-
 apiGroups: [""]
 resources:
   - pods
@@ -237,12 +216,9 @@ resources:
   - serviceaccounts
 ```
 
-```
-
 ### Named API Groups
 
 ```yaml
-
 # apps API group
 
 apiGroups: ["apps"]
@@ -269,12 +245,9 @@ resources:
   - clusterrolebindings
 ```
 
-```
-
 ### Finding API Groups
 
 ```bash
-
 # List all API resources with their groups
 
 kubectl api-resources
@@ -288,8 +261,6 @@ kubectl api-resources | grep deployments
 # Explain resource to see API group
 
 kubectl explain deployment
-```
-
 ```
 
 ## Verbs: What Actions Are Allowed
@@ -310,7 +281,6 @@ kubectl explain deployment
 ### Special Verbs
 
 ```yaml
-
 verbs:
   - use           # For PodSecurityPolicies
   - bind          # For escalation prevention
@@ -318,17 +288,12 @@ verbs:
   - impersonate   # For impersonating users/groups
 ```
 
-```
-
 ### Wildcard Verb
 
 ```yaml
-
 # Grant all actions (avoid in production)
 
 verbs: ["*"]
-```
-
 ```
 
 ## Resource Names (Granular Permissions)
@@ -336,7 +301,6 @@ verbs: ["*"]
 Restrict permissions to specific resource instances:
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -349,8 +313,6 @@ rules:
   verbs: ["get", "update"]
 ```
 
-```
-
 **Use Case**: Allow updating specific ConfigMaps but not creating new ones.
 
 ## Subresources
@@ -358,7 +320,6 @@ rules:
 Grant access to resource subresources:
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -371,8 +332,6 @@ rules:
 - apiGroups: [""]
   resources: ["pods/exec"]  # Another subresource
   verbs: ["create"]
-```
-
 ```
 
 **Common Subresources**:
@@ -388,7 +347,6 @@ rules:
 ### Pattern 1: Namespace Admin
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -414,12 +372,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Pattern 2: Read-Only Cluster Viewer
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -446,12 +401,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Pattern 3: ServiceAccount for Application
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -487,12 +439,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Pattern 4: Multi-Namespace Access with ClusterRole
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -537,14 +486,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ## Aggregated ClusterRoles
 
 Combine multiple ClusterRoles into one using label selectors:
 
 ```yaml
-
 # Define a base aggregated role
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -582,8 +528,6 @@ rules:
   verbs: ["get"]
 ```
 
-```
-
 **Benefits**:
 
 - Modular role composition
@@ -599,10 +543,7 @@ Kubernetes provides several built-in ClusterRoles:
 **Superuser access to cluster**
 
 ```bash
-
 kubectl describe clusterrole cluster-admin
-```
-
 ```
 
 **Permissions**: Full access to all resources
@@ -632,7 +573,6 @@ kubectl describe clusterrole cluster-admin
 ### Example Usage
 
 ```bash
-
 # Grant namespace admin access
 
 kubectl create rolebinding admin-binding \
@@ -648,8 +588,6 @@ kubectl create rolebinding viewer-binding \
   --namespace=production
 ```
 
-```
-
 ## Testing RBAC Permissions
 
 ### kubectl auth can-i
@@ -657,7 +595,6 @@ kubectl create rolebinding viewer-binding \
 Test if a user can perform an action:
 
 ```bash
-
 # Test current user permissions
 
 kubectl auth can-i create deployments --namespace=development
@@ -681,12 +618,9 @@ kubectl auth can-i --list --as=jane --namespace=development
 kubectl auth can-i get /logs --as=bob
 ```
 
-```
-
 ### Output Examples
 
 ```bash
-
 $ kubectl auth can-i create deployments
 yes
 
@@ -697,12 +631,9 @@ $ kubectl auth can-i '*' '*' --as=system:serviceaccount:default:default
 no
 ```
 
-```
-
 ### Impersonation for Testing
 
 ```bash
-
 # Run commands as another user
 
 kubectl get pods --as=jane --namespace=development
@@ -716,14 +647,11 @@ kubectl get secrets --as=system:serviceaccount:prod:app-sa -n prod
 kubectl get nodes --as=alice --as-group=system:developers
 ```
 
-```
-
 ## Creating RBAC Resources
 
 ### Using kubectl create
 
 ```bash
-
 # Create a Role
 
 kubectl create role pod-reader \
@@ -765,14 +693,11 @@ kubectl create rolebinding dev-edit \
   --namespace=development
 ```
 
-```
-
 ### Using YAML Manifests
 
 For complex roles, YAML is more maintainable:
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -790,15 +715,10 @@ rules:
   verbs: ["get", "list"]
 ```
 
-```
-
 Apply with:
 
 ```bash
-
 kubectl apply -f role.yaml
-```
-
 ```
 
 ## Troubleshooting RBAC
@@ -808,17 +728,14 @@ kubectl apply -f role.yaml
 #### 1. Permission Denied
 
 ```
-
 Error from server (Forbidden): pods is forbidden:
 User "jane" cannot list resource "pods" in API group "" in the namespace "default"
 
-```
 ```
 
 **Troubleshooting Steps**:
 
 ```bash
-
 # Check if user has permission
 
 kubectl auth can-i list pods --as=jane --namespace=default
@@ -834,14 +751,11 @@ kubectl get rolebindings,clusterrolebindings \
 kubectl describe rolebinding <binding-name> --namespace=default
 ```
 
-```
-
 #### 2. Wrong Namespace
 
 RoleBindings only apply to their namespace:
 
 ```bash
-
 # This binding only works in 'development' namespace
 
 kubectl create rolebinding read-pods \
@@ -854,12 +768,9 @@ kubectl create rolebinding read-pods \
 kubectl auth can-i list pods --as=jane --namespace=production  # no
 ```
 
-```
-
 #### 3. Missing API Group
 
 ```yaml
-
 # WRONG - missing API group for deployments
 
 rules:
@@ -875,12 +786,9 @@ rules:
   verbs: ["get"]
 ```
 
-```
-
 #### 4. Verb Mismatch
 
 ```bash
-
 # Role allows 'get' but not 'list'
 
 rules:
@@ -897,12 +805,9 @@ kubectl get pod my-pod
 kubectl get pods  # Requires 'list' verb
 ```
 
-```
-
 ### Debugging Commands
 
 ```bash
-
 # View all Roles in a namespace
 
 kubectl get roles -n development
@@ -937,8 +842,6 @@ kubectl get rolebindings,clusterrolebindings --all-namespaces \
 kubectl -n kube-system get pod <apiserver-pod> -o yaml | grep authorization-mode
 ```
 
-```
-
 ## RBAC Best Practices
 
 ### 1. Principle of Least Privilege
@@ -946,7 +849,6 @@ kubectl -n kube-system get pod <apiserver-pod> -o yaml | grep authorization-mode
 Grant only the minimum permissions needed:
 
 ```yaml
-
 # BAD - too permissive
 
 rules:
@@ -963,14 +865,11 @@ rules:
   verbs: ["get"]
 ```
 
-```
-
 ### 2. Prefer Roles over ClusterRoles
 
 Use namespace-scoped Roles when possible:
 
 ```yaml
-
 # BETTER - limited to namespace
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -983,14 +882,11 @@ metadata:
 
 ```
 
-```
-
 ### 3. Use Groups for User Management
 
 Bind to groups instead of individual users:
 
 ```yaml
-
 # BETTER - group-based
 
 subjects:
@@ -1009,14 +905,11 @@ subjects:
   name: charlie
 ```
 
-```
-
 ### 4. Regular RBAC Audits
 
 Periodically review and clean up:
 
 ```bash
-
 # List all ClusterRoleBindings
 
 kubectl get clusterrolebindings
@@ -1031,14 +924,11 @@ kubectl get clusterrolebindings -o json | \
 kubectl get serviceaccounts --all-namespaces
 ```
 
-```
-
 ### 5. Document Roles
 
 Add descriptions to your roles:
 
 ```yaml
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -1054,12 +944,9 @@ rules:
   verbs: ["create", "update", "patch", "delete"]
 ```
 
-```
-
 ### 6. Avoid Wildcards in Production
 
 ```yaml
-
 # AVOID in production
 
 verbs: ["*"]
@@ -1073,12 +960,9 @@ resources: ["pods", "services"]
 apiGroups: ["", "apps"]
 ```
 
-```
-
 ### 7. Use Built-in Roles When Possible
 
 ```bash
-
 # Use standard roles
 
 kubectl create rolebinding editor \
@@ -1090,12 +974,9 @@ kubectl create rolebinding editor \
 
 ```
 
-```
-
 ### 8. Separate Dev and Prod Permissions
 
 ```yaml
-
 # Development - more permissive
 
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1125,8 +1006,6 @@ roleRef:
   name: view
 ```
 
-```
-
 ## Security Considerations
 
 ### Privilege Escalation Prevention
@@ -1134,11 +1013,8 @@ roleRef:
 Kubernetes prevents privilege escalation by default:
 
 ```yaml
-
 # Cannot grant permissions you don't have
 # User with 'get pods' cannot create role with 'delete pods'
-
-```
 
 ```
 
@@ -1150,15 +1026,12 @@ Kubernetes prevents privilege escalation by default:
 ### Prevent RBAC Self-Modification
 
 ```yaml
-
 # Dangerous - allows modifying own permissions
 
 rules:
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["roles", "rolebindings"]
   verbs: ["*"]
-```
-
 ```
 
 ### Sensitive Resources
@@ -1177,7 +1050,6 @@ Be extra careful with these resources:
 Disable when not needed:
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -1185,14 +1057,11 @@ metadata:
 automountServiceAccountToken: false
 ```
 
-```
-
 ## Real-World Examples
 
 ### Example 1: CI/CD Pipeline ServiceAccount
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -1230,12 +1099,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Example 2: Monitoring ServiceAccount
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -1270,12 +1136,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ### Example 3: Developer with Namespace Isolation
 
 ```yaml
-
 # Create namespaces
 
 apiVersion: v1
@@ -1323,14 +1186,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-```
-
 ## Quick Reference
 
 ### Common Commands
 
 ```bash
-
 # Create role
 
 kubectl create role NAME --verb=VERB --resource=RESOURCE
@@ -1362,12 +1222,9 @@ kubectl describe rolebinding BINDING -n NAMESPACE
 kubectl get pods --as=USER --as-group=GROUP
 ```
 
-```
-
 ### Resource Hierarchy
 
 ```
-
 Cluster Level              Namespace Level
 ├── ClusterRole           ├── Role
 ├── ClusterRoleBinding    ├── RoleBinding
@@ -1376,7 +1233,6 @@ Cluster Level              Namespace Level
 ├── Namespaces            ├── ConfigMaps
 └── StorageClasses        └── Secrets
 
-```
 ```
 
 ## Exam Tips

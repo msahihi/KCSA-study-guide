@@ -96,45 +96,32 @@ sudo apt-get update
 sudo apt-get install trivy
 ```
 
-```
-
 ### macOS (Homebrew)
 
 ```bash
-
 brew install trivy
-```
-
 ```
 
 ### Linux/macOS (Binary)
 
 ```bash
-
 VERSION=$(curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
 wget https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz
 tar zxvf trivy_${VERSION}_Linux-64bit.tar.gz
 sudo mv trivy /usr/local/bin/
 ```
 
-```
-
 ### Verify Installation
 
 ```bash
-
 trivy --version
-```
-
 ```
 
 Expected output:
 
 ```
-
 Version: 0.50.1
 
-```
 ```
 
 ## Basic Image Scanning
@@ -142,10 +129,7 @@ Version: 0.50.1
 ### Scan a Public Image
 
 ```bash
-
 trivy image nginx:1.26
-```
-
 ```
 
 This command will:
@@ -158,7 +142,6 @@ This command will:
 ### Scan Output Example
 
 ```
-
 nginx:1.26 (debian 12.5)
 
 Total: 45 (UNKNOWN: 0, LOW: 20, MEDIUM: 15, HIGH: 8, CRITICAL: 2)
@@ -171,7 +154,6 @@ Total: 45 (UNKNOWN: 0, LOW: 20, MEDIUM: 15, HIGH: 8, CRITICAL: 2)
 └───────────────┴────────────────┴──────────┴────────┴───────────────────┴───────────────┴────────────────────────────────────┘
 
 ```
-```
 
 ## Filtering Scan Results
 
@@ -180,19 +162,13 @@ Total: 45 (UNKNOWN: 0, LOW: 20, MEDIUM: 15, HIGH: 8, CRITICAL: 2)
 Scan only for HIGH and CRITICAL vulnerabilities:
 
 ```bash
-
 trivy image --severity HIGH,CRITICAL nginx:1.26
-```
-
 ```
 
 Scan for specific severity level:
 
 ```bash
-
 trivy image --severity CRITICAL nginx:1.26
-```
-
 ```
 
 ### Ignore Unfixed Vulnerabilities
@@ -200,10 +176,7 @@ trivy image --severity CRITICAL nginx:1.26
 Many vulnerabilities don't have fixes available yet. To focus on actionable items:
 
 ```bash
-
 trivy image --ignore-unfixed nginx:1.26
-```
-
 ```
 
 This shows only vulnerabilities with available patches.
@@ -211,10 +184,7 @@ This shows only vulnerabilities with available patches.
 ### Combine Filters
 
 ```bash
-
 trivy image --severity HIGH,CRITICAL --ignore-unfixed nginx:1.26
-```
-
 ```
 
 This shows only HIGH/CRITICAL vulnerabilities that can be fixed.
@@ -226,37 +196,25 @@ This shows only HIGH/CRITICAL vulnerabilities that can be fixed.
 **Scan a specific layer:**
 
 ```bash
-
 trivy image --layers nginx:1.26
-```
-
 ```
 
 **Scan filesystem:**
 
 ```bash
-
 trivy fs /path/to/project
-```
-
 ```
 
 **Scan tarball:**
 
 ```bash
-
 trivy image --input nginx.tar
-```
-
 ```
 
 **Scan remote repository:**
 
 ```bash
-
 trivy repo https://github.com/aquasecurity/trivy
-```
-
 ```
 
 ### Output Formats
@@ -264,55 +222,37 @@ trivy repo https://github.com/aquasecurity/trivy
 **JSON output:**
 
 ```bash
-
 trivy image -f json -o results.json nginx:1.26
-```
-
 ```
 
 **Table output (default):**
 
 ```bash
-
 trivy image -f table nginx:1.26
-```
-
 ```
 
 **SARIF output (for GitHub Security):**
 
 ```bash
-
 trivy image -f sarif -o results.sarif nginx:1.26
-```
-
 ```
 
 **Template output:**
 
 ```bash
-
 trivy image --format template --template "@contrib/gitlab.tpl" -o gl-container-scanning.json nginx:1.26
-```
-
 ```
 
 **CycloneDX SBOM:**
 
 ```bash
-
 trivy image --format cyclonedx nginx:1.26
-```
-
 ```
 
 **SPDX SBOM:**
 
 ```bash
-
 trivy image --format spdx-json nginx:1.26
-```
-
 ```
 
 ### Quiet Mode
@@ -320,10 +260,7 @@ trivy image --format spdx-json nginx:1.26
 Only show summary:
 
 ```bash
-
 trivy image --quiet nginx:1.26
-```
-
 ```
 
 ### Exit Code on Vulnerabilities
@@ -331,10 +268,7 @@ trivy image --quiet nginx:1.26
 Fail the scan if vulnerabilities are found:
 
 ```bash
-
 trivy image --exit-code 1 --severity HIGH,CRITICAL nginx:1.26
-```
-
 ```
 
 This returns:
@@ -349,7 +283,6 @@ Perfect for CI/CD pipelines!
 ### Build and Scan
 
 ```bash
-
 # Build an image
 
 docker build -t myapp:1.0 .
@@ -359,17 +292,12 @@ docker build -t myapp:1.0 .
 trivy image myapp:1.0
 ```
 
-```
-
 ### Scan Without Pulling
 
 If the image exists locally:
 
 ```bash
-
 trivy image --no-pull myapp:1.0
-```
-
 ```
 
 ## Scanning Private Registry Images
@@ -377,7 +305,6 @@ trivy image --no-pull myapp:1.0
 ### With Authentication
 
 ```bash
-
 # Using environment variables
 
 export TRIVY_USERNAME=myuser
@@ -389,18 +316,13 @@ trivy image registry.example.com/myapp:1.0
 trivy image --username myuser --password mypassword registry.example.com/myapp:1.0
 ```
 
-```
-
 ### Using Docker Credentials
 
 Trivy automatically uses Docker credentials from `~/.docker/config.json`:
 
 ```bash
-
 docker login registry.example.com
 trivy image registry.example.com/myapp:1.0
-```
-
 ```
 
 ## Kubernetes Cluster Scanning
@@ -408,10 +330,7 @@ trivy image registry.example.com/myapp:1.0
 ### Scan Entire Cluster
 
 ```bash
-
 trivy k8s --report summary cluster
-```
-
 ```
 
 Output shows:
@@ -426,46 +345,31 @@ Output shows:
 **Scan a deployment:**
 
 ```bash
-
 trivy k8s deployment/nginx -n default
-```
-
 ```
 
 **Scan a pod:**
 
 ```bash
-
 trivy k8s pod/nginx-abc123 -n default
-```
-
 ```
 
 **Scan a namespace:**
 
 ```bash
-
 trivy k8s --namespace production all
-```
-
 ```
 
 **Scan all resources of a type:**
 
 ```bash
-
 trivy k8s deployments --all-namespaces
-```
-
 ```
 
 ### Detailed Report
 
 ```bash
-
 trivy k8s --report all cluster
-```
-
 ```
 
 Shows detailed vulnerability information for each workload.
@@ -473,10 +377,7 @@ Shows detailed vulnerability information for each workload.
 ### Filter Kubernetes Scans
 
 ```bash
-
 trivy k8s --severity HIGH,CRITICAL --report summary cluster
-```
-
 ```
 
 ## Vulnerability Database Management
@@ -486,28 +387,19 @@ trivy k8s --severity HIGH,CRITICAL --report summary cluster
 Trivy automatically updates its database, but you can manually trigger updates:
 
 ```bash
-
 trivy image --download-db-only
-```
-
 ```
 
 ### Check Database Version
 
 ```bash
-
 trivy image --db-repository
-```
-
 ```
 
 ### Use Custom Database
 
 ```bash
-
 trivy image --db-repository custom-db.example.com/trivy-db nginx:1.26
-```
-
 ```
 
 ### Offline Scanning
@@ -515,7 +407,6 @@ trivy image --db-repository custom-db.example.com/trivy-db nginx:1.26
 For air-gapped environments:
 
 ```bash
-
 # Download database on internet-connected machine
 
 trivy image --download-db-only
@@ -528,8 +419,6 @@ tar -xzf trivy-db.tar.gz -C ~/
 trivy image --skip-db-update nginx:1.26
 ```
 
-```
-
 ## Vulnerability Exemptions
 
 ### Using .trivyignore
@@ -537,7 +426,6 @@ trivy image --skip-db-update nginx:1.26
 Create a `.trivyignore` file to suppress specific CVEs:
 
 ```
-
 # Ignore specific CVE
 
 CVE-2024-1234
@@ -561,14 +449,12 @@ CVE-2024-7777 exp:2024-12-31
 # (Better to use --severity flag instead)
 
 ```
-```
 
 ### Using Policy Files
 
 Create a policy file `policy.rego` using OPA:
 
 ```rego
-
 package trivy
 
 default ignore = false
@@ -583,15 +469,10 @@ ignore {
 }
 ```
 
-```
-
 Scan with policy:
 
 ```bash
-
 trivy image --policy policy.rego nginx:1.26
-```
-
 ```
 
 ## CI/CD Integration
@@ -599,7 +480,6 @@ trivy image --policy policy.rego nginx:1.26
 ### GitHub Actions
 
 ```yaml
-
 name: Scan Image
 on:
   push:
@@ -629,12 +509,9 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 ```
 
-```
-
 ### GitLab CI
 
 ```yaml
-
 scan:
   stage: test
   image: aquasec/trivy:latest
@@ -644,12 +521,9 @@ scan:
     - main
 ```
 
-```
-
 ### Jenkins Pipeline
 
 ```groovy
-
 pipeline {
     agent any
 
@@ -674,8 +548,6 @@ pipeline {
         }
     }
 }
-```
-
 ```
 
 ## Interpreting Scan Results
@@ -763,7 +635,6 @@ Each vulnerability report includes:
 Reduce attack surface by using minimal images:
 
 ```dockerfile
-
 # Instead of full Ubuntu
 
 FROM ubuntu:22.04
@@ -777,8 +648,6 @@ FROM gcr.io/distroless/static-debian12
 FROM alpine:3.19
 ```
 
-```
-
 **Comparison:**
 
 - Ubuntu: ~70MB, 100+ packages
@@ -790,7 +659,6 @@ FROM alpine:3.19
 Keep build tools out of final images:
 
 ```dockerfile
-
 # Build stage
 
 FROM golang:1.22 AS builder
@@ -805,12 +673,9 @@ COPY --from=builder /app/myapp /
 ENTRYPOINT ["/myapp"]
 ```
 
-```
-
 ### 4. Keep Images Updated
 
 ```bash
-
 # Regular base image updates
 
 docker pull nginx:1.26
@@ -818,14 +683,11 @@ docker build --no-cache -t myapp:latest .
 trivy image myapp:latest
 ```
 
-```
-
 ### 5. Automate Remediation
 
 Create automated workflows:
 
 ```bash
-
 #!/bin/bash
 # scan-and-notify.sh
 
@@ -843,14 +705,11 @@ if [ "$VULN_COUNT" -gt 0 ]; then
 fi
 ```
 
-```
-
 ### 6. Implement Security Gates
 
 Don't deploy vulnerable images:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -860,14 +719,11 @@ metadata:
     trivy.severity.threshold: "HIGH"
 ```
 
-```
-
 ### 7. Document Exceptions
 
 When ignoring vulnerabilities:
 
 ```
-
 # .trivyignore
 
 # CVE-2024-1234 - False positive for our use case
@@ -885,7 +741,6 @@ When ignoring vulnerabilities:
 CVE-2024-1234 build-tool
 
 ```
-```
 
 ## Troubleshooting
 
@@ -896,7 +751,6 @@ CVE-2024-1234 build-tool
 **Solution:**
 
 ```bash
-
 # Use proxy
 
 export HTTP_PROXY=http://proxy.example.com:8080
@@ -907,8 +761,6 @@ export HTTPS_PROXY=http://proxy.example.com:8080
 trivy image --download-db-only
 ```
 
-```
-
 ### Issue: Scan takes too long
 
 **Cause**: Large images or slow network
@@ -916,7 +768,6 @@ trivy image --download-db-only
 **Solution:**
 
 ```bash
-
 # Use cached images
 
 trivy image --no-pull myapp:1.0
@@ -930,8 +781,6 @@ trivy image --severity HIGH,CRITICAL myapp:1.0
 trivy image --timeout 5m myapp:1.0
 ```
 
-```
-
 ### Issue: Too many false positives
 
 **Cause**: Outdated or incorrect vulnerability data
@@ -939,7 +788,6 @@ trivy image --timeout 5m myapp:1.0
 **Solution:**
 
 ```bash
-
 # Update database
 
 trivy image --download-db-only
@@ -950,8 +798,6 @@ trivy image --download-db-only
 
 ```
 
-```
-
 ### Issue: "No vulnerabilities found" but image has issues
 
 **Cause**: Unsupported OS or package format
@@ -959,15 +805,12 @@ trivy image --download-db-only
 **Solution:**
 
 ```bash
-
 # Check supported OS
 
 trivy image --list-all-pkgs myapp:1.0
 
 # Use different scanner for unsupported formats
 # Consider Grype or Clair
-
-```
 
 ```
 
@@ -1011,7 +854,7 @@ trivy image --list-all-pkgs myapp:1.0
 
 ### Interactive Learning
 
-- [Trivy Playground](https://play.trivy.dev/)
+- [Rego Playground](https://play.openpolicyagent.org/
 - [Vulnerable Container Images](https://hub.docker.com/r/vulnerables/)
 
 ## Next Steps
@@ -1026,7 +869,6 @@ trivy image --list-all-pkgs myapp:1.0
 ### Essential Commands
 
 ```bash
-
 # Basic scan
 
 trivy image nginx:1.26
@@ -1054,8 +896,6 @@ trivy image --download-db-only
 # CI/CD mode (exit on findings)
 
 trivy image --exit-code 1 --severity HIGH,CRITICAL nginx:1.26
-```
-
 ```
 
 ---

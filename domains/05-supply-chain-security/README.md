@@ -182,7 +182,6 @@ Before diving into Domain 5, ensure you have:
 ### Common Commands for Domain 5
 
 ```bash
-
 # Trivy Image Scanning
 
 trivy image <image-name>
@@ -224,8 +223,6 @@ kubectl get secret regcred -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d
 
 kubectl get pods -o jsonpath='{.items[*].spec.containers[*].image}'
 kubectl describe pod <pod-name> | grep Image:
-```
-
 ```
 
 ## Security Best Practices

@@ -55,12 +55,9 @@ kubectl create namespace lab-admission
 kubectl label namespace lab-admission policy=enforced
 ```
 
-```
-
 ### 1.2 Verify Webhook Support
 
 ```bash
-
 # Check if MutatingWebhookConfiguration is available
 
 kubectl api-resources | grep MutatingWebhookConfiguration
@@ -70,8 +67,6 @@ kubectl api-resources | grep MutatingWebhookConfiguration
 kubectl api-resources | grep ValidatingWebhookConfiguration
 ```
 
-```
-
 ## Step 2: Generate TLS Certificates
 
 Webhooks require TLS for secure communication with the API server.
@@ -79,7 +74,6 @@ Webhooks require TLS for secure communication with the API server.
 ### 2.1 Generate CA Certificate
 
 ```bash
-
 # Create directory for certificates
 
 mkdir -p webhook-certs
@@ -97,12 +91,9 @@ openssl req -x509 -new -nodes -key ca.key \
   -out ca.crt
 ```
 
-```
-
 ### 2.2 Generate Webhook Server Certificate
 
 ```bash
-
 # Generate webhook server private key
 
 openssl genrsa -out webhook-server.key 2048
@@ -148,12 +139,9 @@ openssl x509 -req -in webhook-server.csr \
 openssl x509 -in webhook-server.crt -text -noout | grep -A 1 "Subject Alternative Name"
 ```
 
-```
-
 ### 2.3 Create Kubernetes Secret
 
 ```bash
-
 # Create secret with TLS certificates
 
 kubectl create secret tls webhook-server-certs \
@@ -166,12 +154,9 @@ kubectl create secret tls webhook-server-certs \
 kubectl get secret webhook-server-certs -n webhook-system
 ```
 
-```
-
 ### 2.4 Get CA Bundle for Webhook Configuration
 
 ```bash
-
 # Get base64-encoded CA certificate
 
 export CA_BUNDLE=$(cat ca.crt | base64 | tr -d '\n')
@@ -182,8 +167,6 @@ echo $CA_BUNDLE
 echo $CA_BUNDLE > ca-bundle.txt
 ```
 
-```
-
 ## Step 3: Create Validating Webhook Server
 
 ### 3.1 Create Webhook Server (Python)
@@ -191,7 +174,6 @@ echo $CA_BUNDLE > ca-bundle.txt
 Create a file `webhook-server.py`:
 
 ```python
-
 #!/usr/bin/env python3
 
 from flask import Flask, request, jsonify
@@ -300,14 +282,11 @@ if __name__ == '__main__':
     )
 ```
 
-```
-
 ### 3.2 Create Dockerfile
 
 Create `Dockerfile`:
 
 ```dockerfile
-
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -331,12 +310,9 @@ EXPOSE 8443
 CMD ["python", "webhook-server.py"]
 ```
 
-```
-
 ### 3.3 Build and Push Image
 
 ```bash
-
 # Build image
 
 docker build -t webhook-server:1.0 .
@@ -351,8 +327,6 @@ kind load docker-image webhook-server:1.0 --name kcsa-lab
 
 ```
 
-```
-
 ## Step 4: Deploy Webhook Server
 
 ### 4.1 Create Deployment
@@ -360,7 +334,6 @@ kind load docker-image webhook-server:1.0 --name kcsa-lab
 Create `webhook-deployment.yaml`:
 
 ```yaml
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -438,12 +411,9 @@ spec:
   type: ClusterIP
 ```
 
-```
-
 ### 4.2 Deploy
 
 ```bash
-
 cd ..  # Back to main directory
 kubectl apply -f webhook-deployment.yaml
 
@@ -461,20 +431,15 @@ kubectl get svc -n webhook-system
 kubectl logs -n webhook-system -l app=webhook-server --tail=20
 ```
 
-```
-
 ### 4.3 Test Webhook Service
 
 ```bash
-
 # Test from within cluster
 
 kubectl run test-curl --image=curlimages/curl --rm -it --restart=Never -- \
   curl -k https://webhook-service.webhook-system.svc:443/health
 
 # Should return: {"status": "healthy"}
-
-```
 
 ```
 
@@ -485,7 +450,6 @@ kubectl run test-curl --image=curlimages/curl --rm -it --restart=Never -- \
 Create `validating-webhook.yaml`:
 
 ```yaml
-
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
@@ -514,12 +478,9 @@ webhooks:
       policy: enforced
 ```
 
-```
-
 ### 5.2 Replace CA Bundle and Apply
 
 ```bash
-
 # Read CA bundle from file
 
 CA_BUNDLE=$(cat webhook-certs/ca-bundle.txt)
@@ -534,14 +495,11 @@ kubectl get validatingwebhookconfigurations
 kubectl describe validatingwebhookconfiguration pod-security-webhook
 ```
 
-```
-
 ## Step 6: Test Validating Webhook
 
 ### 6.1 Test Non-Compliant Pod (Should Fail)
 
 ```bash
-
 # Create pod without resource limits
 
 cat <<EOF | kubectl apply -f -
@@ -562,12 +520,9 @@ EOF
 
 ```
 
-```
-
 ### 6.2 Test Privileged Pod (Should Fail)
 
 ```bash
-
 # Create privileged pod
 
 cat <<EOF | kubectl apply -f -
@@ -594,12 +549,9 @@ EOF
 
 ```
 
-```
-
 ### 6.3 Test Pod Running as Root (Should Fail)
 
 ```bash
-
 # Create pod running as root
 
 cat <<EOF | kubectl apply -f -
@@ -626,12 +578,9 @@ EOF
 
 ```
 
-```
-
 ### 6.4 Test Compliant Pod (Should Succeed)
 
 ```bash
-
 # Create compliant pod
 
 cat <<EOF | kubectl apply -f -
@@ -665,12 +614,9 @@ EOF
 kubectl get pod test-compliant -n lab-admission
 ```
 
-```
-
 ### 6.5 Test in Non-Enforced Namespace
 
 ```bash
-
 # Create namespace without policy label
 
 kubectl create namespace no-policy
@@ -694,8 +640,6 @@ EOF
 kubectl get pod test-no-limits -n no-policy
 ```
 
-```
-
 ## Step 7: Create Mutating Webhook
 
 ### 7.1 Update Webhook Server with Mutating Endpoint
@@ -703,7 +647,6 @@ kubectl get pod test-no-limits -n no-policy
 Add to `webhook-server.py`:
 
 ```python
-
 import base64
 import json
 
@@ -795,12 +738,9 @@ def mutate_pod():
     return jsonify(admission_response)
 ```
 
-```
-
 ### 7.2 Rebuild and Redeploy
 
 ```bash
-
 # Rebuild image
 
 cd webhook-certs/..
@@ -821,14 +761,11 @@ kubectl set image deployment/webhook-server \
 kubectl rollout status deployment/webhook-server -n webhook-system
 ```
 
-```
-
 ### 7.3 Create MutatingWebhookConfiguration
 
 Create `mutating-webhook.yaml`:
 
 ```yaml
-
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
@@ -857,12 +794,9 @@ webhooks:
       mutation: enabled
 ```
 
-```
-
 ### 7.4 Apply Mutating Webhook
 
 ```bash
-
 # Replace CA bundle and apply
 
 CA_BUNDLE=$(cat webhook-certs/ca-bundle.txt)
@@ -873,23 +807,17 @@ sed "s/CA_BUNDLE_PLACEHOLDER/${CA_BUNDLE}/" mutating-webhook.yaml | kubectl appl
 kubectl get mutatingwebhookconfigurations
 ```
 
-```
-
 ## Step 8: Test Mutating Webhook
 
 ### 8.1 Enable Mutation on Namespace
 
 ```bash
-
 kubectl label namespace lab-admission mutation=enabled
-```
-
 ```
 
 ### 8.2 Create Pod Without Security Context
 
 ```bash
-
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
@@ -907,8 +835,6 @@ EOF
 kubectl get pod test-mutated -n lab-admission -o yaml | grep -A 10 securityContext
 kubectl get pod test-mutated -n lab-admission -o yaml | grep -A 5 resources
 kubectl get pod test-mutated -n lab-admission -o yaml | grep "security.admission/mutated"
-```
-
 ```
 
 ## Challenge Exercises
@@ -930,7 +856,6 @@ Require specific labels (e.g., owner, team, environment) on all pods.
 ### Webhook Not Called
 
 ```bash
-
 # Check webhook configuration
 
 kubectl describe validatingwebhookconfiguration pod-security-webhook
@@ -945,12 +870,9 @@ kubectl run test --image=curlimages/curl --rm -it -- \
   curl -k https://webhook-service.webhook-system.svc:443/health
 ```
 
-```
-
 ### Certificate Issues
 
 ```bash
-
 # Verify certificate SAN
 
 openssl x509 -in webhook-certs/webhook-server.crt -text -noout | grep -A 1 "Subject Alternative Name"
@@ -960,20 +882,15 @@ openssl x509 -in webhook-certs/webhook-server.crt -text -noout | grep -A 1 "Subj
 kubectl get secret webhook-server-certs -n webhook-system -o yaml
 ```
 
-```
-
 ### Webhook Logs
 
 ```bash
-
 # View webhook logs
 
 kubectl logs -n webhook-system -l app=webhook-server -f
 
 # Check API server logs (if accessible)
 # Look for webhook-related errors
-
-```
 
 ```
 
@@ -992,15 +909,12 @@ You learned how to:
 ## Cleanup
 
 ```bash
-
 kubectl delete namespace webhook-system
 kubectl delete namespace lab-admission
 kubectl delete namespace no-policy
 kubectl delete validatingwebhookconfiguration pod-security-webhook
 kubectl delete mutatingwebhookconfiguration pod-defaults-webhook
 rm -rf webhook-certs/
-```
-
 ```
 
 ---

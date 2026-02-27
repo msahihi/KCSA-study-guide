@@ -42,67 +42,49 @@ sudo apt-get update
 sudo apt-get install trivy
 ```
 
-```
-
 **macOS (Homebrew):**
 
 ```bash
-
 brew install trivy
-```
-
 ```
 
 **Binary Installation:**
 
 ```bash
-
 VERSION=$(curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
 wget https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz
 tar zxvf trivy_${VERSION}_Linux-64bit.tar.gz
 sudo mv trivy /usr/local/bin/
 ```
 
-```
-
 ### Step 2: Verify Installation
 
 ```bash
-
 trivy --version
-```
-
 ```
 
 Expected output:
 
 ```
-
 Version: 0.50.1
 
-```
 ```
 
 ### Step 3: Update Vulnerability Database
 
 ```bash
-
 trivy image --download-db-only
-```
-
 ```
 
 Output:
 
 ```
-
 2024-01-15T10:00:00.000Z  INFO  Downloading DB...
 2024-01-15T10:00:05.000Z  INFO  Vulnerability DB:
   Type: Full
   UpdatedAt: 2024-01-15 09:00:00 +0000 UTC
   NextUpdate: 2024-01-15 15:00:00 +0000 UTC
 
-```
 ```
 
 ## Part 2: Basic Image Scanning
@@ -112,10 +94,7 @@ Output:
 Scan the nginx image:
 
 ```bash
-
 trivy image nginx:1.26
-```
-
 ```
 
 Observe the output structure:
@@ -135,10 +114,7 @@ Observe the output structure:
 Scan an older, vulnerable image:
 
 ```bash
-
 trivy image nginx:1.14.0
-```
-
 ```
 
 **Questions to answer:**
@@ -151,11 +127,8 @@ trivy image nginx:1.14.0
 To count vulnerabilities:
 
 ```bash
-
 trivy image nginx:1.14.0 | grep CRITICAL | wc -l
 trivy image nginx:1.14.0 | grep HIGH | wc -l
-```
-
 ```
 
 ### Exercise 3: Detailed Vulnerability Information
@@ -163,19 +136,13 @@ trivy image nginx:1.14.0 | grep HIGH | wc -l
 Scan with JSON output for detailed analysis:
 
 ```bash
-
 trivy image -f json -o nginx-scan.json nginx:1.26
-```
-
 ```
 
 View specific vulnerability details:
 
 ```bash
-
 cat nginx-scan.json | jq '.Results[].Vulnerabilities[] | select(.Severity == "CRITICAL") | {VulnerabilityID, PkgName, InstalledVersion, FixedVersion, Title}'
-```
-
 ```
 
 ## Part 3: Filtering and Reporting
@@ -185,19 +152,13 @@ cat nginx-scan.json | jq '.Results[].Vulnerabilities[] | select(.Severity == "CR
 Scan only for HIGH and CRITICAL vulnerabilities:
 
 ```bash
-
 trivy image --severity HIGH,CRITICAL nginx:1.26
-```
-
 ```
 
 Scan only CRITICAL:
 
 ```bash
-
 trivy image --severity CRITICAL nginx:1.26
-```
-
 ```
 
 ### Exercise 5: Ignore Unfixed Vulnerabilities
@@ -205,19 +166,13 @@ trivy image --severity CRITICAL nginx:1.26
 Many vulnerabilities don't have patches yet. Focus on actionable items:
 
 ```bash
-
 trivy image --ignore-unfixed nginx:1.26
-```
-
 ```
 
 Combine with severity filtering:
 
 ```bash
-
 trivy image --severity HIGH,CRITICAL --ignore-unfixed nginx:1.26
-```
-
 ```
 
 ### Exercise 6: Generate Reports
@@ -225,46 +180,31 @@ trivy image --severity HIGH,CRITICAL --ignore-unfixed nginx:1.26
 **Table format (default):**
 
 ```bash
-
 trivy image nginx:1.26 > nginx-report.txt
-```
-
 ```
 
 **JSON format:**
 
 ```bash
-
 trivy image -f json -o nginx-report.json nginx:1.26
-```
-
 ```
 
 **SARIF format (for GitHub Security):**
 
 ```bash
-
 trivy image -f sarif -o nginx-report.sarif nginx:1.26
-```
-
 ```
 
 **Template format:**
 
 ```bash
-
 trivy image --format template --template "@contrib/html.tpl" -o nginx-report.html nginx:1.26
-```
-
 ```
 
 **CycloneDX SBOM:**
 
 ```bash
-
 trivy image --format cyclonedx -o nginx-sbom.json nginx:1.26
-```
-
 ```
 
 ## Part 4: Scanning Local Images
@@ -274,7 +214,6 @@ trivy image --format cyclonedx -o nginx-sbom.json nginx:1.26
 Create a Dockerfile:
 
 ```bash
-
 mkdir ~/trivy-lab
 cd ~/trivy-lab
 
@@ -293,12 +232,9 @@ CMD ["/app.sh"]
 EOF
 ```
 
-```
-
 Create a simple app:
 
 ```bash
-
 cat > app.sh <<EOF
 
 #!/bin/bash
@@ -308,24 +244,16 @@ sleep 3600
 EOF
 ```
 
-```
-
 Build the image:
 
 ```bash
-
 docker build -t myapp:vulnerable .
-```
-
 ```
 
 Scan the image:
 
 ```bash
-
 trivy image myapp:vulnerable
-```
-
 ```
 
 **Analysis Questions:**
@@ -339,7 +267,6 @@ trivy image myapp:vulnerable
 Scan different base images to find the most secure:
 
 ```bash
-
 # Ubuntu
 
 trivy image --severity HIGH,CRITICAL ubuntu:20.04 | grep "Total:"
@@ -357,12 +284,9 @@ trivy image --severity HIGH,CRITICAL alpine:3.19 | grep "Total:"
 trivy image --severity HIGH,CRITICAL gcr.io/distroless/static-debian12 | grep "Total:"
 ```
 
-```
-
 Create a comparison script:
 
 ```bash
-
 cat > compare-images.sh <<'EOF'
 
 #!/bin/bash
@@ -391,8 +315,6 @@ chmod +x compare-images.sh
 ./compare-images.sh
 ```
 
-```
-
 ## Part 5: Kubernetes Workload Scanning
 
 ### Exercise 9: Set Up Test Environment
@@ -400,7 +322,6 @@ chmod +x compare-images.sh
 Create a namespace with vulnerable deployments:
 
 ```bash
-
 kubectl create namespace trivy-lab
 
 cat > vulnerable-deployment.yaml <<EOF
@@ -448,16 +369,11 @@ EOF
 kubectl apply -f vulnerable-deployment.yaml
 ```
 
-```
-
 Wait for pods to be ready:
 
 ```bash
-
 kubectl wait --for=condition=ready pod -l app=vulnerable -n trivy-lab --timeout=60s
 kubectl wait --for=condition=ready pod -l app=secure -n trivy-lab --timeout=60s
-```
-
 ```
 
 ### Exercise 10: Scan Kubernetes Cluster
@@ -465,37 +381,25 @@ kubectl wait --for=condition=ready pod -l app=secure -n trivy-lab --timeout=60s
 Scan the entire cluster:
 
 ```bash
-
 trivy k8s --report summary cluster
-```
-
 ```
 
 Scan specific namespace:
 
 ```bash
-
 trivy k8s --namespace trivy-lab --report summary all
-```
-
 ```
 
 Scan specific deployment:
 
 ```bash
-
 trivy k8s deployment/vulnerable-app -n trivy-lab
-```
-
 ```
 
 Scan with detailed report:
 
 ```bash
-
 trivy k8s --report all --namespace trivy-lab all
-```
-
 ```
 
 ### Exercise 11: Filter Kubernetes Scans
@@ -503,33 +407,24 @@ trivy k8s --report all --namespace trivy-lab all
 Scan only for HIGH and CRITICAL:
 
 ```bash
-
 trivy k8s --severity HIGH,CRITICAL --namespace trivy-lab all
-```
-
 ```
 
 Generate JSON report:
 
 ```bash
-
 trivy k8s --format json --output k8s-scan.json --namespace trivy-lab all
-```
-
 ```
 
 Analyze results:
 
 ```bash
-
 cat k8s-scan.json | jq '.Resources[] | {
   Namespace: .Namespace,
   Kind: .Kind,
   Name: .Name,
   Vulnerabilities: (.Results[]?.Vulnerabilities // [] | length)
 }'
-```
-
 ```
 
 ## Part 6: Advanced Scanning
@@ -539,7 +434,6 @@ cat k8s-scan.json | jq '.Resources[] | {
 Extract an image and scan its filesystem:
 
 ```bash
-
 # Create working directory
 
 mkdir -p ~/trivy-lab/fs-scan
@@ -555,15 +449,10 @@ tar xf nginx.tar
 trivy fs .
 ```
 
-```
-
 Scan a specific directory:
 
 ```bash
-
 trivy fs /path/to/project
-```
-
 ```
 
 ### Exercise 13: Scan Configuration Files
@@ -571,7 +460,6 @@ trivy fs /path/to/project
 Create Kubernetes manifests with issues:
 
 ```bash
-
 cat > insecure-pod.yaml <<EOF
 apiVersion: v1
 kind: Pod
@@ -589,14 +477,11 @@ EOF
 trivy config insecure-pod.yaml
 ```
 
-```
-
 ### Exercise 14: Use .trivyignore
 
 Create a .trivyignore file to suppress specific CVEs:
 
 ```bash
-
 cat > .trivyignore <<EOF
 
 # Ignore this CVE as it's a false positive for our use case
@@ -615,14 +500,11 @@ EOF
 trivy image --ignorefile .trivyignore nginx:1.26
 ```
 
-```
-
 ### Exercise 15: CI/CD Integration
 
 Create a CI/CD scan script:
 
 ```bash
-
 cat > ci-scan.sh <<'EOF'
 
 #!/bin/bash
@@ -670,12 +552,9 @@ EOF
 chmod +x ci-scan.sh
 ```
 
-```
-
 Test the script:
 
 ```bash
-
 # Should pass
 
 ./ci-scan.sh gcr.io/distroless/static-debian12
@@ -685,8 +564,6 @@ Test the script:
 ./ci-scan.sh nginx:1.14.0
 ```
 
-```
-
 ## Part 7: Remediation
 
 ### Exercise 16: Fix Vulnerabilities
@@ -694,16 +571,12 @@ Test the script:
 Review vulnerabilities in custom image:
 
 ```bash
-
 trivy image --severity HIGH,CRITICAL myapp:vulnerable
-```
-
 ```
 
 Update Dockerfile to use newer base:
 
 ```bash
-
 cat > Dockerfile.fixed <<EOF
 FROM ubuntu:22.04
 
@@ -721,22 +594,16 @@ CMD ["/app.sh"]
 EOF
 ```
 
-```
-
 Build and scan:
 
 ```bash
-
 docker build -f Dockerfile.fixed -t myapp:fixed .
 trivy image --severity HIGH,CRITICAL myapp:fixed
-```
-
 ```
 
 Compare results:
 
 ```bash
-
 echo "Vulnerable image:"
 trivy image --severity HIGH,CRITICAL myapp:vulnerable | grep "Total:"
 
@@ -744,14 +611,11 @@ echo -e "\\nFixed image:"
 trivy image --severity HIGH,CRITICAL myapp:fixed | grep "Total:"
 ```
 
-```
-
 ### Exercise 17: Use Minimal Base Images
 
 Create a multi-stage build with distroless:
 
 ```bash
-
 cat > Dockerfile.minimal <<EOF
 
 # Build stage
@@ -783,12 +647,9 @@ EOF
 docker build -f Dockerfile.minimal -t myapp:minimal .
 ```
 
-```
-
 Scan and compare:
 
 ```bash
-
 echo "Minimal image scan:"
 trivy image myapp:minimal
 
@@ -796,14 +657,11 @@ echo -e "\\nImage size comparison:"
 docker images | grep myapp
 ```
 
-```
-
 ## Verification and Testing
 
 ### Comprehensive Test Script
 
 ```bash
-
 cat > test-trivy.sh <<'EOF'
 
 #!/bin/bash
@@ -878,8 +736,6 @@ chmod +x test-trivy.sh
 ./test-trivy.sh
 ```
 
-```
-
 ## Challenge Questions
 
 1. **What's the difference between installed and fixed versions?**
@@ -903,7 +759,6 @@ chmod +x test-trivy.sh
    <summary>Click to see answer</summary>
 
    ```bash
-
    trivy image --scanners license nginx:1.26
 
    ```
@@ -915,7 +770,6 @@ chmod +x test-trivy.sh
    <summary>Click to see answer</summary>
 
    ```bash
-
    # Method 1: Use Docker credentials
 
    docker login myregistry.com
@@ -932,14 +786,11 @@ chmod +x test-trivy.sh
    trivy image myregistry.com/myapp:v1.0
    ```
 
-   ```
-
    </details>
 
 ## Cleanup
 
 ```bash
-
 # Delete Kubernetes resources
 
 kubectl delete namespace trivy-lab
@@ -955,8 +806,6 @@ rm -rf ~/trivy-lab
 # Reset namespace
 
 kubectl config set-context --current --namespace=default
-```
-
 ```
 
 ## Key Takeaways
@@ -984,7 +833,6 @@ kubectl config set-context --current --namespace=default
 Try scanning these images and compare results:
 
 ```bash
-
 # Official images
 
 trivy image redis:7.2
@@ -1001,8 +849,6 @@ trivy image node:16 vs node:20
 
 trivy image nginx:1.26-alpine
 trivy image nginx:1.26-debian
-```
-
 ```
 
 ---

@@ -38,8 +38,6 @@ PSA enforces three predefined security profiles defined by Pod Security Standard
 pod-security.kubernetes.io/enforce: privileged
 ```
 
-```
-
 ### Baseline Profile
 
 **Minimal restrictions** - Prevents the most dangerous configurations while allowing common deployment patterns.
@@ -65,10 +63,7 @@ pod-security.kubernetes.io/enforce: privileged
 **Example Namespace Label**:
 
 ```yaml
-
 pod-security.kubernetes.io/enforce: baseline
-```
-
 ```
 
 ### Restricted Profile
@@ -104,10 +99,7 @@ pod-security.kubernetes.io/enforce: baseline
 **Example Namespace Label**:
 
 ```yaml
-
 pod-security.kubernetes.io/enforce: restricted
-```
-
 ```
 
 ## PSA Enforcement Modes
@@ -119,7 +111,6 @@ PSA supports three modes that can be applied independently:
 **Rejects pods that violate the policy** - Pod creation fails.
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -128,19 +119,15 @@ metadata:
     pod-security.kubernetes.io/enforce: restricted
 ```
 
-```
-
 **Behavior**: API server rejects non-compliant pods with an error message.
 
 **Example Error**:
 
 ```
-
 Error from server (Forbidden): error when creating "pod.yaml": pods "test-pod"
 is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation
 != false (container "test" must set securityContext.allowPrivilegeEscalation=false)
 
-```
 ```
 
 ### 2. Audit Mode
@@ -148,15 +135,12 @@ is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation
 **Logs violations to audit log** - Pod creation succeeds.
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
   name: development
   labels:
     pod-security.kubernetes.io/audit: restricted
-```
-
 ```
 
 **Behavior**: Violations recorded in audit log for review, but pods are created.
@@ -168,7 +152,6 @@ metadata:
 **Shows warnings to users** - Pod creation succeeds.
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -177,19 +160,15 @@ metadata:
     pod-security.kubernetes.io/warn: baseline
 ```
 
-```
-
 **Behavior**: kubectl displays warnings, but pods are created.
 
 **Example Warning**:
 
 ```
-
 Warning: would violate PodSecurity "baseline:latest": host namespaces
 (hostNetwork=true)
 pod/test-pod created
 
-```
 ```
 
 **Use Case**: Educate users about security issues without blocking deployments.
@@ -199,7 +178,6 @@ pod/test-pod created
 ### Single Mode
 
 ```bash
-
 # Enforce restricted profile
 
 kubectl label namespace production \
@@ -216,14 +194,11 @@ kubectl label namespace testing \
   pod-security.kubernetes.io/warn=privileged
 ```
 
-```
-
 ### Multiple Modes
 
 Apply all three modes simultaneously:
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -232,8 +207,6 @@ metadata:
     pod-security.kubernetes.io/enforce: baseline   # Block violations
     pod-security.kubernetes.io/audit: restricted   # Log restricted violations
     pod-security.kubernetes.io/warn: restricted    # Warn about restricted violations
-```
-
 ```
 
 **Common Pattern**: Enforce baseline, audit/warn restricted:
@@ -247,7 +220,6 @@ metadata:
 Pin to specific Kubernetes version of PSS:
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -255,8 +227,6 @@ metadata:
   labels:
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/enforce-version: v1.30
-```
-
 ```
 
 **Why Pin Versions**:
@@ -274,7 +244,6 @@ metadata:
 Any pod specification works:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -289,14 +258,11 @@ spec:
 
 ```
 
-```
-
 ### Baseline-Compliant Pod
 
 Avoid dangerous configurations:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -324,8 +290,6 @@ spec:
 
 ```
 
-```
-
 **Key Points**:
 
 - Can run as root (not prohibited)
@@ -338,7 +302,6 @@ spec:
 Full security hardening:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -373,8 +336,6 @@ spec:
     emptyDir: {}
 ```
 
-```
-
 **Required Fields**:
 
 - `runAsNonRoot: true`
@@ -387,7 +348,6 @@ spec:
 ### Development Namespace (Permissive)
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -398,14 +358,11 @@ metadata:
     pod-security.kubernetes.io/warn: baseline        # Warn about baseline issues
 ```
 
-```
-
 **Rationale**: Allow developers flexibility while educating about security.
 
 ### Staging Namespace (Moderate)
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -416,14 +373,11 @@ metadata:
     pod-security.kubernetes.io/warn: restricted      # Warn about restricted issues
 ```
 
-```
-
 **Rationale**: Block dangerous configurations, prepare for production standards.
 
 ### Production Namespace (Strict)
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -435,14 +389,11 @@ metadata:
     pod-security.kubernetes.io/enforce-version: v1.30
 ```
 
-```
-
 **Rationale**: Maximum security for production workloads.
 
 ### System Namespace (Privileged)
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -451,8 +402,6 @@ metadata:
     pod-security.kubernetes.io/enforce: privileged   # System components need access
     pod-security.kubernetes.io/audit: privileged
     pod-security.kubernetes.io/warn: privileged
-```
-
 ```
 
 **Rationale**: System components require host access and privileges.
@@ -487,7 +436,6 @@ PodSecurityPolicy (PSP) was deprecated in Kubernetes v1.21 and removed in v1.25.
 **Old PodSecurityPolicy**:
 
 ```yaml
-
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
@@ -506,20 +454,15 @@ spec:
   - secret
 ```
 
-```
-
 **New Pod Security Admission** (equivalent):
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
   name: production
   labels:
     pod-security.kubernetes.io/enforce: restricted
-```
-
 ```
 
 **Simplified**: One label vs. entire PSP resource + RBAC bindings.
@@ -531,7 +474,6 @@ metadata:
 Test pod against namespace policies without creating:
 
 ```bash
-
 # Test pod creation
 
 kubectl apply -f pod.yaml --dry-run=server -n restricted-ns
@@ -541,14 +483,11 @@ kubectl apply -f pod.yaml --dry-run=server -n restricted-ns
 
 ```
 
-```
-
 ### Namespace Audit
 
 Check existing pods against a PSS level:
 
 ```bash
-
 # Install kubectl-check-psa plugin
 
 kubectl check-psa --namespace production --level restricted
@@ -563,14 +502,11 @@ kubectl label namespace production \
 kubectl logs -n kube-system kube-apiserver-* | grep pod-security
 ```
 
-```
-
 ### Bulk Assessment
 
 Check all namespaces:
 
 ```bash
-
 # List namespace PSA labels
 
 kubectl get namespaces -o json | \
@@ -584,8 +520,6 @@ kubectl get namespaces -o json | \
     .metadata.name'
 ```
 
-```
-
 ## Exemptions
 
 PSA allows exempting specific pods, users, or namespaces from enforcement.
@@ -595,7 +529,6 @@ PSA allows exempting specific pods, users, or namespaces from enforcement.
 Configure via API server admission plugin:
 
 ```yaml
-
 # /etc/kubernetes/admission-control/psa-config.yaml
 
 apiVersion: apiserver.config.k8s.io/v1
@@ -620,15 +553,11 @@ plugins:
       - ingress-nginx            # Exempt ingress controller
 ```
 
-```
-
 **kube-apiserver flag**:
 
 ```
-
 --admission-control-config-file=/etc/kubernetes/admission-control/psa-config.yaml
 
-```
 ```
 
 ### Common Exemption Use Cases
@@ -647,25 +576,19 @@ plugins:
 **Error**:
 
 ```
-
 Error from server (Forbidden): error when creating "pod.yaml": pods "test"
 is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation
 != false (container "app" must set securityContext.allowPrivilegeEscalation=false),
 unrestricted capabilities (container "app" must set securityContext.capabilities.drop=["ALL"])
 ```
 
-```
-
 **Solution**: Fix pod specification:
 
 ```yaml
-
 securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop: [ALL]
-```
-
 ```
 
 #### 2. Existing Pods Work, New Ones Fail
@@ -684,16 +607,13 @@ securityContext:
 **Example**:
 
 ```
-
 Warning: would violate PodSecurity "restricted:latest": ...
 
-```
 ```
 
 **Solutions**:
 
 ```bash
-
 # Option 1: Suppress warnings
 
 kubectl create -f pod.yaml --warnings-as-errors=false
@@ -706,8 +626,6 @@ kubectl label namespace staging \
   pod-security.kubernetes.io/warn=baseline --overwrite
 ```
 
-```
-
 #### 4. Can't Determine Required Security Context
 
 **Problem**: Not sure what's needed for restricted compliance
@@ -715,7 +633,6 @@ kubectl label namespace staging \
 **Solution**: Use audit mode to discover issues:
 
 ```bash
-
 # Apply pod with audit
 
 kubectl label namespace test \
@@ -731,12 +648,9 @@ kubectl apply -f pod.yaml -n test
 kubectl apply -f pod.yaml -n test --dry-run=server
 ```
 
-```
-
 ### Debugging Commands
 
 ```bash
-
 # Check namespace PSA configuration
 
 kubectl get namespace production -o yaml | grep pod-security
@@ -758,8 +672,6 @@ kubectl label namespace test \
 
 kubectl -n kube-system get pod kube-apiserver-* -o yaml | \
   grep -A10 admission-control-config-file
-```
-
 ```
 
 ## Pod Security Standards Comparison
@@ -794,7 +706,6 @@ Pod/Container must have:
 ### 1. Start with Baseline in Production
 
 ```yaml
-
 # Begin with baseline enforcement
 
 pod-security.kubernetes.io/enforce: baseline
@@ -805,12 +716,9 @@ pod-security.kubernetes.io/audit: restricted
 pod-security.kubernetes.io/warn: restricted
 ```
 
-```
-
 ### 2. Use Audit/Warn Before Enforce
 
 ```bash
-
 # Week 1-2: Audit only
 
 kubectl label namespace prod \
@@ -827,16 +735,11 @@ kubectl label namespace prod \
   pod-security.kubernetes.io/enforce=restricted --overwrite
 ```
 
-```
-
 ### 3. Pin Versions for Stability
 
 ```yaml
-
 pod-security.kubernetes.io/enforce: restricted
 pod-security.kubernetes.io/enforce-version: v1.30  # Pin version
-```
-
 ```
 
 ### 4. Apply Appropriate Levels
@@ -854,7 +757,6 @@ pod-security.kubernetes.io/enforce-version: v1.30  # Pin version
 ### 5. Document Privileged Exceptions
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -867,12 +769,9 @@ metadata:
       Reviewed and approved by security team on 2026-02-27.
 ```
 
-```
-
 ### 6. Regular Compliance Audits
 
 ```bash
-
 # Monthly audit script
 
 for ns in $(kubectl get namespaces -o name | cut -d/ -f2); do
@@ -885,12 +784,9 @@ done
 
 ```
 
-```
-
 ### 7. Combine with Other Security Controls
 
 ```yaml
-
 # PSA + Network Policies + RBAC
 
 apiVersion: v1
@@ -907,14 +803,11 @@ metadata:
 
 ```
 
-```
-
 ## Quick Reference
 
 ### Apply PSA Labels
 
 ```bash
-
 # Enforce level
 
 kubectl label namespace <ns> \
@@ -939,8 +832,6 @@ kubectl label namespace <ns> \
 
 kubectl label namespace <ns> \
   pod-security.kubernetes.io/enforce-
-```
-
 ```
 
 ### PSS Levels

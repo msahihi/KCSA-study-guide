@@ -27,7 +27,6 @@ By the end of this lab, you will be able to:
 ## Lab Environment Setup
 
 ```bash
-
 # Create cluster
 
 cat <<EOF | kind create cluster --name seccomp-lab --config=-
@@ -48,14 +47,11 @@ EOF
 kubectl get nodes
 ```
 
-```
-
 ## Part 1: Seccomp Basics
 
 ### Step 1.1: Check Seccomp Support
 
 ```bash
-
 # Access worker node
 
 docker exec -it seccomp-lab-worker bash
@@ -77,12 +73,9 @@ grep Seccomp /proc/self/status
 exit
 ```
 
-```
-
 ### Step 1.2: Deploy Pod Without Seccomp
 
 ```bash
-
 # Create pod without seccomp
 
 cat <<EOF > /tmp/pod-no-seccomp.yaml
@@ -109,12 +102,9 @@ kubectl apply -f /tmp/pod-no-seccomp.yaml
 kubectl wait --for=condition=Ready pod/pod-no-seccomp --timeout=60s
 ```
 
-```
-
 ### Step 1.3: Check Container's Seccomp Status
 
 ```bash
-
 # Get container ID
 
 CONTAINER_ID=$(kubectl get pod pod-no-seccomp -o jsonpath='{.status.containerStatuses[0].containerID}' | cut -d/ -f3)
@@ -144,14 +134,11 @@ grep Seccomp /proc/$PID/status
 exit
 ```
 
-```
-
 ## Part 2: RuntimeDefault Seccomp Profile
 
 ### Step 2.1: Deploy Pod with RuntimeDefault
 
 ```bash
-
 # Create pod with RuntimeDefault seccomp
 
 cat <<EOF > /tmp/pod-runtime-default.yaml
@@ -178,12 +165,9 @@ kubectl apply -f /tmp/pod-runtime-default.yaml
 kubectl wait --for=condition=Ready pod/pod-runtime-default --timeout=60s
 ```
 
-```
-
 ### Step 2.2: Test Dangerous Syscalls
 
 ```bash
-
 # Test 1: Try to use ptrace (should be blocked)
 
 kubectl exec pod-runtime-default -- sh -c "echo 'Not testing ptrace directly, as it requires tools'"
@@ -214,12 +198,9 @@ kubectl exec pod-runtime-default -- ls /etc
 kubectl exec pod-runtime-default -- cat /etc/hostname
 ```
 
-```
-
 ### Step 2.3: Compare with Unconfined Pod
 
 ```bash
-
 # Both pods likely behave similarly for basic operations
 # RuntimeDefault blocks dangerous syscalls that need special privileges
 
@@ -236,20 +217,15 @@ kubectl exec pod-runtime-default -- mount 2>&1 | head -2
 
 ```
 
-```
-
 ## Part 3: Create Custom Seccomp Profile
 
 ### Step 3.1: Create Profile Directory
 
 ```bash
-
 # Create directory on host (maps into Kind nodes)
 
 sudo mkdir -p /tmp/seccomp-profiles
 sudo chmod 755 /tmp/seccomp-profiles
-```
-
 ```
 
 ### Step 3.2: Create Minimal Seccomp Profile
@@ -257,7 +233,6 @@ sudo chmod 755 /tmp/seccomp-profiles
 This profile allows only essential syscalls:
 
 ```bash
-
 # Create very restrictive profile
 
 cat <<'EOF' | sudo tee /tmp/seccomp-profiles/minimal.json
@@ -462,14 +437,11 @@ EOF
 cat /tmp/seccomp-profiles/minimal.json | jq .
 ```
 
-```
-
 ### Step 3.3: Create Deny-Dangerous Profile
 
 This profile allows most syscalls but explicitly denies dangerous ones:
 
 ```bash
-
 # Create deny-dangerous profile
 
 cat <<'EOF' | sudo tee /tmp/seccomp-profiles/deny-dangerous.json
@@ -546,14 +518,11 @@ EOF
 cat /tmp/seccomp-profiles/deny-dangerous.json | jq .
 ```
 
-```
-
 ### Step 3.4: Create Audit Profile
 
 This profile logs all syscalls but doesn't block them (useful for discovering what an app needs):
 
 ```bash
-
 # Create audit profile
 
 cat <<'EOF' | sudo tee /tmp/seccomp-profiles/audit.json
@@ -572,12 +541,9 @@ EOF
 cat /tmp/seccomp-profiles/audit.json | jq .
 ```
 
-```
-
 ### Step 3.5: Verify Profiles Are Accessible in Nodes
 
 ```bash
-
 # Access worker node
 
 docker exec -it seccomp-lab-worker bash
@@ -596,14 +562,11 @@ ls -la /var/lib/kubelet/seccomp/profiles/
 exit
 ```
 
-```
-
 ## Part 4: Apply Custom Seccomp Profiles
 
 ### Step 4.1: Deploy Pod with Deny-Dangerous Profile
 
 ```bash
-
 # Create pod with deny-dangerous profile
 
 cat <<EOF > /tmp/pod-deny-dangerous.yaml
@@ -631,12 +594,9 @@ kubectl apply -f /tmp/pod-deny-dangerous.yaml
 kubectl wait --for=condition=Ready pod/pod-deny-dangerous --timeout=60s
 ```
 
-```
-
 ### Step 4.2: Test Blocked Syscalls
 
 ```bash
-
 # Test 1: Try to mount (should fail)
 
 kubectl exec pod-deny-dangerous -- mount -t tmpfs tmpfs /mnt 2>&1
@@ -663,12 +623,9 @@ kubectl exec pod-deny-dangerous -- ps aux
 kubectl exec pod-deny-dangerous -- sh -c "echo 'ptrace is blocked by profile'"
 ```
 
-```
-
 ### Step 4.3: Deploy Pod with Minimal Profile
 
 ```bash
-
 # Create pod with minimal profile
 
 cat <<EOF > /tmp/pod-minimal.yaml
@@ -696,12 +653,9 @@ kubectl apply -f /tmp/pod-minimal.yaml
 kubectl wait --for=condition=Ready pod/pod-minimal --timeout=60s
 ```
 
-```
-
 ### Step 4.4: Test Minimal Profile
 
 ```bash
-
 # Test 1: Basic operations (should work)
 
 kubectl exec pod-minimal -- echo "Hello"
@@ -722,14 +676,11 @@ kubectl exec pod-minimal -- ls -la /tmp/test.txt
 
 ```
 
-```
-
 ## Part 5: Nginx with Seccomp
 
 ### Step 5.1: Create Nginx-Specific Profile
 
 ```bash
-
 # Create nginx-optimized profile
 
 cat <<'EOF' | sudo tee /tmp/seccomp-profiles/nginx.json
@@ -828,12 +779,9 @@ EOF
 cat /tmp/seccomp-profiles/nginx.json | jq .
 ```
 
-```
-
 ### Step 5.2: Deploy Nginx with Custom Profile
 
 ```bash
-
 # Create nginx pod with seccomp
 
 cat <<EOF > /tmp/nginx-seccomp.yaml
@@ -867,12 +815,9 @@ kubectl apply -f /tmp/nginx-seccomp.yaml
 kubectl wait --for=condition=Ready pod/nginx-seccomp --timeout=60s
 ```
 
-```
-
 ### Step 5.3: Test Nginx Functionality
 
 ```bash
-
 # Test nginx is working
 
 kubectl port-forward nginx-seccomp 8080:80 &
@@ -897,12 +842,9 @@ kubectl logs nginx-seccomp
 
 ```
 
-```
-
 ### Step 5.4: Verify Dangerous Syscalls Are Blocked
 
 ```bash
-
 # Try to exec into container (may fail depending on profile strictness)
 
 kubectl exec nginx-seccomp -- ls /etc/nginx
@@ -918,14 +860,11 @@ kubectl exec nginx-seccomp -- mount 2>&1
 
 ```
 
-```
-
 ## Part 6: Debugging Seccomp Issues
 
 ### Step 6.1: Create Profile That's Too Restrictive
 
 ```bash
-
 # Create overly restrictive profile
 
 cat <<'EOF' | sudo tee /tmp/seccomp-profiles/too-restrictive.json
@@ -953,12 +892,9 @@ EOF
 cat /tmp/seccomp-profiles/too-restrictive.json | jq .
 ```
 
-```
-
 ### Step 6.2: Deploy Pod with Restrictive Profile
 
 ```bash
-
 # Create pod
 
 cat <<EOF > /tmp/pod-too-restrictive.yaml
@@ -998,12 +934,9 @@ kubectl logs pod-too-restrictive 2>&1
 kubectl describe pod pod-too-restrictive | grep -A 10 Events
 ```
 
-```
-
 ### Step 6.3: Debug with Audit Profile
 
 ```bash
-
 # Delete broken pod
 
 kubectl delete pod pod-too-restrictive
@@ -1032,12 +965,9 @@ kubectl apply -f /tmp/pod-audit.yaml
 kubectl wait --for=condition=Ready pod/pod-audit --timeout=60s
 ```
 
-```
-
 ### Step 6.4: Check Audit Logs
 
 ```bash
-
 # Run some operations
 
 kubectl exec pod-audit -- ls /
@@ -1070,8 +1000,6 @@ dmesg | grep audit | grep seccomp | tail -20
 exit
 ```
 
-```
-
 ## Part 7: Best Practices
 
 ### Step 7.1: Create Production-Grade Profile
@@ -1079,7 +1007,6 @@ exit
 Combining lessons learned:
 
 ```bash
-
 # Create production profile
 
 cat <<'EOF' | sudo tee /tmp/seccomp-profiles/production.json
@@ -1366,12 +1293,9 @@ EOF
 cat /tmp/seccomp-profiles/production.json | jq . | head -30
 ```
 
-```
-
 ### Step 7.2: Test Production Profile
 
 ```bash
-
 # Deploy pod with production profile
 
 cat <<EOF > /tmp/pod-production.yaml
@@ -1419,12 +1343,9 @@ kubectl exec pod-production -- cat /etc/hostname
 kubectl exec pod-production -- mount 2>&1 | grep -i "not permitted"
 ```
 
-```
-
 ## Part 8: Cleanup
 
 ```bash
-
 # Delete all test pods
 
 kubectl delete pod --all
@@ -1438,8 +1359,6 @@ kind delete cluster --name seccomp-lab
 sudo rm -rf /tmp/seccomp-profiles
 ```
 
-```
-
 ## Troubleshooting
 
 ### Issue 1: "Profile not found" Error
@@ -1449,7 +1368,6 @@ sudo rm -rf /tmp/seccomp-profiles
 **Solution**:
 
 ```bash
-
 # Ensure profile exists on all nodes
 
 docker exec -it seccomp-lab-worker ls -la /var/lib/kubelet/seccomp/profiles/
@@ -1462,8 +1380,6 @@ cat /tmp/seccomp-profiles/your-profile.json | jq .
 
 ```
 
-```
-
 ### Issue 2: Pod CrashLoopBackOff
 
 **Symptom**: Pod fails to start with seccomp profile
@@ -1471,7 +1387,6 @@ cat /tmp/seccomp-profiles/your-profile.json | jq .
 **Debug**:
 
 ```bash
-
 # Check pod events
 
 kubectl describe pod <pod-name>
@@ -1484,8 +1399,6 @@ kubectl logs <pod-name>
 
 ```
 
-```
-
 ### Issue 3: Application Doesn't Work
 
 **Symptom**: App fails with cryptic errors
@@ -1493,14 +1406,11 @@ kubectl logs <pod-name>
 **Solution**:
 
 ```bash
-
 # Use audit profile to discover needed syscalls
 # Deploy with audit.json
 # Run app through all code paths
 # Check audit logs for syscalls used
 # Add those syscalls to your profile
-
-```
 
 ```
 

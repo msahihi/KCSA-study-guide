@@ -65,7 +65,6 @@ Trivy is a comprehensive security scanner that detects vulnerabilities in contai
 ### Installation
 
 ```bash
-
 # Linux
 
 wget https://github.com/aquasecurity/trivy/releases/download/v0.48.0/trivy_0.48.0_Linux-64bit.tar.gz
@@ -81,12 +80,9 @@ brew install trivy
 trivy version
 ```
 
-```
-
 ### Basic Image Scanning
 
 ```bash
-
 # Scan an image
 
 trivy image nginx:1.27
@@ -106,12 +102,9 @@ trivy image --format table nginx:1.27
 trivy image --format sarif nginx:1.27 > results.sarif
 ```
 
-```
-
 ### Understanding Trivy Output
 
 ```bash
-
 trivy image nginx:1.27
 
 # Output:
@@ -129,12 +122,9 @@ trivy image nginx:1.27
 
 ```
 
-```
-
 ### Advanced Scanning Options
 
 ```bash
-
 # Scan specific layers
 
 trivy image --list-all-pkgs nginx:1.27
@@ -156,12 +146,9 @@ trivy image --skip-files /usr/lib/python3.9/site-packages nginx:1.27
 trivy image --cache-dir /path/to/cache nginx:1.27
 ```
 
-```
-
 ### Scanning Local Images
 
 ```bash
-
 # Scan image from Docker daemon
 
 docker pull nginx:1.27
@@ -177,14 +164,11 @@ trivy image --input nginx.tar
 trivy config Dockerfile
 ```
 
-```
-
 ### Scanning in CI/CD
 
 #### GitHub Actions
 
 ```yaml
-
 name: Container Security Scan
 
 on:
@@ -219,12 +203,9 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 ```
 
-```
-
 #### GitLab CI
 
 ```yaml
-
 # .gitlab-ci.yml
 
 stages:
@@ -246,14 +227,11 @@ trivy-scan:
   allow_failure: false
 ```
 
-```
-
 ### Trivy Kubernetes Integration
 
 #### Scan Running Images in Cluster
 
 ```bash
-
 # Scan all images in cluster
 
 trivy k8s --report summary cluster
@@ -267,12 +245,9 @@ trivy k8s --report summary --namespace production
 trivy k8s --report all --format json cluster > cluster-scan.json
 ```
 
-```
-
 #### Trivy Operator
 
 ```bash
-
 # Install Trivy Operator
 
 kubectl apply -f https://raw.githubusercontent.com/aquasecurity/trivy-operator/main/deploy/static/trivy-operator.yaml
@@ -286,14 +261,11 @@ kubectl get vulnerabilityreports --all-namespaces
 kubectl describe vulnerabilityreport <report-name> -n <namespace>
 ```
 
-```
-
 ### Filtering and Ignoring Vulnerabilities
 
 #### .trivyignore File
 
 ```bash
-
 # .trivyignore
 # Ignore specific CVEs with justification
 
@@ -310,12 +282,9 @@ CVE-2023-67890
 CVE-2024-00001
 ```
 
-```
-
 #### Policy as Code
 
 ```yaml
-
 # .trivyignore.yaml
 
 vulnerabilities:
@@ -331,8 +300,6 @@ vulnerabilities:
     expired: 2024-06-30
 ```
 
-```
-
 ## Image Signing and Verification
 
 Image signing ensures image integrity and authenticity using cryptographic signatures.
@@ -344,7 +311,6 @@ Cosign is a tool for signing and verifying container images.
 #### Installation
 
 ```bash
-
 # Linux
 
 wget https://github.com/sigstore/cosign/releases/download/v2.2.2/cosign-linux-amd64
@@ -360,12 +326,9 @@ brew install cosign
 cosign version
 ```
 
-```
-
 #### Generating Key Pair
 
 ```bash
-
 # Generate key pair
 
 cosign generate-key-pair
@@ -378,12 +341,9 @@ cosign generate-key-pair
 
 ```
 
-```
-
 #### Signing Images
 
 ```bash
-
 # Sign an image
 
 cosign sign --key cosign.key myregistry.io/myapp:v1.0.0
@@ -400,12 +360,9 @@ cosign sign --key cosign.key \
   myregistry.io/myapp:v1.0.0
 ```
 
-```
-
 #### Verifying Signatures
 
 ```bash
-
 # Verify with public key
 
 cosign verify --key cosign.pub myregistry.io/myapp:v1.0.0
@@ -424,12 +381,9 @@ cosign verify --key cosign.pub \
 
 ```
 
-```
-
 #### Storing Keys in Kubernetes
 
 ```bash
-
 # Create secret with signing keys
 
 kubectl create secret generic cosign-keys \
@@ -444,8 +398,6 @@ kubectl create secret generic cosign-pub \
   -n security-system
 ```
 
-```
-
 ### Policy Controller (Formerly Cosigned)
 
 Policy Controller enforces image signature verification at admission time.
@@ -453,7 +405,6 @@ Policy Controller enforces image signature verification at admission time.
 #### Installation
 
 ```bash
-
 # Install Policy Controller
 
 kubectl apply -f https://github.com/sigstore/policy-controller/releases/download/v0.8.0/policy-controller.yaml
@@ -463,12 +414,9 @@ kubectl apply -f https://github.com/sigstore/policy-controller/releases/download
 kubectl get pods -n cosign-system
 ```
 
-```
-
 #### ClusterImagePolicy
 
 ```yaml
-
 apiVersion: policy.sigstore.dev/v1beta1
 kind: ClusterImagePolicy
 metadata:
@@ -484,12 +432,9 @@ spec:
         -----END PUBLIC KEY-----
 ```
 
-```
-
 #### Namespace-Scoped Policy
 
 ```yaml
-
 apiVersion: policy.sigstore.dev/v1alpha1
 kind: ImagePolicy
 metadata:
@@ -506,14 +451,11 @@ spec:
         subject: ".*@myorg.com$"
 ```
 
-```
-
 ### Docker Content Trust (DCT)
 
 Docker's built-in image signing mechanism using Notary.
 
 ```bash
-
 # Enable DCT
 
 export DOCKER_CONTENT_TRUST=1
@@ -535,8 +477,6 @@ docker pull myregistry.io/myapp:v1.0.0
 export DOCKER_CONTENT_TRUST=0
 ```
 
-```
-
 ## Container Registry Security
 
 ### Private Registry Setup
@@ -544,7 +484,6 @@ export DOCKER_CONTENT_TRUST=0
 #### Harbor Registry
 
 ```bash
-
 # Install Harbor using Helm
 
 helm repo add harbor https://helm.goharbor.io
@@ -565,12 +504,9 @@ helm install harbor harbor/harbor \
 
 ```
 
-```
-
 #### Registry Authentication
 
 ```yaml
-
 # Docker Registry with basic auth
 
 apiVersion: v1
@@ -583,12 +519,9 @@ data:
   .dockerconfigjson: <BASE64_ENCODED_DOCKER_CONFIG>
 ```
 
-```
-
 ### Image Pull Policies
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -602,8 +535,6 @@ spec:
   - name: registry-credentials
 ```
 
-```
-
 **Pull Policy Options:**
 
 - `Always`: Always pull the latest image (recommended for :latest tag)
@@ -615,7 +546,6 @@ spec:
 #### Harbor RBAC
 
 ```yaml
-
 # Harbor Project-level roles:
 # - Project Admin: Full control
 # - Developer: Push and pull
@@ -624,12 +554,9 @@ spec:
 
 ```
 
-```
-
 #### Registry Webhook
 
 ```yaml
-
 # Harbor webhook for scan completion
 
 webhookURL: https://your-webhook-endpoint.com/harbor
@@ -639,8 +566,6 @@ events:
 skipCertVerify: false
 ```
 
-```
-
 ## Image Pull Secrets
 
 ### Creating Image Pull Secrets
@@ -648,7 +573,6 @@ skipCertVerify: false
 #### Method 1: From Docker Config
 
 ```bash
-
 # Login to registry
 
 docker login myregistry.io
@@ -660,12 +584,9 @@ kubectl create secret generic regcred \
   --type=kubernetes.io/dockerconfigjson
 ```
 
-```
-
 #### Method 2: From Command Line
 
 ```bash
-
 kubectl create secret docker-registry regcred \
   --docker-server=myregistry.io \
   --docker-username=myuser \
@@ -673,12 +594,9 @@ kubectl create secret docker-registry regcred \
   --docker-email=myemail@example.com
 ```
 
-```
-
 #### Method 3: From YAML
 
 ```yaml
-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -688,12 +606,9 @@ data:
   .dockerconfigjson: eyJhdXRocyI6eyJteXJlZ2lzdHJ5LmlvIjp7InVzZXJuYW1lIjoibXl1c2VyIiwicGFzc3dvcmQiOiJteXBhc3N3b3JkIiwiZW1haWwiOiJteWVtYWlsQGV4YW1wbGUuY29tIiwiYXV0aCI6ImJYbDFjMlZ5T20xNWNHRnpjM2R2Y21RPSJ9fX0=
 ```
 
-```
-
 **Generating .dockerconfigjson:**
 
 ```bash
-
 kubectl create secret docker-registry regcred \
   --docker-server=myregistry.io \
   --docker-username=myuser \
@@ -701,14 +616,11 @@ kubectl create secret docker-registry regcred \
   --dry-run=client -o yaml | grep .dockerconfigjson
 ```
 
-```
-
 ### Using Image Pull Secrets
 
 #### In Pod Spec
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -721,12 +633,9 @@ spec:
   - name: regcred
 ```
 
-```
-
 #### In ServiceAccount
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -746,12 +655,9 @@ spec:
     image: myregistry.io/private/myapp:v1.0.0
 ```
 
-```
-
 ### Default Image Pull Secrets
 
 ```bash
-
 # Add to default ServiceAccount
 
 kubectl patch serviceaccount default \
@@ -762,14 +668,11 @@ kubectl patch serviceaccount default \
 kubectl get serviceaccount default -o yaml
 ```
 
-```
-
 ## Building Secure Images
 
 ### Minimal Base Images
 
 ```dockerfile
-
 # BAD: Large attack surface
 
 FROM ubuntu:22.04
@@ -799,12 +702,9 @@ ENV PATH=/root/.local/bin:$PATH
 CMD ["app.py"]
 ```
 
-```
-
 ### Running as Non-Root
 
 ```dockerfile
-
 # BAD: Running as root
 
 FROM nginx:1.27
@@ -822,12 +722,9 @@ USER nginx
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-```
-
 ### Multi-Stage Builds
 
 ```dockerfile
-
 # Build stage
 
 FROM golang:1.21 AS builder
@@ -845,12 +742,9 @@ USER nonroot:nonroot
 ENTRYPOINT ["/main"]
 ```
 
-```
-
 ### Securing Dockerfile
 
 ```dockerfile
-
 FROM python:3.11-slim
 
 # Use specific versions
@@ -894,12 +788,9 @@ LABEL maintainer="security@example.com" \
       description="Secure Python application"
 ```
 
-```
-
 ### .dockerignore
 
 ```bash
-
 # .dockerignore
 
 .git
@@ -917,8 +808,6 @@ node_modules/
 .DS_Store
 ```
 
-```
-
 ## Image Policy Enforcement
 
 ### Admission Controller Policy
@@ -926,7 +815,6 @@ node_modules/
 Using OPA Gatekeeper to enforce image policies:
 
 ```yaml
-
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -973,12 +861,9 @@ spec:
       - "gcr.io/mycompany/"
 ```
 
-```
-
 ### Kyverno Image Policy
 
 ```yaml
-
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -1008,12 +893,9 @@ spec:
               -----END PUBLIC KEY-----
 ```
 
-```
-
 ### ImagePolicyWebhook
 
 ```yaml
-
 # /etc/kubernetes/admission-control/imagepolicy.yaml
 
 imagePolicy:
@@ -1047,14 +929,11 @@ contexts:
 current-context: image-checker
 ```
 
-```
-
 ## Best Practices
 
 ### 1. Use Minimal Base Images
 
 ```bash
-
 # Image size comparison
 
 docker images
@@ -1062,8 +941,6 @@ docker images
 # ubuntu:22.04           ~77MB
 # alpine:3.18            ~7MB
 # gcr.io/distroless/base ~20MB
-
-```
 
 ```
 
@@ -1082,7 +959,6 @@ Don't rely on public registries for production workloads.
 ### 5. Tag Images Properly
 
 ```bash
-
 # BAD: Using :latest
 
 myregistry.io/myapp:latest
@@ -1097,24 +973,18 @@ myregistry.io/myapp@sha256:abc123...
 myregistry.io/myapp:v1.2.3@sha256:abc123...
 ```
 
-```
-
 ### 6. Regular Image Updates
 
 ```bash
-
 # Set up automated image scanning
 # Example: Harbor scheduled scanning
 # Or use Trivy Operator for continuous scanning
 
 ```
 
-```
-
 ### 7. Remove Unnecessary Tools
 
 ```dockerfile
-
 # Don't include shells, compilers, or debug tools in production images
 # Use distroless or scratch base images
 
@@ -1123,12 +993,9 @@ COPY --from=builder /app/binary /
 ENTRYPOINT ["/binary"]
 ```
 
-```
-
 ### 8. Secrets Management
 
 ```dockerfile
-
 # BAD: Secrets in image
 
 ENV API_KEY=abc123
@@ -1138,24 +1005,18 @@ ENV API_KEY=abc123
 
 ```
 
-```
-
 ### 9. Immutable Tags
 
 ```bash
-
 # Use image digest for immutability
 
 kubectl set image deployment/myapp \
   app=myregistry.io/myapp@sha256:abc123...
 ```
 
-```
-
 ### 10. Image Provenance
 
 ```bash
-
 # Use SBOM (Software Bill of Materials)
 
 trivy image --format cyclonedx myregistry.io/myapp:v1.0.0 > sbom.json
@@ -1163,8 +1024,6 @@ trivy image --format cyclonedx myregistry.io/myapp:v1.0.0 > sbom.json
 # Attach SBOM to image
 
 cosign attach sbom --sbom sbom.json myregistry.io/myapp:v1.0.0
-```
-
 ```
 
 ## Summary

@@ -38,32 +38,23 @@ Your organization needs to track all components in container images for vulnerab
 curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 ```
 
-```
-
 **Install Grype (optional, for SBOM scanning):**
 
 ```bash
-
 curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
-```
-
 ```
 
 Verify installations:
 
 ```bash
-
 syft version
 grype version
 trivy --version
 ```
 
-```
-
 ### Step 2: Create Lab Environment
 
 ```bash
-
 mkdir -p ~/sbom-lab
 cd ~/sbom-lab
 
@@ -73,8 +64,6 @@ kubectl create namespace sbom-lab
 kubectl config set-context --current --namespace=sbom-lab
 ```
 
-```
-
 ## Part 2: SBOM Generation with Trivy
 
 ### Exercise 1: Generate SPDX SBOM
@@ -82,19 +71,13 @@ kubectl config set-context --current --namespace=sbom-lab
 Generate SPDX format SBOM:
 
 ```bash
-
 trivy image --format spdx-json --output nginx-sbom.spdx.json nginx:1.26
-```
-
 ```
 
 View SBOM structure:
 
 ```bash
-
 cat nginx-sbom.spdx.json | jq . | head -50
-```
-
 ```
 
 SPDX SBOM contains:
@@ -110,16 +93,12 @@ SPDX SBOM contains:
 Generate CycloneDX format:
 
 ```bash
-
 trivy image --format cyclonedx --output nginx-sbom.cdx.json nginx:1.26
-```
-
 ```
 
 Compare formats:
 
 ```bash
-
 echo "SPDX packages:"
 cat nginx-sbom.spdx.json | jq '.packages | length'
 
@@ -127,14 +106,11 @@ echo "CycloneDX components:"
 cat nginx-sbom.cdx.json | jq '.components | length'
 ```
 
-```
-
 ### Exercise 3: SBOM for Different Images
 
 Generate SBOMs for various base images:
 
 ```bash
-
 # Alpine
 
 trivy image --format spdx-json --output alpine-sbom.json alpine:3.19
@@ -155,8 +131,6 @@ echo "Ubuntu: $(cat ubuntu-sbom.json | jq '.packages | length')"
 echo "Distroless: $(cat distroless-sbom.json | jq '.packages | length')"
 ```
 
-```
-
 ## Part 3: SBOM Generation with Syft
 
 ### Exercise 4: Syft SBOM Generation
@@ -164,40 +138,28 @@ echo "Distroless: $(cat distroless-sbom.json | jq '.packages | length')"
 Generate SPDX with Syft:
 
 ```bash
-
 syft nginx:1.26 -o spdx-json=nginx-syft.spdx.json
-```
-
 ```
 
 Generate CycloneDX:
 
 ```bash
-
 syft nginx:1.26 -o cyclonedx-json=nginx-syft.cdx.json
-```
-
 ```
 
 Generate multiple formats:
 
 ```bash
-
 syft nginx:1.26 \\
   -o spdx-json=nginx-multi.spdx.json \\
   -o cyclonedx-json=nginx-multi.cdx.json \\
   -o table=nginx-table.txt
 ```
 
-```
-
 View table output:
 
 ```bash
-
 cat nginx-table.txt
-```
-
 ```
 
 ### Exercise 5: Scan Different Sources
@@ -205,7 +167,6 @@ cat nginx-table.txt
 Scan local directory:
 
 ```bash
-
 # Create sample project
 
 mkdir sample-app
@@ -222,25 +183,17 @@ syft dir:. -o spdx-json=app-sbom.json
 cd ..
 ```
 
-```
-
 Scan Docker archive:
 
 ```bash
-
 docker save nginx:1.26 -o nginx.tar
 syft file:nginx.tar -o spdx-json=nginx-tar-sbom.json
-```
-
 ```
 
 Scan remote image:
 
 ```bash
-
 syft registry:nginx:1.26 -o spdx-json=nginx-remote-sbom.json
-```
-
 ```
 
 ## Part 4: SBOM Analysis
@@ -250,25 +203,18 @@ syft registry:nginx:1.26 -o spdx-json=nginx-remote-sbom.json
 **List all packages (SPDX):**
 
 ```bash
-
 cat nginx-sbom.spdx.json | jq '.packages[] | {name: .name, version: .versionInfo}' | head -20
-```
-
 ```
 
 **List all components (CycloneDX):**
 
 ```bash
-
 cat nginx-sbom.cdx.json | jq '.components[] | {name: .name, version: .version}' | head -20
-```
-
 ```
 
 **Find specific package:**
 
 ```bash
-
 # SPDX
 
 cat nginx-sbom.spdx.json | jq '.packages[] | select(.name == "openssl")'
@@ -278,17 +224,12 @@ cat nginx-sbom.spdx.json | jq '.packages[] | select(.name == "openssl")'
 cat nginx-sbom.cdx.json | jq '.components[] | select(.name == "openssl")'
 ```
 
-```
-
 **Count packages by type:**
 
 ```bash
-
 # CycloneDX (has type field)
 
 cat nginx-sbom.cdx.json | jq '.components | group_by(.type) | map({type: .[0].type, count: length})'
-```
-
 ```
 
 ### Exercise 7: License Analysis
@@ -298,25 +239,18 @@ Extract license information:
 **SPDX:**
 
 ```bash
-
 cat nginx-sbom.spdx.json | jq '.packages[] | {name: .name, license: .licenseConcluded}' | grep -v "NOASSERTION" | head -20
-```
-
 ```
 
 **CycloneDX:**
 
 ```bash
-
 cat nginx-sbom.cdx.json | jq '.components[] | select(.licenses) | {name: .name, licenses: [.licenses[].license.id]}' | head -20
-```
-
 ```
 
 Find packages with specific licenses:
 
 ```bash
-
 # Find GPL licenses
 
 cat nginx-sbom.spdx.json | jq '.packages[] | select(.licenseConcluded | contains("GPL")) | {name: .name, license: .licenseConcluded}'
@@ -326,12 +260,9 @@ cat nginx-sbom.spdx.json | jq '.packages[] | select(.licenseConcluded | contains
 cat nginx-sbom.spdx.json | jq '.packages[] | select(.licenseConcluded | contains("Apache")) | {name: .name, license: .licenseConcluded}'
 ```
 
-```
-
 Create license summary:
 
 ```bash
-
 cat > analyze-licenses.sh <<'EOF'
 
 #!/bin/bash
@@ -352,28 +283,20 @@ chmod +x analyze-licenses.sh
 ./analyze-licenses.sh nginx-sbom.spdx.json
 ```
 
-```
-
 ### Exercise 8: Dependency Analysis
 
 Extract Package URLs (PURLs):
 
 ```bash
-
 # CycloneDX includes PURLs
 
 cat nginx-sbom.cdx.json | jq '.components[] | select(.purl) | {name: .name, purl: .purl}' | head -10
 ```
 
-```
-
 Find outdated packages (version < 1.0):
 
 ```bash
-
 cat nginx-sbom.spdx.json | jq '.packages[] | select(.versionInfo | test("^0\\.[0-9]")) | {name: .name, version: .versionInfo}'
-```
-
 ```
 
 ## Part 5: SBOM Vulnerability Scanning
@@ -383,28 +306,19 @@ cat nginx-sbom.spdx.json | jq '.packages[] | select(.versionInfo | test("^0\\.[0
 Scan SBOM for vulnerabilities:
 
 ```bash
-
 trivy sbom nginx-sbom.spdx.json
-```
-
 ```
 
 Filter by severity:
 
 ```bash
-
 trivy sbom --severity HIGH,CRITICAL nginx-sbom.spdx.json
-```
-
 ```
 
 JSON output:
 
 ```bash
-
 trivy sbom -f json -o sbom-vuln-results.json nginx-sbom.spdx.json
-```
-
 ```
 
 ### Exercise 10: Scan SBOM with Grype
@@ -412,25 +326,18 @@ trivy sbom -f json -o sbom-vuln-results.json nginx-sbom.spdx.json
 Scan with Grype:
 
 ```bash
-
 grype sbom:./nginx-sbom.spdx.json
-```
-
 ```
 
 Filter results:
 
 ```bash
-
 grype sbom:./nginx-sbom.spdx.json --fail-on critical
-```
-
 ```
 
 Compare Trivy vs Grype results:
 
 ```bash
-
 echo "Trivy results:"
 trivy sbom nginx-sbom.spdx.json | grep "Total:"
 
@@ -438,14 +345,11 @@ echo -e "\\nGrype results:"
 grype sbom:./nginx-sbom.spdx.json -q | tail -5
 ```
 
-```
-
 ### Exercise 11: Track Vulnerability Over Time
 
 Create a vulnerability tracking script:
 
 ```bash
-
 cat > track-vulnerabilities.sh <<'EOF'
 
 #!/bin/bash
@@ -483,8 +387,6 @@ chmod +x track-vulnerabilities.sh
 ./track-vulnerabilities.sh nginx:1.26
 ```
 
-```
-
 ## Part 6: SBOM Attachment and Distribution
 
 ### Exercise 12: Attach SBOM to Image
@@ -492,7 +394,6 @@ chmod +x track-vulnerabilities.sh
 Generate and attach SBOM:
 
 ```bash
-
 # Build sample image
 
 cat > Dockerfile <<EOF
@@ -513,12 +414,9 @@ trivy image --format spdx-json --output myapp-sbom.json docker.io/youruser/myapp
 cosign attach sbom --sbom myapp-sbom.json docker.io/youruser/myapp:sbom-demo
 ```
 
-```
-
 Verify attachment:
 
 ```bash
-
 # Get SBOM reference
 
 cosign triangulate --type sbom docker.io/youruser/myapp:sbom-demo
@@ -532,14 +430,11 @@ cosign download sbom docker.io/youruser/myapp:sbom-demo > downloaded-sbom.json
 diff myapp-sbom.json downloaded-sbom.json
 ```
 
-```
-
 ### Exercise 13: Sign SBOM
 
 Sign the attached SBOM:
 
 ```bash
-
 # Get SBOM reference
 
 SBOM_REF=$(cosign triangulate --type sbom docker.io/youruser/myapp:sbom-demo)
@@ -553,8 +448,6 @@ cosign sign --key cosign.key $SBOM_REF
 cosign verify --key cosign.pub $SBOM_REF
 ```
 
-```
-
 ## Part 7: CI/CD Integration
 
 ### Exercise 14: Automated SBOM Generation
@@ -562,7 +455,6 @@ cosign verify --key cosign.pub $SBOM_REF
 Create CI/CD SBOM generation script:
 
 ```bash
-
 cat > ci-sbom-gen.sh <<'EOF'
 
 #!/bin/bash
@@ -636,14 +528,11 @@ chmod +x ci-sbom-gen.sh
 ./ci-sbom-gen.sh nginx:1.26
 ```
 
-```
-
 ### Exercise 15: GitHub Actions Workflow
 
 Create a GitHub Actions workflow example:
 
 ```bash
-
 cat > .github-sbom-workflow.yaml <<'EOF'
 name: SBOM Generation and Scanning
 
@@ -702,8 +591,6 @@ jobs:
 EOF
 ```
 
-```
-
 ## Part 8: SBOM Quality Assessment
 
 ### Exercise 16: Assess SBOM Quality
@@ -711,7 +598,6 @@ EOF
 Check SBOM completeness:
 
 ```bash
-
 cat > assess-sbom-quality.sh <<'EOF'
 
 #!/bin/bash
@@ -772,12 +658,9 @@ chmod +x assess-sbom-quality.sh
 ./assess-sbom-quality.sh nginx-sbom.spdx.json
 ```
 
-```
-
 ## Verification Script
 
 ```bash
-
 cat > test-sbom-lab.sh <<'EOF'
 
 #!/bin/bash
@@ -821,12 +704,9 @@ chmod +x test-sbom-lab.sh
 ./test-sbom-lab.sh
 ```
 
-```
-
 ## Cleanup
 
 ```bash
-
 # Delete namespace
 
 kubectl delete namespace sbom-lab
@@ -839,8 +719,6 @@ rm -rf ~/sbom-lab
 # Reset context
 
 kubectl config set-context --current --namespace=default
-```
-
 ```
 
 ## Key Takeaways

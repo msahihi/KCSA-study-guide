@@ -48,12 +48,9 @@ kubectl create namespace lab-secrets
 kubectl get namespace lab-secrets
 ```
 
-```
-
 ### 1.2 Create Unencrypted Secret (for comparison)
 
 ```bash
-
 # Create a secret before enabling encryption
 
 kubectl create secret generic unencrypted-secret \
@@ -67,14 +64,11 @@ kubectl get secret unencrypted-secret -n lab-secrets
 kubectl describe secret unencrypted-secret -n lab-secrets
 ```
 
-```
-
 ### 1.3 Verify Secret is Not Encrypted
 
 If you have access to etcd, verify the secret is stored in plaintext (base64 encoded):
 
 ```bash
-
 # Access control plane node
 # For Kind cluster:
 
@@ -93,14 +87,11 @@ ETCDCTL_API=3 etcdctl \
 
 ```
 
-```
-
 ## Step 2: Generate Encryption Key
 
 ### 2.1 Generate Random Encryption Key
 
 ```bash
-
 # Generate a 32-byte random key and base64 encode it
 
 head -c 32 /dev/urandom | base64
@@ -110,14 +101,11 @@ head -c 32 /dev/urandom | base64
 
 ```
 
-```
-
 **Save this key securely!** You'll need it for the encryption configuration.
 
 ### 2.2 Store Key Securely
 
 ```bash
-
 # In production, store this in a secure key management system
 # For this lab, we'll store it in a variable
 
@@ -128,14 +116,11 @@ export ENCRYPTION_KEY="8dRbG7xK2QmN5vP9wT3hU6eL1fJ4oS7aZ0kX8cY2bW9="
 echo $ENCRYPTION_KEY
 ```
 
-```
-
 ## Step 3: Create Encryption Configuration
 
 ### 3.1 Access Control Plane Node
 
 ```bash
-
 # For Kind cluster
 
 docker exec -it kcsa-lab-control-plane bash
@@ -149,23 +134,17 @@ minikube ssh
 ssh user@control-plane-node
 ```
 
-```
-
 ### 3.2 Create Encryption Config Directory
 
 ```bash
-
 # On control plane node
 
 sudo mkdir -p /etc/kubernetes/enc
 ```
 
-```
-
 ### 3.3 Create Encryption Configuration File
 
 ```bash
-
 # Create encryption configuration
 
 sudo cat > /etc/kubernetes/enc/encryption-config.yaml <<EOF
@@ -187,8 +166,6 @@ EOF
 sudo cat /etc/kubernetes/enc/encryption-config.yaml
 ```
 
-```
-
 **Configuration Explanation:**
 
 - `resources: [secrets]`: Apply encryption to Secret objects
@@ -199,7 +176,6 @@ sudo cat /etc/kubernetes/enc/encryption-config.yaml
 ### 3.4 Secure the Configuration File
 
 ```bash
-
 # Set restrictive permissions
 
 sudo chmod 600 /etc/kubernetes/enc/encryption-config.yaml
@@ -213,14 +189,11 @@ ls -la /etc/kubernetes/enc/encryption-config.yaml
 
 ```
 
-```
-
 ## Step 4: Configure kube-apiserver
 
 ### 4.1 Backup kube-apiserver Manifest
 
 ```bash
-
 # Backup original manifest
 
 sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml \
@@ -231,17 +204,12 @@ sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml \
 ls -la /etc/kubernetes/manifests/kube-apiserver.yaml.backup
 ```
 
-```
-
 ### 4.2 Modify kube-apiserver Configuration
 
 ```bash
-
 # Edit kube-apiserver manifest
 
 sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
-```
-
 ```
 
 Add the following to the `kube-apiserver` container spec:
@@ -249,7 +217,6 @@ Add the following to the `kube-apiserver` container spec:
 **Add to command array:**
 
 ```yaml
-
 spec:
   containers:
   - command:
@@ -260,12 +227,9 @@ spec:
     - --encryption-provider-config=/etc/kubernetes/enc/encryption-config.yaml
 ```
 
-```
-
 **Add to volumeMounts array:**
 
 ```yaml
-
     volumeMounts:
 
     # ... existing mounts ...
@@ -275,12 +239,9 @@ spec:
       readOnly: true
 ```
 
-```
-
 **Add to volumes array:**
 
 ```yaml
-
   volumes:
 
   # ... existing volumes ...
@@ -291,14 +252,11 @@ spec:
       type: DirectoryOrCreate
 ```
 
-```
-
 ### 4.3 Complete Modified Manifest Example
 
 Here's a complete example of the relevant sections:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -341,14 +299,11 @@ spec:
     name: encryption-config
 ```
 
-```
-
 ## Step 5: Wait for kube-apiserver to Restart
 
 ### 5.1 Monitor kube-apiserver Pod
 
 ```bash
-
 # Exit from control plane node (if inside)
 
 exit
@@ -361,12 +316,9 @@ kubectl get pods -n kube-system -w | grep kube-apiserver
 
 ```
 
-```
-
 ### 5.2 Verify Encryption Flag
 
 ```bash
-
 # Check if encryption flag is present
 
 kubectl get pod kube-apiserver-<node-name> -n kube-system -o yaml | grep encryption-provider-config
@@ -376,12 +328,9 @@ kubectl get pod kube-apiserver-<node-name> -n kube-system -o yaml | grep encrypt
 
 ```
 
-```
-
 ### 5.3 Test API Server Connectivity
 
 ```bash
-
 # Verify API server is responding
 
 kubectl cluster-info
@@ -389,14 +338,11 @@ kubectl get nodes
 kubectl get namespaces
 ```
 
-```
-
 ## Step 6: Encrypt Existing Secrets
 
 ### 6.1 Re-encrypt All Existing Secrets
 
 ```bash
-
 # Re-write all secrets to encrypt them with the new configuration
 
 kubectl get secrets --all-namespaces -o json | kubectl replace -f -
@@ -408,17 +354,12 @@ kubectl get secrets --all-namespaces -o json | kubectl replace -f -
 
 ```
 
-```
-
 ### 6.2 Verify Specific Secret Re-encryption
 
 ```bash
-
 # Check if our test secret was re-encrypted
 
 kubectl get secret unencrypted-secret -n lab-secrets -o yaml
-```
-
 ```
 
 ## Step 7: Verify Encryption is Working
@@ -426,7 +367,6 @@ kubectl get secret unencrypted-secret -n lab-secrets -o yaml
 ### 7.1 Create New Encrypted Secret
 
 ```bash
-
 # Create a new secret (should be encrypted automatically)
 
 kubectl create secret generic encrypted-secret \
@@ -439,12 +379,9 @@ kubectl create secret generic encrypted-secret \
 kubectl get secret encrypted-secret -n lab-secrets
 ```
 
-```
-
 ### 7.2 Verify in etcd (Direct Verification)
 
 ```bash
-
 # Access control plane node
 
 docker exec -it kcsa-lab-control-plane bash
@@ -463,12 +400,9 @@ ETCDCTL_API=3 etcdctl \
 
 ```
 
-```
-
 ### 7.3 Compare Encrypted vs Unencrypted
 
 ```bash
-
 # Get both secrets from etcd
 
 ETCDCTL_API=3 etcdctl \
@@ -483,14 +417,11 @@ ETCDCTL_API=3 etcdctl \
 
 ```
 
-```
-
 ## Step 8: Key Rotation
 
 ### 8.1 Generate New Encryption Key
 
 ```bash
-
 # Generate a new key
 
 NEW_KEY=$(head -c 32 /dev/urandom | base64)
@@ -501,12 +432,9 @@ echo "New Key: $NEW_KEY"
 export NEW_ENCRYPTION_KEY=$NEW_KEY
 ```
 
-```
-
 ### 8.2 Update Encryption Configuration with New Key
 
 ```bash
-
 # Access control plane node
 
 docker exec -it kcsa-lab-control-plane bash
@@ -534,12 +462,9 @@ EOF
 
 ```
 
-```
-
 ### 8.3 Wait for kube-apiserver to Pick Up Changes
 
 ```bash
-
 # Exit control plane node
 
 exit
@@ -554,12 +479,9 @@ sleep 60
 kubectl get nodes
 ```
 
-```
-
 ### 8.4 Re-encrypt All Secrets with New Key
 
 ```bash
-
 # Re-encrypt all secrets with key2
 
 kubectl get secrets --all-namespaces -o json | kubectl replace -f -
@@ -568,12 +490,9 @@ kubectl get secrets --all-namespaces -o json | kubectl replace -f -
 
 ```
 
-```
-
 ### 8.5 Verify New Key is Used
 
 ```bash
-
 # Create a test secret
 
 kubectl create secret generic rotated-secret \
@@ -595,14 +514,11 @@ ETCDCTL_API=3 etcdctl \
 
 ```
 
-```
-
 ### 8.6 Remove Old Key (After Verification)
 
 After confirming all secrets are encrypted with key2:
 
 ```bash
-
 # Update encryption config to remove old key
 
 sudo cat > /etc/kubernetes/enc/encryption-config.yaml <<EOF
@@ -626,14 +542,11 @@ sleep 30
 kubectl get secrets -n lab-secrets
 ```
 
-```
-
 ## Step 9: Testing and Validation
 
 ### 9.1 Test Secret Creation
 
 ```bash
-
 # Create multiple test secrets
 
 for i in {1..5}; do
@@ -647,12 +560,9 @@ done
 kubectl get secrets -n lab-secrets
 ```
 
-```
-
 ### 9.2 Test Secret Retrieval
 
 ```bash
-
 # Retrieve and decode a secret
 
 kubectl get secret encrypted-secret -n lab-secrets -o jsonpath='{.data.api-key}' | base64 -d
@@ -664,12 +574,9 @@ kubectl get secret encrypted-secret -n lab-secrets -o jsonpath='{.data.api-key}'
 kubectl get secret encrypted-secret -n lab-secrets -o yaml
 ```
 
-```
-
 ### 9.3 Test RBAC with Encrypted Secrets
 
 ```bash
-
 # Create ServiceAccount
 
 kubectl create serviceaccount secret-reader -n lab-secrets
@@ -698,14 +605,11 @@ kubectl auth can-i get secrets \
 
 ```
 
-```
-
 ## Step 10: Troubleshooting
 
 ### 10.1 API Server Won't Start
 
 ```bash
-
 # Check API server logs
 
 docker logs kcsa-lab-control-plane | grep apiserver
@@ -722,12 +626,9 @@ journalctl -u kubelet -n 100 | grep encryption
 
 ```
 
-```
-
 ### 10.2 Verify Encryption Provider Configuration
 
 ```bash
-
 # Check if file exists and is readable
 
 docker exec -it kcsa-lab-control-plane ls -la /etc/kubernetes/enc/
@@ -737,12 +638,9 @@ docker exec -it kcsa-lab-control-plane ls -la /etc/kubernetes/enc/
 docker exec -it kcsa-lab-control-plane cat /etc/kubernetes/enc/encryption-config.yaml
 ```
 
-```
-
 ### 10.3 Test Encryption Manually
 
 ```bash
-
 # Create a test secret
 
 kubectl create secret generic test-enc \
@@ -762,8 +660,6 @@ ETCDCTL_API=3 etcdctl \
 
 ```
 
-```
-
 ## Challenge Exercises
 
 ### Challenge 1: Multiple Resource Types
@@ -771,7 +667,6 @@ ETCDCTL_API=3 etcdctl \
 Extend encryption to ConfigMaps:
 
 ```yaml
-
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
 resources:
@@ -786,8 +681,6 @@ resources:
       - identity: {}
 ```
 
-```
-
 ### Challenge 2: KMS Provider
 
 Research and configure a KMS provider (AWS KMS, Azure Key Vault, GCP KMS) instead of local keys.
@@ -797,19 +690,15 @@ Research and configure a KMS provider (AWS KMS, Azure Key Vault, GCP KMS) instea
 Enable audit logging to track Secret access:
 
 ```yaml
-
 # kube-apiserver flag
 
 - --audit-policy-file=/etc/kubernetes/audit-policy.yaml
 - --audit-log-path=/var/log/kubernetes/audit.log
 ```
 
-```
-
 Create audit policy:
 
 ```yaml
-
 apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
@@ -818,8 +707,6 @@ rules:
   resources:
   - group: ""
     resources: ["secrets"]
-```
-
 ```
 
 ## Lab Summary
@@ -848,7 +735,6 @@ In this lab, you:
 ### Remove Lab Resources
 
 ```bash
-
 # Delete lab namespace
 
 kubectl delete namespace lab-secrets
@@ -865,12 +751,10 @@ exit
 kubectl get pods -n kube-system -w | grep kube-apiserver
 ```
 
-```
-
 ## Additional Resources
 
 - [Kubernetes Encrypting Secret Data at Rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)
-- [Encryption Configuration API](https://kubernetes.io/docs/reference/config-api/apiserver-encryption.v1/)
+- [API Server Configuration API](https://kubernetes.io/docs/reference/config-api/apiserver-config.v1/)
 - [KMS Encryption Provider](https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/)
 
 ---

@@ -38,8 +38,6 @@ spec:
     protocol: TCP
 ```
 
-```
-
 **Security Best Practices**:
 
 - Use for all internal communication
@@ -57,7 +55,6 @@ spec:
 **Example**:
 
 ```yaml
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -72,8 +69,6 @@ spec:
     targetPort: 8080
     nodePort: 30080
     protocol: TCP
-```
-
 ```
 
 **Security Concerns**:
@@ -101,7 +96,6 @@ spec:
 **Example**:
 
 ```yaml
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -120,8 +114,6 @@ spec:
     protocol: TCP
 ```
 
-```
-
 **Security Best Practices**:
 
 - Use annotations to configure cloud provider security features
@@ -136,7 +128,6 @@ spec:
 **AWS**:
 
 ```yaml
-
 metadata:
   annotations:
 
@@ -157,12 +148,9 @@ metadata:
     service.beta.kubernetes.io/aws-load-balancer-access-log-enabled: "true"
 ```
 
-```
-
 **GCP**:
 
 ```yaml
-
 metadata:
   annotations:
 
@@ -175,12 +163,9 @@ metadata:
     cloud.google.com/app-protocols: '{"https":"HTTPS"}'
 ```
 
-```
-
 **Azure**:
 
 ```yaml
-
 metadata:
   annotations:
 
@@ -193,8 +178,6 @@ metadata:
     service.beta.kubernetes.io/load-balancer-source-ranges: "10.0.0.0/8"
 ```
 
-```
-
 #### 4. ExternalName
 
 **Description**: Maps a service to a DNS name.
@@ -204,7 +187,6 @@ metadata:
 **Example**:
 
 ```yaml
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -213,8 +195,6 @@ metadata:
 spec:
   type: ExternalName
   externalName: api.external-service.com
-```
-
 ```
 
 **Security Concerns**:
@@ -238,7 +218,6 @@ spec:
 **Solution**: Configure source IP preservation:
 
 ```yaml
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -250,8 +229,6 @@ spec:
     app: frontend
   ports:
   - port: 80
-```
-
 ```
 
 **Trade-offs**:
@@ -276,7 +253,6 @@ Popular Ingress Controllers include:
 ### Basic Ingress Resource
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -297,8 +273,6 @@ spec:
               number: 80
 ```
 
-```
-
 ### TLS Configuration
 
 TLS (Transport Layer Security) encrypts traffic between clients and your cluster.
@@ -308,7 +282,6 @@ TLS (Transport Layer Security) encrypts traffic between clients and your cluster
 **Option 1: Self-Signed Certificate (Development)**:
 
 ```bash
-
 # Generate private key
 
 openssl genrsa -out tls.key 2048
@@ -326,23 +299,17 @@ kubectl create secret tls example-tls \
   -n production
 ```
 
-```
-
 **Option 2: Let's Encrypt with cert-manager (Production)**:
 
 1. **Install cert-manager**:
 
 ```bash
-
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
-```
-
 ```
 
 1. **Create ClusterIssuer**:
 
 ```yaml
-
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -359,12 +326,9 @@ spec:
           class: nginx
 ```
 
-```
-
 1. **Use in Ingress**:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -391,14 +355,11 @@ spec:
               number: 80
 ```
 
-```
-
 #### TLS Best Practices
 
 **1. Manual TLS Secret Creation**:
 
 ```yaml
-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -410,12 +371,9 @@ data:
   tls.key: <base64-encoded-key>
 ```
 
-```
-
 **2. TLS Ingress Configuration**:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -454,12 +412,9 @@ spec:
               number: 80
 ```
 
-```
-
 **3. Multiple TLS Certificates**:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -497,8 +452,6 @@ spec:
               number: 80
 ```
 
-```
-
 ## Advanced Ingress Security
 
 ### 1. Basic Authentication
@@ -506,7 +459,6 @@ spec:
 Protect applications with username/password authentication:
 
 ```bash
-
 # Create auth file
 
 htpasswd -c auth admin
@@ -521,9 +473,6 @@ kubectl create secret generic basic-auth \
 ```
 
 ```
-
-```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -548,14 +497,11 @@ spec:
               number: 80
 ```
 
-```
-
 ### 2. IP Whitelisting
 
 Restrict access to specific IP addresses or ranges:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -578,14 +524,11 @@ spec:
               number: 80
 ```
 
-```
-
 ### 3. Rate Limiting
 
 Protect against DDoS and brute-force attacks:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -619,14 +562,11 @@ spec:
               number: 80
 ```
 
-```
-
 ### 4. CORS Configuration
 
 Control cross-origin resource sharing:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -652,8 +592,6 @@ spec:
               number: 80
 ```
 
-```
-
 ### 5. OAuth/OIDC Authentication
 
 Implement OAuth2 authentication using oauth2-proxy:
@@ -661,7 +599,6 @@ Implement OAuth2 authentication using oauth2-proxy:
 **Deploy oauth2-proxy**:
 
 ```yaml
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -718,12 +655,9 @@ spec:
     targetPort: 4180
 ```
 
-```
-
 **Configure Ingress with oauth2-proxy**:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -747,14 +681,11 @@ spec:
               number: 80
 ```
 
-```
-
 ### 6. Request Size Limits
 
 Protect against large payload attacks:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -784,14 +715,11 @@ spec:
               number: 80
 ```
 
-```
-
 ### 7. Custom Error Pages
 
 Prevent information disclosure:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -815,14 +743,11 @@ spec:
               number: 80
 ```
 
-```
-
 ### 8. Security Headers
 
 Add security headers to responses:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -855,8 +780,6 @@ spec:
               number: 80
 ```
 
-```
-
 ## Backend Protocol Configuration
 
 Secure communication between Ingress and backend services:
@@ -864,7 +787,6 @@ Secure communication between Ingress and backend services:
 ### HTTPS Backend
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -896,12 +818,9 @@ spec:
               number: 443
 ```
 
-```
-
 ### gRPC Backend
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -924,14 +843,11 @@ spec:
               number: 50051
 ```
 
-```
-
 ## Path-Based Security
 
 Apply different security policies to different paths:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -992,8 +908,6 @@ spec:
               number: 80
 ```
 
-```
-
 ## Service Mesh Integration
 
 Service meshes provide advanced traffic management and security:
@@ -1003,7 +917,6 @@ Service meshes provide advanced traffic management and security:
 **Enable mutual TLS**:
 
 ```yaml
-
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
@@ -1014,12 +927,9 @@ spec:
     mode: STRICT
 ```
 
-```
-
 **Authorization Policy**:
 
 ```yaml
-
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
@@ -1039,8 +949,6 @@ spec:
         methods: ["GET", "POST"]
 ```
 
-```
-
 ## Monitoring and Logging
 
 ### Ingress Access Logs
@@ -1048,7 +956,6 @@ spec:
 Configure detailed access logging:
 
 ```yaml
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -1060,8 +967,6 @@ data:
     "status": $status, "body_bytes_sent": $body_bytes_sent,
     "request_time": $request_time, "http_referrer": "$http_referer",
     "http_user_agent": "$http_user_agent"}'
-```
-
 ```
 
 ### Monitoring Metrics
@@ -1078,7 +983,6 @@ Key metrics to monitor:
 **Prometheus Integration**:
 
 ```yaml
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -1095,14 +999,11 @@ spec:
     port: 10254
 ```
 
-```
-
 ## Common Security Patterns
 
 ### 1. Complete Production Ingress
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -1156,12 +1057,9 @@ spec:
               number: 80
 ```
 
-```
-
 ### 2. Internal Service (No External Access)
 
 ```yaml
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -1182,14 +1080,11 @@ spec:
     targetPort: 5432
 ```
 
-```
-
 ### 3. Defense in Depth
 
 Combine multiple security layers:
 
 ```yaml
-
 # NetworkPolicy - Layer 1
 
 apiVersion: networking.k8s.io/v1
@@ -1258,8 +1153,6 @@ spec:
               number: 80
 ```
 
-```
-
 ## Best Practices
 
 1. **Always Use TLS**: Never expose services without TLS in production.
@@ -1303,10 +1196,7 @@ spec:
 **Solution**: Explicitly configure strong TLS:
 
 ```yaml
-
 nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
-```
-
 ```
 
 ### 4. No Rate Limiting
@@ -1366,7 +1256,6 @@ nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
 ### Common Commands
 
 ```bash
-
 # Services
 
 kubectl get services -n <namespace>
@@ -1389,12 +1278,9 @@ curl -v https://example.com
 curl -H "Host: example.com" http://<ingress-ip>
 ```
 
-```
-
 ### Common Annotations (NGINX Ingress)
 
 ```yaml
-
 # TLS
 
 nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
@@ -1426,8 +1312,6 @@ nginx.ingress.kubernetes.io/proxy-body-size: "10m"
 # Backend Protocol
 
 nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-```
-
 ```
 
 ---
