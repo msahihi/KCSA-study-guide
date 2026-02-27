@@ -211,8 +211,6 @@ sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 kubectl version --client
 ```
 
-```
-
 ### Install Kind
 
 ```bash
@@ -230,8 +228,6 @@ sudo mv ./kind /usr/local/bin/kind
 # Verify installation
 
 kind version
-```
-
 ```
 
 ### Create Your First Lab Cluster
@@ -259,8 +255,6 @@ kubectl get nodes
 
 ```
 
-```
-
 ### Optional: Install Additional Tools
 
 ```bash
@@ -278,8 +272,6 @@ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/
 # kubesec (security risk analysis)
 
 docker pull kubesec/kubesec:latest
-```
-
 ```
 
 ## Study Tips
@@ -304,5 +296,3 @@ docker pull kubesec/kubesec:latest
 **Ready to start?** Begin with [Domain 1: Cluster Setup](domains/01-cluster-setup/README.md) or jump to the [KCSA Cheatsheet](KCSA_CHEATSHEET.md) for a quick overview.
 
 **Questions?** Check the [mock-questions/](mock-questions/) directory for practice exams and detailed explanations.
-
-🎯 **Goal**: Master Kubernetes security fundamentals and pass the KCSA exam with confidence!
