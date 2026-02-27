@@ -114,52 +114,35 @@ spec:
           path: "/etc/kubernetes"
 ```
 
-```
-
 Apply the job:
 
 ```bash
-
 kubectl apply -f kube-bench-job.yaml
-```
-
 ```
 
 Wait for completion:
 
 ```bash
-
 kubectl wait --for=condition=complete job/kube-bench-master --timeout=300s
-```
-
 ```
 
 Get the pod name:
 
 ```bash
-
 KUBE_BENCH_POD=$(kubectl get pods -l app=kube-bench -o jsonpath='{.items[0].metadata.name}')
 echo $KUBE_BENCH_POD
-```
-
 ```
 
 View the results:
 
 ```bash
-
 kubectl logs $KUBE_BENCH_POD
-```
-
 ```
 
 Save results to a file:
 
 ```bash
-
 kubectl logs $KUBE_BENCH_POD > kube-bench-master-results.txt
-```
-
 ```
 
 ### Step 3: Run kube-bench for Worker Nodes
@@ -167,7 +150,6 @@ kubectl logs $KUBE_BENCH_POD > kube-bench-master-results.txt
 Create a file named `kube-bench-node-job.yaml`:
 
 ```yaml
-
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -209,46 +191,32 @@ spec:
           path: "/etc/kubernetes"
 ```
 
-```
-
 **Note**: If your worker nodes don't have the `node-role.kubernetes.io/worker` label, either add it or remove the nodeSelector.
 
 Check node labels:
 
 ```bash
-
 kubectl get nodes --show-labels
-```
-
 ```
 
 Add worker label if needed:
 
 ```bash
-
 kubectl label node <worker-node-name> node-role.kubernetes.io/worker=
-```
-
 ```
 
 Apply the job:
 
 ```bash
-
 kubectl apply -f kube-bench-node-job.yaml
 kubectl wait --for=condition=complete job/kube-bench-node --timeout=300s
-```
-
 ```
 
 View and save results:
 
 ```bash
-
 KUBE_BENCH_NODE_POD=$(kubectl get pods -l app=kube-bench-node -o jsonpath='{.items[0].metadata.name}')
 kubectl logs $KUBE_BENCH_NODE_POD > kube-bench-node-results.txt
-```
-
 ```
 
 ## Exercise 2: Analyze kube-bench Output
@@ -258,16 +226,12 @@ kubectl logs $KUBE_BENCH_NODE_POD > kube-bench-node-results.txt
 View your saved results:
 
 ```bash
-
 cat kube-bench-master-results.txt
-```
-
 ```
 
 **Output Structure**:
 
 ```
-
 [INFO] 1 Control Plane Security Configuration
 [INFO] 1.1 Control Plane Node Configuration Files
 [PASS] 1.1.1 Ensure that the API server pod specification file permissions are set to 600 or more restrictive
@@ -285,7 +249,6 @@ For example, chown root:root /etc/kubernetes/manifests/kube-apiserver.yaml
 0 checks INFO
 
 ```
-```
 
 **Status Meanings**:
 
@@ -299,25 +262,18 @@ For example, chown root:root /etc/kubernetes/manifests/kube-apiserver.yaml
 View only failures:
 
 ```bash
-
 grep FAIL kube-bench-master-results.txt
-```
-
 ```
 
 Count failures:
 
 ```bash
-
 grep -c FAIL kube-bench-master-results.txt
-```
-
 ```
 
 Create a summary:
 
 ```bash
-
 cat > analyze-results.sh << 'EOF'
 
 #!/bin/bash
@@ -355,8 +311,6 @@ chmod +x analyze-results.sh
 ./analyze-results.sh
 ```
 
-```
-
 ### Step 3: Prioritize Issues
 
 **Critical Priority (Fix Immediately)**:
@@ -389,7 +343,6 @@ chmod +x analyze-results.sh
 Let's create a prioritized list:
 
 ```bash
-
 cat > prioritize-findings.sh << 'EOF'
 
 #!/bin/bash
@@ -419,8 +372,6 @@ chmod +x prioritize-findings.sh
 ./prioritize-findings.sh
 ```
 
-```
-
 ## Exercise 3: Common Remediations
 
 ### Remediation 1: API Server Anonymous Authentication
@@ -430,16 +381,12 @@ chmod +x prioritize-findings.sh
 **Find if it failed**:
 
 ```bash
-
 grep "1.2.1" kube-bench-master-results.txt
-```
-
 ```
 
 **If FAIL, remediate**:
 
 ```bash
-
 # SSH to control plane node (if needed)
 # ssh user@control-plane-node
 
@@ -448,12 +395,9 @@ grep "1.2.1" kube-bench-master-results.txt
 sudo vim /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
 
-```
-
 Find the `command` section and add or modify:
 
 ```yaml
-
 spec:
   containers:
   - command:
@@ -464,14 +408,11 @@ spec:
 
 ```
 
-```
-
 Save the file. The API server will automatically restart.
 
 **Verify**:
 
 ```bash
-
 # Wait for API server to restart (30-60 seconds)
 
 sleep 60
@@ -479,8 +420,6 @@ sleep 60
 # Check if flag is present
 
 kubectl get pod kube-apiserver-$(hostname) -n kube-system -o yaml | grep anonymous-auth
-```
-
 ```
 
 Expected output: `- --anonymous-auth=false`
@@ -492,10 +431,7 @@ Expected output: `- --anonymous-auth=false`
 **Find if it failed**:
 
 ```bash
-
 grep -E "1.2.22|1.2.23|1.2.24|1.2.25" kube-bench-master-results.txt
-```
-
 ```
 
 **If FAIL, remediate**:
@@ -503,7 +439,6 @@ grep -E "1.2.22|1.2.23|1.2.24|1.2.25" kube-bench-master-results.txt
 1. Create audit policy file:
 
 ```bash
-
 sudo mkdir -p /etc/kubernetes/audit
 
 sudo cat > /etc/kubernetes/audit/policy.yaml << 'EOF'
@@ -547,31 +482,22 @@ rules:
 EOF
 ```
 
-```
-
 1. Create log directory:
 
 ```bash
-
 sudo mkdir -p /var/log/kubernetes
 sudo chmod 755 /var/log/kubernetes
-```
-
 ```
 
 1. Edit API server manifest:
 
 ```bash
-
 sudo vim /etc/kubernetes/manifests/kube-apiserver.yaml
-```
-
 ```
 
 Add to `command` section:
 
 ```yaml
-
 spec:
   containers:
   - command:
@@ -586,12 +512,9 @@ spec:
 
 ```
 
-```
-
 Add volume mounts:
 
 ```yaml
-
     volumeMounts:
     - mountPath: /etc/kubernetes/audit
       name: audit-policy
@@ -603,12 +526,9 @@ Add volume mounts:
 
 ```
 
-```
-
 Add volumes:
 
 ```yaml
-
   volumes:
   - hostPath:
       path: /etc/kubernetes/audit
@@ -623,12 +543,9 @@ Add volumes:
 
 ```
 
-```
-
 1. Verify:
 
 ```bash
-
 # Wait for API server to restart
 
 sleep 60
@@ -639,8 +556,6 @@ sudo ls -lh /var/log/kubernetes/
 sudo tail -f /var/log/kubernetes/audit.log
 ```
 
-```
-
 ### Remediation 3: kubelet Anonymous Authentication
 
 **Check**: 4.2.1 - Ensure that the --anonymous-auth argument is set to false
@@ -648,28 +563,21 @@ sudo tail -f /var/log/kubernetes/audit.log
 **Find if it failed**:
 
 ```bash
-
 grep "4.2.1" kube-bench-node-results.txt
-```
-
 ```
 
 **If FAIL, remediate**:
 
 ```bash
-
 # On each worker node
 # Edit kubelet configuration
 
 sudo vim /var/lib/kubelet/config.yaml
 ```
 
-```
-
 Add or modify:
 
 ```yaml
-
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 authentication:
@@ -681,25 +589,17 @@ authorization:
   mode: Webhook
 ```
 
-```
-
 Restart kubelet:
 
 ```bash
-
 sudo systemctl restart kubelet
-```
-
 ```
 
 Verify:
 
 ```bash
-
 sudo systemctl status kubelet
 kubectl get nodes  # Should still show Ready
-```
-
 ```
 
 ### Remediation 4: kubelet Read-Only Port
@@ -709,48 +609,33 @@ kubectl get nodes  # Should still show Ready
 **Find if it failed**:
 
 ```bash
-
 grep "4.2.4" kube-bench-node-results.txt
-```
-
 ```
 
 **If FAIL, remediate**:
 
 ```bash
-
 sudo vim /var/lib/kubelet/config.yaml
-```
-
 ```
 
 Add or modify:
 
 ```yaml
-
 readOnlyPort: 0
-```
-
 ```
 
 Restart kubelet:
 
 ```bash
-
 sudo systemctl restart kubelet
-```
-
 ```
 
 Verify:
 
 ```bash
-
 # This should fail (port closed)
 
 curl http://localhost:10255/metrics
-```
-
 ```
 
 ### Remediation 5: File Permissions
@@ -760,16 +645,12 @@ curl http://localhost:10255/metrics
 **Find failed file permission checks**:
 
 ```bash
-
 grep "1.1" kube-bench-master-results.txt | grep FAIL
-```
-
 ```
 
 **Common fixes**:
 
 ```bash
-
 # API server manifest
 
 sudo chmod 600 /etc/kubernetes/manifests/kube-apiserver.yaml
@@ -806,17 +687,12 @@ sudo chmod 600 /var/lib/kubelet/config.yaml
 sudo chown root:root /var/lib/kubelet/config.yaml
 ```
 
-```
-
 Verify:
 
 ```bash
-
 ls -la /etc/kubernetes/manifests/
 ls -la /etc/kubernetes/pki/ | head
 ls -la /etc/kubernetes/admin.conf
-```
-
 ```
 
 ## Exercise 4: Policy-Based Remediations
@@ -830,7 +706,6 @@ ls -la /etc/kubernetes/admin.conf
 1. Label production namespaces:
 
 ```bash
-
 # Create test namespace
 
 kubectl create namespace prod-apps
@@ -847,12 +722,9 @@ kubectl label namespace prod-apps \
 kubectl get namespace prod-apps -o yaml | grep pod-security
 ```
 
-```
-
 1. Test the policy:
 
 ```bash
-
 # This should fail (privileged)
 
 cat > test-privileged.yaml << EOF
@@ -872,14 +744,11 @@ EOF
 kubectl apply -f test-privileged.yaml
 ```
 
-```
-
 Expected: Error about baseline policy violation
 
 1. Create compliant pod:
 
 ```bash
-
 cat > test-compliant.yaml << EOF
 apiVersion: v1
 kind: Pod
@@ -905,8 +774,6 @@ EOF
 kubectl apply -f test-compliant.yaml
 ```
 
-```
-
 Expected: Success (with possible warnings)
 
 ### Remediation 7: Network Policies
@@ -916,7 +783,6 @@ Expected: Success (with possible warnings)
 **Remediate**:
 
 ```bash
-
 # Apply default deny to production namespace
 
 cat > default-deny-netpol.yaml << EOF
@@ -944,15 +810,10 @@ EOF
 kubectl apply -f default-deny-netpol.yaml
 ```
 
-```
-
 Verify:
 
 ```bash
-
 kubectl get networkpolicies -n prod-apps
-```
-
 ```
 
 ## Exercise 5: Verify Improvements
@@ -962,16 +823,12 @@ kubectl get networkpolicies -n prod-apps
 Delete old jobs:
 
 ```bash
-
 kubectl delete job kube-bench-master kube-bench-node
-```
-
 ```
 
 Run new scans:
 
 ```bash
-
 kubectl apply -f kube-bench-job.yaml
 kubectl wait --for=condition=complete job/kube-bench-master --timeout=300s
 
@@ -979,12 +836,9 @@ KUBE_BENCH_POD=$(kubectl get pods -l app=kube-bench -o jsonpath='{.items[0].meta
 kubectl logs $KUBE_BENCH_POD > kube-bench-master-results-after.txt
 ```
 
-```
-
 ### Step 2: Compare Results
 
 ```bash
-
 cat > compare-results.sh << 'EOF'
 
 #!/bin/bash
@@ -1024,14 +878,11 @@ chmod +x compare-results.sh
 ./compare-results.sh
 ```
 
-```
-
 ### Step 3: Document Exceptions
 
 For remaining failures, document why they're acceptable (if they are):
 
 ```bash
-
 cat > exceptions.md << 'EOF'
 
 # Security Audit Exceptions
@@ -1064,14 +915,11 @@ EOF
 echo "Edit exceptions.md to document your findings"
 ```
 
-```
-
 ## Exercise 6: Automate Regular Audits
 
 ### Step 1: Create CronJob for Regular Scans
 
 ```yaml
-
 cat > kube-bench-cronjob.yaml << 'EOF'
 apiVersion: batch/v1
 kind: CronJob
@@ -1132,15 +980,10 @@ EOF
 kubectl apply -f kube-bench-cronjob.yaml
 ```
 
-```
-
 Verify CronJob:
 
 ```bash
-
 kubectl get cronjob kube-bench-audit
-```
-
 ```
 
 ### Step 2: Test CronJob
@@ -1148,12 +991,9 @@ kubectl get cronjob kube-bench-audit
 Manually trigger:
 
 ```bash
-
 kubectl create job --from=cronjob/kube-bench-audit kube-bench-manual-test
 kubectl wait --for=condition=complete job/kube-bench-manual-test --timeout=300s
 kubectl logs job/kube-bench-manual-test
-```
-
 ```
 
 ## Challenge Questions
@@ -1208,7 +1048,6 @@ kubectl logs job/kube-bench-manual-test
 1. Check pod status:
 
    ```bash
-
    kubectl get pods -l app=kube-bench
    kubectl describe pod <kube-bench-pod>
 
@@ -1217,7 +1056,6 @@ kubectl logs job/kube-bench-manual-test
 1. Check logs:
 
    ```bash
-
    kubectl logs <kube-bench-pod>
 
    ```
@@ -1225,7 +1063,6 @@ kubectl logs job/kube-bench-manual-test
 1. Verify volume mounts exist on node:
 
    ```bash
-
    ls -la /etc/kubernetes/manifests
    ls -la /var/lib/kubelet
 
@@ -1240,7 +1077,6 @@ kubectl logs job/kube-bench-manual-test
 1. Check API server logs:
 
    ```bash
-
    kubectl logs -n kube-system kube-apiserver-<node-name> --previous
 
    ```
@@ -1248,7 +1084,6 @@ kubectl logs job/kube-bench-manual-test
 1. Verify YAML syntax:
 
    ```bash
-
    sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep -A 5 "audit"
 
    ```
@@ -1258,7 +1093,6 @@ kubectl logs job/kube-bench-manual-test
 1. Rollback the change:
 
    ```bash
-
    sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml.backup /etc/kubernetes/manifests/kube-apiserver.yaml
 
    ```
@@ -1272,7 +1106,6 @@ kubectl logs job/kube-bench-manual-test
 1. Use sudo:
 
    ```bash
-
    sudo vim /etc/kubernetes/manifests/kube-apiserver.yaml
 
    ```
@@ -1284,7 +1117,6 @@ kubectl logs job/kube-bench-manual-test
 ## Cleanup
 
 ```bash
-
 # Delete test resources
 
 kubectl delete namespace prod-apps
@@ -1299,8 +1131,6 @@ rm -f analyze-results.sh compare-results.sh prioritize-findings.sh
 rm -f test-*.yaml
 rm -f default-deny-netpol.yaml
 rm -f exceptions.md
-```
-
 ```
 
 **Note**: Don't rollback the security improvements you've made! Keep those in place.

@@ -165,12 +165,9 @@ kubectl create secret docker-registry regcred \
   -n default
 ```
 
-```
-
 **Method 2: From Docker config**
 
 ```bash
-
 # Login with docker first
 
 docker login myregistry.com
@@ -183,12 +180,9 @@ kubectl create secret generic regcred \
   -n default
 ```
 
-```
-
 **Method 3: From YAML manifest**
 
 ```yaml
-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -199,15 +193,10 @@ data:
   .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJteXJlZ2lzdHJ5LmNvbSI6IHsKCQkJImF1dGgiOiAiYldsMWMyVnlPbTE1Y0dGemMzZHZjbVE9IgoJCX0KCX0KfQ==
 ```
 
-```
-
 The `data` field contains base64-encoded Docker config:
 
 ```bash
-
 echo -n '{"auths":{"myregistry.com":{"auth":"base64(username:password)"}}}' | base64
-```
-
 ```
 
 ### Using ImagePullSecrets
@@ -215,7 +204,6 @@ echo -n '{"auths":{"myregistry.com":{"auth":"base64(username:password)"}}}' | ba
 **In Pod Spec:**
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -228,12 +216,9 @@ spec:
   - name: regcred
 ```
 
-```
-
 **In ServiceAccount:**
 
 ```yaml
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -243,12 +228,9 @@ imagePullSecrets:
 - name: regcred
 ```
 
-```
-
 Then use the ServiceAccount:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -260,17 +242,12 @@ spec:
     image: myregistry.com/myapp:v1.0
 ```
 
-```
-
 **Add to Default ServiceAccount:**
 
 ```bash
-
 kubectl patch serviceaccount default \
   -p '{"imagePullSecrets": [{"name": "regcred"}]}' \
   -n default
-```
-
 ```
 
 Now all pods in the namespace automatically use this secret.
@@ -280,7 +257,6 @@ Now all pods in the namespace automatically use this secret.
 Create a merged Docker config for multiple registries:
 
 ```yaml
-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -303,8 +279,6 @@ data:
     }
 ```
 
-```
-
 ### ImagePullSecrets Best Practices
 
 1. **Namespace Isolation**: Create secrets per namespace
@@ -319,7 +293,6 @@ data:
 ### Enable Docker Content Trust
 
 ```bash
-
 # Enable DCT globally
 
 export DOCKER_CONTENT_TRUST=1
@@ -327,8 +300,6 @@ export DOCKER_CONTENT_TRUST=1
 # Pull only signed images
 
 docker pull nginx:latest
-```
-
 ```
 
 With DCT enabled:
@@ -340,7 +311,6 @@ With DCT enabled:
 ### Push Signed Images with DCT
 
 ```bash
-
 # Enable DCT
 
 export DOCKER_CONTENT_TRUST=1
@@ -350,12 +320,9 @@ export DOCKER_CONTENT_TRUST=1
 docker push myregistry.com/myapp:v1.0
 ```
 
-```
-
 First push creates root and repository keys:
 
 ```
-
 You are about to create a new root signing key passphrase.
 This passphrase will be used to protect the most sensitive key in your signing system.
 
@@ -365,12 +332,10 @@ Enter passphrase for new repository key with ID def5678:
 Repeat passphrase for new repository key with ID def5678:
 
 ```
-```
 
 ### Verify Signed Images
 
 ```bash
-
 # Enable DCT
 
 export DOCKER_CONTENT_TRUST=1
@@ -380,15 +345,10 @@ export DOCKER_CONTENT_TRUST=1
 docker pull myregistry.com/myapp:v1.0
 ```
 
-```
-
 View image signatures:
 
 ```bash
-
 docker trust inspect myregistry.com/myapp:v1.0
-```
-
 ```
 
 ## Private Registry Setup
@@ -406,7 +366,6 @@ Harbor is the most feature-rich open-source registry.
 **Installation:**
 
 ```bash
-
 # Download Harbor installer
 
 wget https://github.com/goharbor/harbor/releases/download/v2.10.0/harbor-offline-installer-v2.10.0.tgz
@@ -421,12 +380,9 @@ cd harbor
 cp harbor.yml.tmpl harbor.yml
 ```
 
-```
-
 Edit `harbor.yml`:
 
 ```yaml
-
 hostname: registry.example.com
 
 https:
@@ -442,15 +398,10 @@ database:
 data_volume: /data
 ```
 
-```
-
 Install:
 
 ```bash
-
 sudo ./install.sh --with-trivy --with-notary
-```
-
 ```
 
 Harbor includes:
@@ -467,7 +418,6 @@ Harbor includes:
 Simple Docker registry with basic auth:
 
 ```bash
-
 # Create htpasswd file
 
 docker run --rm --entrypoint htpasswd httpd:2 -Bbn myuser mypassword > htpasswd
@@ -485,15 +435,10 @@ docker run -d \
   registry:2
 ```
 
-```
-
 Login:
 
 ```bash
-
 docker login localhost:5000
-```
-
 ```
 
 ### Registry with TLS
@@ -501,7 +446,6 @@ docker login localhost:5000
 Generate self-signed certificate:
 
 ```bash
-
 mkdir -p certs
 
 openssl req -newkey rsa:4096 -nodes -sha256 \
@@ -511,12 +455,9 @@ openssl req -newkey rsa:4096 -nodes -sha256 \
   -subj "/CN=myregistry.com"
 ```
 
-```
-
 Start registry with TLS:
 
 ```bash
-
 docker run -d \
   -p 5000:5000 \
   --name registry \
@@ -527,8 +468,6 @@ docker run -d \
   registry:2
 ```
 
-```
-
 ## Cloud Registry Security
 
 ### Amazon ECR
@@ -536,16 +475,12 @@ docker run -d \
 **Create Repository:**
 
 ```bash
-
 aws ecr create-repository --repository-name myapp
-```
-
 ```
 
 **Authentication:**
 
 ```bash
-
 # Get login password
 
 aws ecr get-login-password --region us-east-1 | \
@@ -553,24 +488,18 @@ aws ecr get-login-password --region us-east-1 | \
   123456789012.dkr.ecr.us-east-1.amazonaws.com
 ```
 
-```
-
 **Create Kubernetes Secret:**
 
 ```bash
-
 kubectl create secret docker-registry ecr-secret \
   --docker-server=123456789012.dkr.ecr.us-east-1.amazonaws.com \
   --docker-username=AWS \
   --docker-password=$(aws ecr get-login-password --region us-east-1)
 ```
 
-```
-
 **IAM Policy for ECR:**
 
 ```json
-
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -588,17 +517,12 @@ kubectl create secret docker-registry ecr-secret \
 }
 ```
 
-```
-
 **Enable Scanning:**
 
 ```bash
-
 aws ecr put-image-scanning-configuration \
   --repository-name myapp \
   --image-scanning-configuration scanOnPush=true
-```
-
 ```
 
 ### Google Artifact Registry
@@ -606,33 +530,24 @@ aws ecr put-image-scanning-configuration \
 **Create Repository:**
 
 ```bash
-
 gcloud artifacts repositories create myapp \
   --repository-format=docker \
   --location=us-central1
 ```
 
-```
-
 **Authentication:**
 
 ```bash
-
 gcloud auth configure-docker us-central1-docker.pkg.dev
-```
-
 ```
 
 **Create Kubernetes Secret:**
 
 ```bash
-
 kubectl create secret docker-registry gcr-secret \
   --docker-server=us-central1-docker.pkg.dev \
   --docker-username=_json_key \
   --docker-password="$(cat keyfile.json)"
-```
-
 ```
 
 ### Azure Container Registry
@@ -640,38 +555,28 @@ kubectl create secret docker-registry gcr-secret \
 **Create Registry:**
 
 ```bash
-
 az acr create --resource-group myResourceGroup \
   --name myregistry --sku Premium
-```
-
 ```
 
 **Authentication:**
 
 ```bash
-
 az acr login --name myregistry
-```
-
 ```
 
 **Create Kubernetes Secret:**
 
 ```bash
-
 kubectl create secret docker-registry acr-secret \
   --docker-server=myregistry.azurecr.io \
   --docker-username=myregistry \
   --docker-password=$(az acr credential show --name myregistry --query passwords[0].value -o tsv)
 ```
 
-```
-
 **Service Principal Authentication:**
 
 ```bash
-
 # Create service principal
 
 SP_PASSWORD=$(az ad sp create-for-rbac \
@@ -691,8 +596,6 @@ kubectl create secret docker-registry acr-secret \
   --docker-password=$SP_PASSWORD
 ```
 
-```
-
 ## Registry Admission Control
 
 ### OPA Gatekeeper Policy
@@ -700,7 +603,6 @@ kubectl create secret docker-registry acr-secret \
 Enforce registry restrictions:
 
 ```yaml
-
 apiVersion: templates.gatekeeper.sh/v1beta1
 kind: ConstraintTemplate
 metadata:
@@ -749,12 +651,9 @@ spec:
       - "123456789012.dkr.ecr.us-east-1.amazonaws.com/"
 ```
 
-```
-
 ### Kyverno Policy
 
 ```yaml
-
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -776,8 +675,6 @@ spec:
           - image: "myregistry.com/* | gcr.io/myproject/* | *.azurecr.io/*"
 ```
 
-```
-
 ## Registry Scanning
 
 ### Trivy Registry Scanning
@@ -785,7 +682,6 @@ spec:
 Scan images in a registry:
 
 ```bash
-
 # Scan specific image
 
 trivy image myregistry.com/myapp:v1.0
@@ -796,8 +692,6 @@ for IMAGE in $(kubectl get pods -n production -o jsonpath='{.items[*].spec.conta
   echo "Scanning: $IMAGE"
   trivy image --severity HIGH,CRITICAL $IMAGE
 done
-```
-
 ```
 
 ### Harbor Built-in Scanning
@@ -812,7 +706,6 @@ Harbor automatically scans images:
 ### ECR Image Scanning
 
 ```bash
-
 # Enable scan on push
 
 aws ecr put-image-scanning-configuration \
@@ -830,8 +723,6 @@ aws ecr start-image-scan \
 aws ecr describe-image-scan-findings \
   --repository-name myapp \
   --image-id imageTag=v1.0
-```
-
 ```
 
 ## Best Practices
@@ -899,7 +790,6 @@ aws ecr describe-image-scan-findings \
 **Solution:**
 
 ```bash
-
 # Check if logged in
 
 docker login myregistry.com
@@ -917,14 +807,11 @@ kubectl create secret docker-registry regcred \
 kubectl get secret regcred -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d
 ```
 
-```
-
 ### Issue: "x509: certificate signed by unknown authority"
 
 **Solution:**
 
 ```bash
-
 # For self-signed certs, add to trust store
 
 sudo cp registry.crt /usr/local/share/ca-certificates/
@@ -940,14 +827,11 @@ sudo update-ca-certificates
 sudo systemctl restart docker
 ```
 
-```
-
 ### Issue: Pod stuck in "ImagePullBackOff"
 
 **Diagnosis:**
 
 ```bash
-
 # Check pod events
 
 kubectl describe pod <pod-name>
@@ -963,8 +847,6 @@ kubectl get pod <pod-name> -o jsonpath='{.spec.imagePullSecrets}'
 # Test manual pull
 
 docker pull <image>
-```
-
 ```
 
 ## Key Points to Remember
@@ -1015,7 +897,6 @@ docker pull <image>
 ## Quick Reference
 
 ```bash
-
 # Create ImagePullSecret
 
 kubectl create secret docker-registry regcred \
@@ -1050,8 +931,6 @@ gcloud auth configure-docker
 # ACR login
 
 az acr login --name <registry>
-```
-
 ```
 
 ---

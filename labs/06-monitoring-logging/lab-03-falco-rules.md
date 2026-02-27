@@ -21,7 +21,6 @@
 ### Step 1: Create Custom Rules ConfigMap
 
 ```bash
-
 # Create custom rules file
 
 cat <<'EOF' > custom-rules.yaml
@@ -69,12 +68,9 @@ helm upgrade falco falcosecurity/falco \
 kubectl rollout status daemonset/falco -n falco
 ```
 
-```
-
 ### Step 2: Verify Custom Rule Loaded
 
 ```bash
-
 # Check if custom rule is loaded
 
 FALCO_POD=$(kubectl get pods -n falco -l app.kubernetes.io/name=falco -o jsonpath='{.items[0].metadata.name}')
@@ -82,12 +78,9 @@ FALCO_POD=$(kubectl get pods -n falco -l app.kubernetes.io/name=falco -o jsonpat
 kubectl exec -n falco $FALCO_POD -- falco --list | grep "Suspicious Binary"
 ```
 
-```
-
 ### Step 3: Test Custom Rule
 
 ```bash
-
 # Create test pod
 
 kubectl run test-custom --image=alpine:3.19 --command -- sleep 3600
@@ -105,8 +98,6 @@ kubectl exec test-custom -- sh -c "apk add --no-cache netcat-openbsd && nc -l 99
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep "Suspicious Binary"
 ```
 
-```
-
 **Verification**:
 
 - [ ] Custom rule loaded successfully
@@ -118,7 +109,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep "Suspicio
 ### Step 4: Package Manager Detection Rule
 
 ```bash
-
 cat <<'EOF' > advanced-rules.yaml
 customRules:
   custom-rules.yaml: |-
@@ -234,14 +224,11 @@ helm upgrade falco falcosecurity/falco \
 kubectl rollout status daemonset/falco -n falco
 ```
 
-```
-
 ### Step 5: Test Advanced Rules
 
 **Test 1: Package Manager Detection**
 
 ```bash
-
 # Should trigger in default namespace (not in allowed list)
 
 kubectl run test-pkg --image=ubuntu:22.04 --command -- sleep 3600
@@ -254,12 +241,9 @@ kubectl exec test-pkg -- apt-get update
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep "Package Manager"
 ```
 
-```
-
 **Test 2: Crypto Mining Detection**
 
 ```bash
-
 # Simulate crypto miner
 
 kubectl exec test-pkg -- sh -c "echo '#!/bin/sh' > /tmp/xmrig && chmod +x /tmp/xmrig && /tmp/xmrig || true"
@@ -267,8 +251,6 @@ kubectl exec test-pkg -- sh -c "echo '#!/bin/sh' > /tmp/xmrig && chmod +x /tmp/x
 # Check logs
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep "Crypto"
-```
-
 ```
 
 **Verification**:
@@ -282,7 +264,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep "Crypto"
 ### Step 6: Add Exceptions
 
 ```bash
-
 cat <<'EOF' > tuned-rules.yaml
 customRules:
   custom-rules.yaml: |-
@@ -342,12 +323,9 @@ helm upgrade falco falcosecurity/falco -n falco --reuse-values -f tuned-rules.ya
 kubectl rollout status daemonset/falco -n falco
 ```
 
-```
-
 ### Step 7: Test Exceptions
 
 ```bash
-
 # This should NOT trigger (in development namespace)
 
 kubectl create namespace development
@@ -364,8 +342,6 @@ kubectl exec test-pkg -- apt-get update
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30 | grep "Package Manager"
 ```
 
-```
-
 **Verification**:
 
 - [ ] Exception for development namespace works
@@ -377,7 +353,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30 | grep "Package 
 ### Step 8: Implement Rule Priorities
 
 ```bash
-
 cat <<'EOF' > priority-rules.yaml
 customRules:
   custom-rules.yaml: |-
@@ -454,12 +429,9 @@ helm upgrade falco falcosecurity/falco -n falco --reuse-values -f priority-rules
 kubectl rollout status daemonset/falco -n falco
 ```
 
-```
-
 ### Step 9: Test Priority Levels
 
 ```bash
-
 # Test CRITICAL: Container escape attempt
 
 kubectl exec test-pkg -- sh -c "ls /var/run/docker.sock || true"
@@ -477,8 +449,6 @@ echo "=== WARNING alerts ==="
 kubectl logs -n falco -l app.kubernetes.io/name=falco | jq 'select(.priority=="Warning")' | tail -5
 ```
 
-```
-
 **Verification**:
 
 - [ ] Different priorities work correctly
@@ -490,7 +460,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | jq 'select(.priority=="W
 ### Step 10: Multi-Stage Attack Detection
 
 ```bash
-
 cat <<'EOF' > complex-rules.yaml
 customRules:
   custom-rules.yaml: |-
@@ -556,8 +525,6 @@ helm upgrade falco falcosecurity/falco -n falco --reuse-values -f complex-rules.
 kubectl rollout status daemonset/falco -n falco
 ```
 
-```
-
 **Verification**:
 
 - [ ] Complex rules loaded
@@ -569,7 +536,6 @@ kubectl rollout status daemonset/falco -n falco
 ### Issue 1: Rule Not Triggering
 
 ```bash
-
 # Verify rule is loaded
 
 kubectl exec -n falco $FALCO_POD -- falco --list | grep "<rule-name>"
@@ -587,12 +553,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i error
 
 ```
 
-```
-
 ### Issue 2: Too Many False Positives
 
 ```bash
-
 # Solutions:
 # 1. Add namespace exceptions
 # 2. Add pod label exceptions
@@ -602,12 +565,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i error
 
 ```
 
-```
-
 ### Issue 3: Custom Rules Not Loading
 
 ```bash
-
 # Check ConfigMap
 
 kubectl get configmap -n falco
@@ -625,8 +585,6 @@ kubectl describe pod -n falco -l app.kubernetes.io/name=falco | grep -A 10 "Moun
 kubectl rollout restart daemonset/falco -n falco
 ```
 
-```
-
 ## Verification Checklist
 
 - [ ] Can write basic custom rules
@@ -640,14 +598,11 @@ kubectl rollout restart daemonset/falco -n falco
 ## Cleanup
 
 ```bash
-
 # Remove test pods
 
 kubectl delete pod test-custom test-pkg test-shell --ignore-not-found
 kubectl delete pod test-dev -n development --ignore-not-found
 kubectl delete namespace development --ignore-not-found
-```
-
 ```
 
 ## Challenge Exercises

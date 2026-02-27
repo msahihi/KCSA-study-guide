@@ -91,7 +91,6 @@ containerd
 **View Current Configuration**:
 
 ```bash
-
 # Show current config
 
 sudo containerd config dump
@@ -101,12 +100,9 @@ sudo containerd config dump
 sudo containerd config default > /tmp/config.toml
 ```
 
-```
-
 **Secure Containerd Configuration**:
 
 ```toml
-
 version = 2
 
 # Root directory for containerd state
@@ -204,12 +200,9 @@ state = "/run/containerd"
   level = "info"
 ```
 
-```
-
 **Apply Configuration**:
 
 ```bash
-
 # Backup existing config
 
 sudo cp /etc/containerd/config.toml /etc/containerd/config.toml.backup
@@ -231,8 +224,6 @@ sudo systemctl restart containerd
 sudo systemctl status containerd
 ```
 
-```
-
 ### Critical Security Settings
 
 #### 1. Socket Permissions
@@ -240,7 +231,6 @@ sudo systemctl status containerd
 The containerd socket provides full control over containers:
 
 ```bash
-
 # Check socket permissions
 
 ls -la /run/containerd/containerd.sock
@@ -253,8 +243,6 @@ sudo chmod 660 /run/containerd/containerd.sock
 sudo chown root:root /run/containerd/containerd.sock
 ```
 
-```
-
 **Why It Matters**: Anyone with socket access can create privileged containers, mount host filesystem, and escape to the host.
 
 #### 2. Restrict Network Access
@@ -262,7 +250,6 @@ sudo chown root:root /run/containerd/containerd.sock
 Disable remote API access:
 
 ```toml
-
 [grpc]
 
   # Only listen on Unix socket, NOT TCP
@@ -273,8 +260,6 @@ Disable remote API access:
 
 ```
 
-```
-
 **Never expose containerd over TCP** without proper authentication!
 
 #### 3. Registry Security
@@ -282,7 +267,6 @@ Disable remote API access:
 Only pull from trusted registries:
 
 ```toml
-
 [plugins."io.containerd.grpc.v1.cri".registry]
 
   # Require TLS for all registries
@@ -292,12 +276,9 @@ Only pull from trusted registries:
       insecure_skip_verify = false
 ```
 
-```
-
 **Content Trust**:
 
 ```bash
-
 # Enable Docker Content Trust (image signing)
 
 export DOCKER_CONTENT_TRUST=1
@@ -307,14 +288,11 @@ export DOCKER_CONTENT_TRUST=1
 crictl pull docker.io/library/nginx:1.27
 ```
 
-```
-
 #### 4. Resource Limits
 
 Prevent resource exhaustion:
 
 ```toml
-
 [plugins."io.containerd.grpc.v1.cri"]
 
   # Limit concurrent downloads
@@ -326,8 +304,6 @@ Prevent resource exhaustion:
   max_container_log_line_size = 16384
 ```
 
-```
-
 ### Using crictl (CRI CLI)
 
 `crictl` is the CLI for interacting with CRI-compatible runtimes:
@@ -335,7 +311,6 @@ Prevent resource exhaustion:
 **Installation**:
 
 ```bash
-
 # Download crictl
 
 VERSION="v1.30.0"
@@ -360,12 +335,9 @@ EOF
 crictl version
 ```
 
-```
-
 **Common Commands**:
 
 ```bash
-
 # List running containers
 
 crictl ps
@@ -415,12 +387,9 @@ crictl info
 crictl version
 ```
 
-```
-
 **Security Inspection**:
 
 ```bash
-
 # Check container security settings
 
 crictl inspect <container-id> | jq '.info.runtimeSpec.linux.seccomp'
@@ -433,8 +402,6 @@ crictl inspect <container-id> | jq '.info.runtimeSpec.process.capabilities'
 # Check AppArmor profile
 
 crictl inspect <container-id> | jq '.info.runtimeSpec.process.apparmorProfile'
-```
-
 ```
 
 ## Runtime Security Features
@@ -456,7 +423,6 @@ Containerd uses Linux namespaces to isolate containers:
 **Check Container Namespaces**:
 
 ```bash
-
 # Find container PID
 
 crictl inspect <container-id> | jq '.info.pid'
@@ -476,14 +442,11 @@ sudo ls -la /proc/<pid>/ns
 
 ```
 
-```
-
 **Namespace Sharing (Pod Concept)**:
 
 In Kubernetes, containers in the same pod share some namespaces:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -506,8 +469,6 @@ spec:
 
 ```
 
-```
-
 ### 2. Control Groups (cgroups)
 
 Cgroups limit container resource usage:
@@ -515,7 +476,6 @@ Cgroups limit container resource usage:
 **Check Container Cgroups**:
 
 ```bash
-
 # Find container cgroup path
 
 crictl inspect <container-id> | jq '.info.runtimeSpec.linux.cgroupsPath'
@@ -526,12 +486,9 @@ cat /sys/fs/cgroup/kubepods/pod<pod-uid>/<container-id>/memory.max
 cat /sys/fs/cgroup/kubepods/pod<pod-uid>/<container-id>/cpu.max
 ```
 
-```
-
 **Kubernetes Resource Limits**:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -549,12 +506,9 @@ spec:
         cpu: "500m"
 ```
 
-```
-
 **Verify Limits Applied**:
 
 ```bash
-
 # Get pod UID
 
 kubectl get pod resource-limited -o jsonpath='{.metadata.uid}'
@@ -573,8 +527,6 @@ cat /sys/fs/cgroup/kubepods/pod<uid>/*/cpu.max
 
 ```
 
-```
-
 ### 3. Capabilities
 
 Capabilities break root privileges into fine-grained permissions:
@@ -582,7 +534,6 @@ Capabilities break root privileges into fine-grained permissions:
 **View Container Capabilities**:
 
 ```bash
-
 # Get container capabilities
 
 crictl inspect <container-id> | jq '.info.runtimeSpec.process.capabilities'
@@ -598,12 +549,9 @@ crictl inspect <container-id> | jq '.info.runtimeSpec.process.capabilities'
 
 ```
 
-```
-
 **Drop All Capabilities**:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -621,12 +569,9 @@ spec:
 
 ```
 
-```
-
 **Verify Capabilities Dropped**:
 
 ```bash
-
 # Inside container
 
 cat /proc/1/status | grep Cap
@@ -635,14 +580,11 @@ cat /proc/1/status | grep Cap
 
 ```
 
-```
-
 ### 4. Read-Only Root Filesystem
 
 Prevent container from modifying its filesystem:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -669,12 +611,9 @@ spec:
     emptyDir: {}
 ```
 
-```
-
 **Verify Read-Only**:
 
 ```bash
-
 # Try to create file in container
 
 kubectl exec readonly-root -- touch /test
@@ -689,8 +628,6 @@ kubectl exec readonly-root -- touch /tmp/test
 
 ```
 
-```
-
 ## Advanced Runtime Security
 
 ### Rootless Containers
@@ -700,7 +637,6 @@ Run containers without root privileges:
 **Install Rootless Containerd**:
 
 ```bash
-
 # Install rootless containerd
 
 curl -fsSL https://get.docker.com/rootless | sh
@@ -712,8 +648,6 @@ containerd-rootless-setuptool.sh install
 # Run as regular user (no sudo)
 
 containerd --version
-```
-
 ```
 
 **Benefits**:
@@ -735,7 +669,6 @@ Use different runtimes for different workloads:
 **Define Runtime Class**:
 
 ```yaml
-
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
 metadata:
@@ -757,12 +690,9 @@ metadata:
 handler: runc
 ```
 
-```
-
 **Use Runtime Class**:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -774,12 +704,9 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 **Configure in Containerd**:
 
 ```toml
-
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]
   runtime_type = "io.containerd.runsc.v1"
 
@@ -787,14 +714,11 @@ spec:
   runtime_type = "io.containerd.kata.v2"
 ```
 
-```
-
 ### gVisor (Application Kernel)
 
 Stronger isolation via user-space kernel:
 
 ```
-
 ┌─────────────┐
 │ Application │
 └──────┬──────┘
@@ -809,12 +733,10 @@ Stronger isolation via user-space kernel:
 └─────────────┘
 
 ```
-```
 
 **Install gVisor**:
 
 ```bash
-
 # Add gVisor repository
 
 curl -fsSL https://gvisor.dev/archive.key | sudo gpg --dearmor -o /usr/share/keyrings/gvisor-archive-keyring.gpg
@@ -829,25 +751,17 @@ sudo apt update && sudo apt install -y runsc
 sudo nano /etc/containerd/config.toml
 ```
 
-```
-
 Add:
 
 ```toml
-
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]
   runtime_type = "io.containerd.runsc.v1"
 ```
 
 ```
-
-```bash
-
 # Restart containerd
 
 sudo systemctl restart containerd
-```
-
 ```
 
 **Trade-offs**:
@@ -860,7 +774,6 @@ sudo systemctl restart containerd
 VM-level isolation with container UX:
 
 ```
-
 ┌─────────────┐
 │ Application │
 └──────┬──────┘
@@ -873,7 +786,6 @@ VM-level isolation with container UX:
 │ Host Kernel │
 └─────────────┘
 
-```
 ```
 
 **Trade-offs**:
@@ -888,7 +800,6 @@ VM-level isolation with container UX:
 Monitor containerd events:
 
 ```bash
-
 # Stream containerd events
 
 sudo ctr events
@@ -899,14 +810,11 @@ sudo ctr events
 
 ```
 
-```
-
 ### Detect Suspicious Activity
 
 **Monitor for Privilege Escalation**:
 
 ```bash
-
 # Watch for privileged containers
 
 sudo crictl ps --format json | jq -r '.[] | select(.securityContext.privileged == true) | .id'
@@ -922,12 +830,9 @@ while true; do
 done
 ```
 
-```
-
 **Monitor Runtime Socket Access**:
 
 ```bash
-
 # Audit socket access
 
 sudo auditctl -w /run/containerd/containerd.sock -p rwxa -k containerd_socket
@@ -937,14 +842,11 @@ sudo auditctl -w /run/containerd/containerd.sock -p rwxa -k containerd_socket
 sudo ausearch -k containerd_socket
 ```
 
-```
-
 ### Integrate with Falco
 
 Falco can detect runtime threats:
 
 ```yaml
-
 # Falco rule: Detect privileged container
 
 - rule: Launch Privileged Container
@@ -957,8 +859,6 @@ Falco can detect runtime threats:
     %container.info)
   priority: WARNING
   tags: [container, cis, mitre_execution]
-```
-
 ```
 
 ## Security Best Practices
@@ -979,7 +879,6 @@ Falco can detect runtime threats:
 ### 2. Containerd Maintenance
 
 ```bash
-
 # Check containerd version
 
 containerd --version
@@ -1002,8 +901,6 @@ sudo systemctl status containerd
 sudo crictl info
 ```
 
-```
-
 ### 3. Incident Response
 
 **If runtime is compromised**:
@@ -1011,7 +908,6 @@ sudo crictl info
 1. **Isolate the node**:
 
    ```bash
-
    kubectl drain node-1 --ignore-daemonsets --delete-emptydir-data
    kubectl cordon node-1
 
@@ -1020,7 +916,6 @@ sudo crictl info
 1. **Investigate**:
 
    ```bash
-
    # Check running containers
 
    sudo crictl ps -a
@@ -1038,7 +933,6 @@ sudo crictl info
 1. **Preserve evidence**:
 
    ```bash
-
    # Save container logs
 
    sudo crictl logs <container-id> > /tmp/evidence/container.log
@@ -1052,7 +946,6 @@ sudo crictl info
 1. **Remediate**:
 
    ```bash
-
    # Stop compromised containers
 
    sudo crictl stop <container-id>
@@ -1071,7 +964,6 @@ sudo crictl info
 **Debug**:
 
 ```bash
-
 # Check container logs
 
 sudo crictl logs <container-id>
@@ -1097,7 +989,6 @@ sudo crictl info | jq '.config.containerd.runtimes'
 **Solution**:
 
 ```bash
-
 # Check socket permissions
 
 ls -la /run/containerd/containerd.sock
@@ -1120,23 +1011,18 @@ sudo crictl ps
 **Solution**:
 
 ```bash
-
 # Add registry CA certificate
 
 sudo mkdir -p /etc/containerd/certs.d/my-registry.com
 sudo cp ca.crt /etc/containerd/certs.d/my-registry.com/
 
 # Or skip verification (NOT recommended for production)
-
 sudo nano /etc/containerd/config.toml
-
 ```
 
 ```toml
-
 [plugins."io.containerd.grpc.v1.cri".registry.configs."my-registry.com".tls]
   insecure_skip_verify = true
-
 ```
 
 ## Next Steps

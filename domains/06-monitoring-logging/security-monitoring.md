@@ -89,7 +89,6 @@ Security monitoring integrates multiple data sources to provide comprehensive vi
 Fluentd is a data collector for unified logging:
 
 ```yaml
-
 # fluentd-daemonset.yaml
 
 apiVersion: apps/v1
@@ -140,12 +139,9 @@ spec:
           name: fluentd-config
 ```
 
-```
-
 #### Fluentd Configuration
 
 ```xml
-
 # fluent.conf
 
 <source>
@@ -244,14 +240,11 @@ spec:
 </match>
 ```
 
-```
-
 #### Using Fluent Bit (Lightweight)
 
 Fluent Bit is more resource-efficient than Fluentd:
 
 ```yaml
-
 # fluent-bit-daemonset.yaml
 
 apiVersion: apps/v1
@@ -325,12 +318,9 @@ data:
         Retry_Limit     5
 ```
 
-```
-
 ### Elasticsearch Deployment
 
 ```yaml
-
 # elasticsearch.yaml
 
 apiVersion: apps/v1
@@ -407,8 +397,6 @@ spec:
     name: transport
 ```
 
-```
-
 ## Metrics Collection
 
 ### Prometheus for Security Metrics
@@ -416,7 +404,6 @@ spec:
 #### Prometheus Deployment
 
 ```yaml
-
 # prometheus.yaml
 
 apiVersion: apps/v1
@@ -458,12 +445,9 @@ spec:
           claimName: prometheus-storage
 ```
 
-```
-
 #### Prometheus Configuration
 
 ```yaml
-
 # prometheus-config.yaml
 
 apiVersion: v1
@@ -606,14 +590,11 @@ data:
           description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} restarting frequently"
 ```
 
-```
-
 ### Security-Relevant Metrics
 
 #### API Server Metrics
 
 ```promql
-
 # Total API requests
 
 sum(rate(apiserver_request_total[5m]))
@@ -639,12 +620,9 @@ sum(rate(apiserver_request_total[5m])) by (user)
 sum(rate(apiserver_request_total[5m])) by (resource)
 ```
 
-```
-
 #### Pod/Container Metrics
 
 ```promql
-
 # Privileged containers running
 
 count(kube_pod_container_status_running{container_security_context_privileged="true"})
@@ -666,12 +644,9 @@ sum(rate(container_cpu_usage_seconds_total[5m])) by (namespace, pod)
 sum(container_memory_usage_bytes) by (namespace, pod)
 ```
 
-```
-
 #### Falco Metrics
 
 ```promql
-
 # Total Falco alerts
 
 sum(increase(falco_events[5m]))
@@ -689,8 +664,6 @@ sum(increase(falco_events[5m])) by (rule)
 rate(falco_events{priority="Critical"}[5m])
 ```
 
-```
-
 ## Security Dashboards
 
 ### Grafana Dashboard Examples
@@ -698,7 +671,6 @@ rate(falco_events{priority="Critical"}[5m])
 #### Security Overview Dashboard
 
 ```json
-
 {
   "dashboard": {
     "title": "Kubernetes Security Overview",
@@ -744,12 +716,9 @@ rate(falco_events{priority="Critical"}[5m])
 }
 ```
 
-```
-
 #### Audit Log Dashboard (Kibana)
 
 ```json
-
 {
   "title": "Kubernetes Audit Logs",
   "visualizations": [
@@ -778,8 +747,6 @@ rate(falco_events{priority="Critical"}[5m])
     }
   ]
 }
-```
-
 ```
 
 ### Key Dashboard Panels
@@ -820,7 +787,6 @@ Correlated events (high confidence):
 Events occurring close in time are related:
 
 ```yaml
-
 # AlertManager correlation example
 
 route:
@@ -836,14 +802,11 @@ route:
     group_by: ['cluster', 'alertname']
 ```
 
-```
-
 #### 2. Entity-Based Correlation
 
 Events related to same entity (user, pod, IP):
 
 ```promql
-
 # Find pods with multiple security issues
 
 (
@@ -855,14 +818,11 @@ Events related to same entity (user, pod, IP):
 )
 ```
 
-```
-
 #### 3. Pattern-Based Correlation
 
 Specific sequences indicate attacks:
 
 ```
-
 Attack Pattern: Container Escape
 
 1. Shell spawned in container (Falco)
@@ -872,14 +832,12 @@ Attack Pattern: Container Escape
 ⚠️ High confidence container escape attempt
 
 ```
-```
 
 ### Implementing Correlation
 
 #### Using Prometheus Recording Rules
 
 ```yaml
-
 # prometheus-rules.yaml
 
 groups:
@@ -910,12 +868,9 @@ groups:
       description: "Pod {{ $labels.pod }} has risk score {{ $value }}"
 ```
 
-```
-
 #### Using External Correlation Tools
 
 ```python
-
 # Example: Python correlation script
 
 import json
@@ -958,14 +913,11 @@ def correlate_events(falco_alerts, audit_logs, metrics):
     return incidents
 ```
 
-```
-
 ## Incident Response Workflows
 
 ### Automated Response Workflow
 
 ```
-
 ┌─────────────────────────────────────────────────────────┐
 │              Security Event Detected                     │
 │         (Falco, Audit Logs, Metrics)                    │
@@ -1029,12 +981,10 @@ def correlate_events(falco_alerts, audit_logs, metrics):
                     └────────────────────────────┘
 
 ```
-```
 
 ### Response Automation Example
 
 ```yaml
-
 # falco-response-engine.yaml
 
 apiVersion: v1
@@ -1079,14 +1029,11 @@ data:
           - type: metrics
 ```
 
-```
-
 ## Compliance Reporting
 
 ### Security Compliance Metrics
 
 ```promql
-
 # Example compliance metrics
 
 # 1. All privileged pods (should be 0 or small)
@@ -1112,8 +1059,6 @@ histogram_quantile(0.95,
 # 5. Falco uptime (should be > 99%)
 
 avg_over_time(up{job="falco"}[30d])
-```
-
 ```
 
 ### Compliance Dashboard

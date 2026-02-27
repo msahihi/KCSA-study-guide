@@ -43,7 +43,6 @@ Before starting these labs, ensure you have:
 #### Option 1: kind (Kubernetes in Docker)
 
 ```bash
-
 # Install kind
 
 curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
@@ -81,12 +80,9 @@ kubectl wait --namespace ingress-nginx \
   --timeout=90s
 ```
 
-```
-
 #### Option 2: minikube
 
 ```bash
-
 # Install minikube
 
 curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
@@ -106,8 +102,6 @@ kubectl get nodes
 kubectl get pods -n kube-system
 ```
 
-```
-
 #### Option 3: Cloud Provider
 
 For AWS EKS, GCP GKE, or Azure AKS, follow the respective cloud provider's documentation to create a cluster with at least 2 nodes.
@@ -115,7 +109,6 @@ For AWS EKS, GCP GKE, or Azure AKS, follow the respective cloud provider's docum
 ### Verify Your Setup
 
 ```bash
-
 # Check cluster nodes
 
 kubectl get nodes
@@ -136,8 +129,6 @@ kubectl api-resources | grep networkpolicies
 
 kubectl auth can-i create pods
 kubectl auth can-i create networkpolicies
-```
-
 ```
 
 ## Lab Structure
@@ -310,7 +301,6 @@ For exam preparation:
 1. Check CNI plugin supports NetworkPolicy
 
    ```bash
-
    kubectl get pods -n kube-system | grep -E "calico|cilium|weave"
 
    ```
@@ -318,7 +308,6 @@ For exam preparation:
 1. Verify NetworkPolicy exists
 
    ```bash
-
    kubectl get networkpolicies -A
 
    ```
@@ -326,7 +315,6 @@ For exam preparation:
 1. Check pod labels match selectors
 
    ```bash
-
    kubectl get pods --show-labels
 
    ```
@@ -340,7 +328,6 @@ For exam preparation:
 1. Check Ingress controller is running
 
    ```bash
-
    kubectl get pods -n ingress-nginx
 
    ```
@@ -348,7 +335,6 @@ For exam preparation:
 1. Verify Ingress resource
 
    ```bash
-
    kubectl get ingress -A
    kubectl describe ingress <name>
 
@@ -357,7 +343,6 @@ For exam preparation:
 1. Check service exists and has endpoints
 
    ```bash
-
    kubectl get svc
    kubectl get endpoints
 
@@ -372,7 +357,6 @@ For exam preparation:
 1. Check namespace labels
 
    ```bash
-
    kubectl get ns <namespace> --show-labels
 
    ```
@@ -380,7 +364,6 @@ For exam preparation:
 1. Use dry-run to see violations
 
    ```bash
-
    kubectl apply -f pod.yaml --dry-run=server
 
    ```
@@ -388,7 +371,6 @@ For exam preparation:
 1. Add required security context fields
 
    ```yaml
-
    securityContext:
      runAsNonRoot: true
      allowPrivilegeEscalation: false
@@ -404,7 +386,6 @@ For exam preparation:
 1. Verify secret exists
 
    ```bash
-
    kubectl get secret <name> -n <namespace>
 
    ```
@@ -412,7 +393,6 @@ For exam preparation:
 1. Check certificate contents
 
    ```bash
-
    kubectl get secret <name> -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -text
 
    ```
@@ -420,7 +400,6 @@ For exam preparation:
 1. Ensure Ingress references correct secret
 
    ```bash
-
    kubectl get ingress <name> -o yaml | grep secretName
 
    ```
@@ -430,7 +409,6 @@ For exam preparation:
 After completing all labs:
 
 ```bash
-
 # Delete all lab namespaces
 
 kubectl delete namespace lab-netpol
@@ -450,8 +428,6 @@ kind delete cluster
 # If using minikube, delete cluster
 
 minikube delete
-```
-
 ```
 
 ## Additional Resources

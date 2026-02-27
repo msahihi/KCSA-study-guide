@@ -74,7 +74,6 @@ Audit levels control how much information is logged:
 **Example of each level**:
 
 ```yaml
-
 # None - nothing logged
 
 - level: None
@@ -107,8 +106,6 @@ Audit levels control how much information is logged:
     resources: ["secrets"]
 ```
 
-```
-
 ## Configuring Audit Logging
 
 ### Audit Policy File
@@ -116,7 +113,6 @@ Audit levels control how much information is logged:
 The audit policy defines what gets logged. Create a policy file:
 
 ```yaml
-
 # /etc/kubernetes/audit-policy.yaml
 
 apiVersion: audit.k8s.io/v1
@@ -177,14 +173,11 @@ rules:
     - "RequestReceived"
 ```
 
-```
-
 ### Policy Rule Precedence
 
 **CRITICAL**: Rules are evaluated from top to bottom, and the **first match wins**.
 
 ```yaml
-
 rules:
 
   # This rule will match secrets in kube-system
@@ -204,8 +197,6 @@ rules:
       resources: ["secrets"]
 ```
 
-```
-
 **Best Practice**: Order rules from most specific to least specific.
 
 ### API Server Configuration
@@ -213,7 +204,6 @@ rules:
 Enable audit logging in the API server (kubeadm clusters):
 
 ```yaml
-
 # /etc/kubernetes/manifests/kube-apiserver.yaml
 
 apiVersion: v1
@@ -269,8 +259,6 @@ spec:
       type: DirectoryOrCreate
 ```
 
-```
-
 ### Audit Backends
 
 Kubernetes supports three audit backends:
@@ -283,15 +271,12 @@ Writes audit events to a log file on the API server host.
 **Cons**: Must manage log rotation, limited to single file
 
 ```bash
-
 # API server flags
 
 --audit-log-path=/var/log/kubernetes/audit.log
 --audit-log-maxage=30        # Keep logs for 30 days
 --audit-log-maxbackup=10     # Keep 10 backup files
 --audit-log-maxsize=100      # Rotate after 100 MB
-```
-
 ```
 
 #### 2. Webhook Backend
@@ -302,7 +287,6 @@ Sends audit events to an external HTTP API.
 **Cons**: Requires external service, can impact API server performance
 
 ```yaml
-
 # /etc/kubernetes/audit-webhook.yaml
 
 apiVersion: v1
@@ -325,8 +309,6 @@ users:
     client-key: /etc/kubernetes/pki/apiserver-audit.key
 ```
 
-```
-
 #### 3. Dynamic Backend
 
 Configured via API objects (advanced, not covered in KCSA).
@@ -336,7 +318,6 @@ Configured via API objects (advanced, not covered in KCSA).
 ### Audit Event Structure
 
 ```json
-
 {
   "kind": "Event",
   "apiVersion": "audit.k8s.io/v1",
@@ -367,8 +348,6 @@ Configured via API objects (advanced, not covered in KCSA).
 }
 ```
 
-```
-
 ### Key Fields Explained
 
 | Field | Description | Example Use |
@@ -386,7 +365,6 @@ Configured via API objects (advanced, not covered in KCSA).
 #### Example 1: Secret Access
 
 ```json
-
 {
   "kind": "Event",
   "level": "RequestResponse",
@@ -410,12 +388,9 @@ Configured via API objects (advanced, not covered in KCSA).
 }
 ```
 
-```
-
 #### Example 2: Failed Authentication
 
 ```json
-
 {
   "kind": "Event",
   "level": "Metadata",
@@ -436,12 +411,9 @@ Configured via API objects (advanced, not covered in KCSA).
 }
 ```
 
-```
-
 #### Example 3: Pod Exec
 
 ```json
-
 {
   "kind": "Event",
   "level": "Metadata",
@@ -460,8 +432,6 @@ Configured via API objects (advanced, not covered in KCSA).
 }
 ```
 
-```
-
 ## Analyzing Audit Logs
 
 ### Using jq for Analysis
@@ -469,86 +439,62 @@ Configured via API objects (advanced, not covered in KCSA).
 #### Find All Secret Access
 
 ```bash
-
 cat /var/log/kubernetes/audit.log | \
   jq 'select(.objectRef.resource=="secrets")'
-```
-
 ```
 
 #### Find Failed Authentication Attempts
 
 ```bash
-
 cat /var/log/kubernetes/audit.log | \
   jq 'select(.responseStatus.code >= 400 and .objectRef.resource=="tokenreviews")'
-```
-
 ```
 
 #### Track Actions by User
 
 ```bash
-
 cat /var/log/kubernetes/audit.log | \
   jq 'select(.user.username=="suspicious-user@example.com")'
-```
-
 ```
 
 #### Find Pod Exec/Attach Events
 
 ```bash
-
 cat /var/log/kubernetes/audit.log | \
   jq 'select(.objectRef.subresource=="exec" or .objectRef.subresource=="attach") |
       {user: .user.username, pod: .objectRef.name, namespace: .objectRef.namespace, time: .requestReceivedTimestamp}'
 ```
 
-```
-
 #### Find Privileged Pod Creation
 
 ```bash
-
 cat /var/log/kubernetes/audit.log | \
   jq 'select(.verb=="create" and .objectRef.resource=="pods") |
       select(.requestObject.spec.containers[].securityContext.privileged==true) |
       {user: .user.username, pod: .objectRef.name, time: .requestReceivedTimestamp}'
 ```
 
-```
-
 #### Find RBAC Changes
 
 ```bash
-
 cat /var/log/kubernetes/audit.log | \
   jq 'select(.objectRef.apiGroup=="rbac.authorization.k8s.io" and
              (.verb=="create" or .verb=="update" or .verb=="delete"))'
 ```
 
-```
-
 #### Top API Endpoints by Request Count
 
 ```bash
-
 cat /var/log/kubernetes/audit.log | \
   jq -r '.requestURI' | \
   sort | uniq -c | sort -rn | head -20
 ```
 
-```
-
 #### Find Requests from External IPs
 
 ```bash
-
 cat /var/log/kubernetes/audit.log | \
   jq 'select(.sourceIPs[0] | startswith("10.") or startswith("192.168.") | not)'
-```
-
 ```
 
 ### Common Audit Queries
@@ -556,7 +502,6 @@ cat /var/log/kubernetes/audit.log | \
 #### Security-Focused Queries
 
 ```bash
-
 # Find all actions on security-sensitive resources
 
 cat audit.log | jq 'select(.objectRef.resource=="secrets" or
@@ -582,12 +527,9 @@ cat audit.log | jq 'select(.verb=="create" and
                             .objectRef.resource=="serviceaccounts/token")'
 ```
 
-```
-
 #### Compliance Queries
 
 ```bash
-
 # All write operations (create/update/delete)
 
 cat audit.log | jq 'select(.verb=="create" or .verb=="update" or .verb=="delete" or .verb=="patch")'
@@ -601,8 +543,6 @@ cat audit.log | jq 'select(.objectRef.namespace=="production")'
 cat audit.log | jq 'select(.user.username | startswith("system:serviceaccount:"))'
 ```
 
-```
-
 ## Common Audit Policies
 
 ### Minimal Security Policy
@@ -610,7 +550,6 @@ cat audit.log | jq 'select(.user.username | startswith("system:serviceaccount:")
 Log only security-critical events:
 
 ```yaml
-
 apiVersion: audit.k8s.io/v1
 kind: Policy
 omitStages: ["RequestReceived"]
@@ -635,12 +574,9 @@ rules:
   - level: None
 ```
 
-```
-
 ### Comprehensive Security Policy
 
 ```yaml
-
 apiVersion: audit.k8s.io/v1
 kind: Policy
 omitStages: ["RequestReceived"]
@@ -713,14 +649,11 @@ rules:
   - level: Metadata
 ```
 
-```
-
 ### Compliance-Focused Policy
 
 For regulatory requirements (SOC 2, PCI-DSS):
 
 ```yaml
-
 apiVersion: audit.k8s.io/v1
 kind: Policy
 omitStages: ["RequestReceived"]
@@ -744,8 +677,6 @@ rules:
   - level: Metadata
 ```
 
-```
-
 ## Performance Considerations
 
 ### Audit Log Impact
@@ -766,7 +697,6 @@ Audit logging can impact API server performance:
 1. **Use None for health checks**:
 
    ```yaml
-
    - level: None
      users: ["system:kube-proxy", "system:kube-controller-manager"]
      verbs: ["watch"]
@@ -776,7 +706,6 @@ Audit logging can impact API server performance:
 1. **Omit RequestReceived stage**:
 
    ```yaml
-
    omitStages: ["RequestReceived"]
 
    ```
@@ -784,7 +713,6 @@ Audit logging can impact API server performance:
 1. **Don't log read-only for most resources**:
 
    ```yaml
-
    - level: None
      verbs: ["get", "list", "watch"]
      resources:
@@ -796,7 +724,6 @@ Audit logging can impact API server performance:
 1. **Use metadata for high-volume resources**:
 
    ```yaml
-
    - level: Metadata
      resources:
      - group: ""
@@ -807,7 +734,6 @@ Audit logging can impact API server performance:
 1. **Batch webhook events**:
 
    ```bash
-
    --audit-webhook-batch-max-wait=5s
    --audit-webhook-batch-max-size=400
 
@@ -861,7 +787,6 @@ Example cluster (100 nodes, 1000 pods):
 - **Storage**: Archive old logs to cheaper storage
 
 ```bash
-
 # API server log rotation flags
 
 --audit-log-maxage=90        # Keep for 90 days
@@ -869,14 +794,11 @@ Example cluster (100 nodes, 1000 pods):
 --audit-log-maxsize=100      # Rotate at 100 MB
 ```
 
-```
-
 ### Log Protection
 
 **Critical**: Audit logs contain sensitive information.
 
 ```bash
-
 # Secure the log directory
 
 chmod 700 /var/log/kubernetes
@@ -885,8 +807,6 @@ chown root:root /var/log/kubernetes
 # Secure individual log files
 
 chmod 600 /var/log/kubernetes/audit.log
-```
-
 ```
 
 **Best practices**:
@@ -915,7 +835,6 @@ chmod 600 /var/log/kubernetes/audit.log
 **Solutions**:
 
 ```bash
-
 # Check API server is running
 
 kubectl get pods -n kube-system kube-apiserver-*
@@ -937,8 +856,6 @@ ls -la /var/log/kubernetes/
 kubectl get pod kube-apiserver-controlplane -n kube-system -o yaml | grep audit
 ```
 
-```
-
 #### API Server Won't Start
 
 **Symptoms**: API server crash loop after enabling audit
@@ -952,7 +869,6 @@ kubectl get pod kube-apiserver-controlplane -n kube-system -o yaml | grep audit
 **Solutions**:
 
 ```bash
-
 # Validate policy YAML
 
 kubectl apply --dry-run=client -f /etc/kubernetes/audit-policy.yaml
@@ -967,8 +883,6 @@ sudo mkdir -p /var/log/kubernetes
 sudo chmod 700 /var/log/kubernetes
 ```
 
-```
-
 #### High Log Volume
 
 **Symptoms**: Log files growing too large, disk space issues
@@ -981,7 +895,6 @@ sudo chmod 700 /var/log/kubernetes
 1. Increase rotation frequency
 
 ```yaml
-
 # Exclude high-volume endpoints
 
 - level: None
@@ -996,8 +909,6 @@ sudo chmod 700 /var/log/kubernetes
 omitStages:
   - "RequestReceived"
   - "ResponseStarted"  # Add this
-```
-
 ```
 
 ## Exam Tips

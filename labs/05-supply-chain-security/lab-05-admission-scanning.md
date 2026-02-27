@@ -39,44 +39,30 @@ Install Kyverno:
 kubectl create -f https://github.com/kyverno/kyverno/releases/download/v1.11.0/install.yaml
 ```
 
-```
-
 Wait for Kyverno to be ready:
 
 ```bash
-
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kyverno -n kyverno --timeout=300s
-```
-
 ```
 
 Verify installation:
 
 ```bash
-
 kubectl get pods -n kyverno
 kubectl get svc -n kyverno
-```
-
 ```
 
 Check Kyverno version:
 
 ```bash
-
 kubectl get deployment kyverno -n kyverno -o jsonpath='{.spec.template.spec.containers[0].image}'
-```
-
 ```
 
 ### Step 2: Create Lab Namespace
 
 ```bash
-
 kubectl create namespace admission-lab
 kubectl config set-context --current --namespace=admission-lab
-```
-
 ```
 
 ## Part 2: Basic Policy Enforcement
@@ -86,7 +72,6 @@ kubectl config set-context --current --namespace=admission-lab
 Create a policy that blocks deployment of images using the :latest tag:
 
 ```bash
-
 cat > require-image-tag.yaml <<EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -119,12 +104,9 @@ EOF
 kubectl apply -f require-image-tag.yaml
 ```
 
-```
-
 Test the policy:
 
 ```bash
-
 # Should fail (using :latest)
 
 kubectl run test-latest --image=nginx:latest
@@ -134,16 +116,11 @@ kubectl run test-latest --image=nginx:latest
 kubectl run test-versioned --image=nginx:1.26
 ```
 
-```
-
 Check policy report:
 
 ```bash
-
 kubectl get policyreport -A
 kubectl describe policyreport -n admission-lab
-```
-
 ```
 
 ### Exercise 2: Restrict Registries
@@ -151,7 +128,6 @@ kubectl describe policyreport -n admission-lab
 Create a policy to allow only approved registries:
 
 ```bash
-
 cat > allowed-registries.yaml <<EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -185,12 +161,9 @@ EOF
 kubectl apply -f allowed-registries.yaml
 ```
 
-```
-
 Test the policy:
 
 ```bash
-
 # Should fail (unapproved registry)
 
 kubectl run test-disallowed --image=nginx:1.26
@@ -200,8 +173,6 @@ kubectl run test-disallowed --image=nginx:1.26
 kubectl run test-allowed --image=docker.io/myuser/myapp:v1.0
 ```
 
-```
-
 ## Part 3: Image Signature Verification
 
 ### Exercise 3: Verify Image Signatures
@@ -209,7 +180,6 @@ kubectl run test-allowed --image=docker.io/myuser/myapp:v1.0
 First, ensure you have signed images from Lab 02:
 
 ```bash
-
 # Sign a test image
 
 SIGNED_IMAGE="docker.io/youruser/signed-app:v1.0"
@@ -218,23 +188,17 @@ docker push $SIGNED_IMAGE
 cosign sign --key cosign.key $SIGNED_IMAGE
 ```
 
-```
-
 Create ConfigMap with public key:
 
 ```bash
-
 kubectl create configmap cosign-pub-keys \\
   --from-file=cosign.pub=cosign.pub \\
   -n kyverno
 ```
 
-```
-
 Create signature verification policy:
 
 ```bash
-
 cat > verify-signatures.yaml <<EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -270,12 +234,9 @@ EOF
 kubectl apply -f verify-signatures.yaml
 ```
 
-```
-
 Test signature verification:
 
 ```bash
-
 # Should succeed (signed image)
 
 kubectl run signed-app --image=docker.io/youruser/signed-app:v1.0
@@ -285,15 +246,10 @@ kubectl run signed-app --image=docker.io/youruser/signed-app:v1.0
 kubectl run unsigned-app --image=docker.io/youruser/unsigned-app:v1.0
 ```
 
-```
-
 Check pod events for verification details:
 
 ```bash
-
 kubectl describe pod signed-app | grep -A 10 Events
-```
-
 ```
 
 ### Exercise 4: Keyless Signature Verification
@@ -301,7 +257,6 @@ kubectl describe pod signed-app | grep -A 10 Events
 For keyless-signed images:
 
 ```bash
-
 cat > verify-keyless-signatures.yaml <<EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -334,8 +289,6 @@ EOF
 kubectl apply -f verify-keyless-signatures.yaml
 ```
 
-```
-
 ## Part 4: Vulnerability Scanning Admission
 
 ### Exercise 5: Install Trivy Operator
@@ -343,25 +296,18 @@ kubectl apply -f verify-keyless-signatures.yaml
 Install Trivy Operator for automated scanning:
 
 ```bash
-
 kubectl apply -f https://raw.githubusercontent.com/aquasecurity/trivy-operator/main/deploy/static/trivy-operator.yaml
-```
-
 ```
 
 Wait for operator:
 
 ```bash
-
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=trivy-operator -n trivy-system --timeout=300s
-```
-
 ```
 
 Configure operator:
 
 ```bash
-
 cat > trivy-operator-config.yaml <<EOF
 apiVersion: v1
 kind: ConfigMap
@@ -379,14 +325,11 @@ EOF
 kubectl apply -f trivy-operator-config.yaml
 ```
 
-```
-
 ### Exercise 6: Block Vulnerable Images
 
 Create a policy to block images with HIGH/CRITICAL vulnerabilities:
 
 ```bash
-
 cat > block-vulnerable-images.yaml <<EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -437,14 +380,11 @@ EOF
 kubectl apply -f block-vulnerable-images.yaml
 ```
 
-```
-
 ### Exercise 7: Scan on Deploy with Init Container
 
 Create a policy that adds a scanning init container:
 
 ```bash
-
 cat > scan-on-deploy.yaml <<EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -478,8 +418,6 @@ EOF
 kubectl apply -f scan-on-deploy.yaml
 ```
 
-```
-
 This adds an init container that scans the image before the pod starts.
 
 ## Part 5: SBOM Requirements
@@ -489,7 +427,6 @@ This adds an init container that scans the image before the pod starts.
 Create policy requiring SBOM attestation:
 
 ```bash
-
 cat > require-sbom.yaml <<EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -522,12 +459,9 @@ EOF
 kubectl apply -f require-sbom.yaml
 ```
 
-```
-
 Test with image that has SBOM:
 
 ```bash
-
 # Attach SBOM from Lab 04
 
 trivy image --format spdx-json -o sbom.json docker.io/youruser/myapp:v1.0
@@ -539,8 +473,6 @@ cosign attest --key cosign.key --type spdx --predicate sbom.json docker.io/youru
 kubectl run sbom-app --image=docker.io/youruser/myapp:v1.0
 ```
 
-```
-
 ## Part 6: Policy Reporting and Audit
 
 ### Exercise 9: View Policy Reports
@@ -548,29 +480,20 @@ kubectl run sbom-app --image=docker.io/youruser/myapp:v1.0
 Check cluster-wide policy reports:
 
 ```bash
-
 kubectl get clusterpolicyreport -A
-```
-
 ```
 
 View namespace policy report:
 
 ```bash
-
 kubectl get policyreport -n admission-lab
 kubectl describe policyreport -n admission-lab
-```
-
 ```
 
 Get policy violations:
 
 ```bash
-
 kubectl get policyreport -n admission-lab -o json | jq '.items[].results[] | select(.result == "fail")'
-```
-
 ```
 
 ### Exercise 10: Audit Mode vs Enforce Mode
@@ -578,7 +501,6 @@ kubectl get policyreport -n admission-lab -o json | jq '.items[].results[] | sel
 Create an audit-only policy:
 
 ```bash
-
 cat > audit-unsigned-images.yaml <<EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -608,12 +530,9 @@ EOF
 kubectl apply -f audit-unsigned-images.yaml
 ```
 
-```
-
 Audit mode allows deployments but records violations:
 
 ```bash
-
 # Deploy unsigned image
 
 kubectl run audit-test --image=nginx:1.26
@@ -623,14 +542,11 @@ kubectl run audit-test --image=nginx:1.26
 kubectl get policyreport -n admission-lab -o yaml | grep -A 20 audit-test
 ```
 
-```
-
 ### Exercise 11: Policy Exceptions
 
 Create policy exceptions for specific namespaces or users:
 
 ```bash
-
 cat > policy-exception.yaml <<EOF
 apiVersion: kyverno.io/v1alpha2
 kind: PolicyException
@@ -655,8 +571,6 @@ EOF
 kubectl apply -f policy-exception.yaml
 ```
 
-```
-
 ## Part 7: Custom Admission Webhook
 
 ### Exercise 12: Deploy Trivy Admission Webhook
@@ -664,7 +578,6 @@ kubectl apply -f policy-exception.yaml
 For advanced scenarios, deploy a custom admission webhook:
 
 ```bash
-
 # Clone repository
 
 git clone https://github.com/aquasecurity/trivy-kubernetes-admission
@@ -675,12 +588,9 @@ cd trivy-kubernetes-admission
 kubectl apply -f deploy/
 ```
 
-```
-
 Configure webhook:
 
 ```bash
-
 cat > webhook-config.yaml <<EOF
 apiVersion: v1
 kind: ConfigMap
@@ -700,8 +610,6 @@ EOF
 kubectl apply -f webhook-config.yaml
 ```
 
-```
-
 ## Part 8: Testing and Troubleshooting
 
 ### Exercise 13: Test Complete Policy Suite
@@ -709,7 +617,6 @@ kubectl apply -f webhook-config.yaml
 Create comprehensive test script:
 
 ```bash
-
 cat > test-admission-policies.sh <<'EOF'
 
 #!/bin/bash
@@ -768,14 +675,11 @@ chmod +x test-admission-policies.sh
 ./test-admission-policies.sh
 ```
 
-```
-
 ### Exercise 14: Debug Policy Failures
 
 When a policy blocks a deployment, debug with:
 
 ```bash
-
 # View Kyverno logs
 
 kubectl logs -n kyverno -l app.kubernetes.io/name=kyverno --tail=100
@@ -794,14 +698,11 @@ kubectl get clusterpolicy verify-image-signatures -o yaml
 kubectl run test --image=nginx:1.26 --dry-run=server -v=8
 ```
 
-```
-
 ### Exercise 15: Performance Tuning
 
 Optimize Kyverno for large clusters:
 
 ```bash
-
 cat > kyverno-tuning.yaml <<EOF
 apiVersion: v1
 kind: ConfigMap
@@ -830,12 +731,9 @@ kubectl apply -f kyverno-tuning.yaml
 kubectl rollout restart deployment kyverno -n kyverno
 ```
 
-```
-
 ## Verification Script
 
 ```bash
-
 cat > verify-admission-lab.sh <<'EOF'
 
 #!/bin/bash
@@ -887,12 +785,9 @@ chmod +x verify-admission-lab.sh
 ./verify-admission-lab.sh
 ```
 
-```
-
 ## Cleanup
 
 ```bash
-
 # Delete policies
 
 kubectl delete clusterpolicy --all
@@ -912,8 +807,6 @@ kubectl config set-context --current --namespace=default
 # Clean up files
 
 rm -f *.yaml *.sh
-```
-
 ```
 
 ## Key Takeaways

@@ -184,7 +184,6 @@ Lab 5: Security Monitoring
 ### Quick Setup Script
 
 ```bash
-
 #!/bin/bash
 # setup-monitoring-labs.sh
 
@@ -211,12 +210,9 @@ kubectl label nodes --all monitoring=enabled
 echo "Environment ready for labs!"
 ```
 
-```
-
 ### Verify Setup
 
 ```bash
-
 # Check Kubernetes version
 
 kubectl version --short
@@ -234,14 +230,11 @@ kubectl get namespaces
 kubectl get storageclass
 ```
 
-```
-
 ## Common Tools and Commands
 
 ### Essential Commands
 
 ```bash
-
 # Kubernetes basics
 
 kubectl get pods -A
@@ -273,12 +266,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco -f
 kubectl exec -n falco <falco-pod> -- falco --list
 ```
 
-```
-
 ### Helpful Aliases
 
 ```bash
-
 # Add to ~/.bashrc or ~/.zshrc
 
 alias k='kubectl'
@@ -295,8 +285,6 @@ alias kgf='kubectl get pods -n falco'
 alias klf-falco='kubectl logs -n falco -l app.kubernetes.io/name=falco -f'
 alias kgl='kubectl get pods -n logging'
 alias kgm='kubectl get pods -n monitoring'
-```
-
 ```
 
 ## Lab Completion Checklist
@@ -367,7 +355,8 @@ After completing all labs, you should be able to:
 ### Practice Environments
 
 - [Killercoda Scenarios](https://killercoda.com/)
-- [Falco Playground](https://falco.org/docs/getting-started/try-falco/)
+- [Falco Playground](https://play.falco.org/)
+- [Falco Getting Started](https://falco.org/docs/getting-started/)
 
 ## Getting Help
 
@@ -391,7 +380,6 @@ After completing all labs, you should be able to:
 After completing all labs:
 
 ```bash
-
 # Delete lab namespaces
 
 kubectl delete namespace logging
@@ -414,8 +402,6 @@ kubectl label nodes --all monitoring-
 rm -rf ~/k8s-security-labs/
 
 echo "Cleanup complete!"
-```
-
 ```
 
 ## Next Steps

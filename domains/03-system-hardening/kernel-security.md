@@ -62,7 +62,6 @@ Isolates process IDs - container sees only its processes.
 **Without PID namespace**:
 
 ```bash
-
 # On host
 
 ps aux | wc -l
@@ -77,12 +76,9 @@ docker run --pid=host busybox ps aux | wc -l
 
 ```
 
-```
-
 **With PID namespace** (default):
 
 ```bash
-
 # Inside container
 
 docker run busybox ps aux
@@ -95,12 +91,9 @@ docker run busybox ps aux
 
 ```
 
-```
-
 **Check Container PID Namespace**:
 
 ```bash
-
 # Get container PID on host
 
 crictl inspect <container-id> | jq '.info.pid'
@@ -123,14 +116,11 @@ ls -la /proc/self/ns/pid
 
 ```
 
-```
-
 **Kubernetes Shared PID Namespace**:
 
 Containers in a pod can share PID namespace:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -146,9 +136,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Sidecar can see nginx process
 
 kubectl exec shared-pid -c sidecar -- ps aux
@@ -160,8 +147,6 @@ kubectl exec shared-pid -c sidecar -- ps aux
 #  20   101      0:00  nginx: worker process
 #  30   root     0:00  sleep 3600
 #  40   root     0:00  ps aux
-
-```
 
 ```
 
@@ -178,7 +163,6 @@ Isolates network stack (interfaces, routing, firewall rules).
 **Check Network Namespace**:
 
 ```bash
-
 # Host network interfaces
 
 ip addr
@@ -194,12 +178,9 @@ kubectl logs test
 
 ```
 
-```
-
 **Shared Network Namespace** (hostNetwork):
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -212,16 +193,11 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Pod sees host's network interfaces
 
 kubectl exec host-network -- ip addr
 
 # Same output as host's `ip addr`
-
-```
 
 ```
 
@@ -239,7 +215,6 @@ Isolates filesystem mount points.
 **Check Mount Namespace**:
 
 ```bash
-
 # Host mounts
 
 mount | wc -l
@@ -255,12 +230,9 @@ kubectl logs test | wc -l
 
 ```
 
-```
-
 **Volume Mounts**:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -278,8 +250,6 @@ spec:
       path: /mnt/data
 ```
 
-```
-
 **Security Implications**:
 
 - Mounting host paths can leak sensitive data
@@ -289,7 +259,6 @@ spec:
 **Dangerous Mounts**:
 
 ```yaml
-
 # BAD: Mounting Docker socket
 
 volumeMounts:
@@ -311,8 +280,6 @@ volumes:
     path: /
 ```
 
-```
-
 With these mounts, container can escape to host!
 
 ### UTS Namespace
@@ -320,7 +287,6 @@ With these mounts, container can escape to host!
 Isolates hostname and domain name.
 
 ```bash
-
 # Host hostname
 
 hostname
@@ -336,12 +302,9 @@ kubectl logs test
 
 ```
 
-```
-
 **Shared UTS Namespace** (hostNetwork implies hostUTS):
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -354,8 +317,6 @@ spec:
     command: ["hostname"]
 ```
 
-```
-
 **Security Implications**:
 
 - Low security impact
@@ -366,7 +327,6 @@ spec:
 Isolates inter-process communication (shared memory, message queues, semaphores).
 
 ```bash
-
 # Host IPC resources
 
 ipcs
@@ -385,12 +345,9 @@ kubectl logs test
 
 ```
 
-```
-
 **Shared IPC** (hostIPC):
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -401,8 +358,6 @@ spec:
   - name: app
     image: busybox
     command: ["ipcs"]
-```
-
 ```
 
 **Security Implications**:
@@ -418,7 +373,6 @@ Maps user IDs inside container to different IDs on host.
 **Without User Namespace**:
 
 ```bash
-
 # Root in container = root on host
 
 kubectl run test --image=busybox --restart=Never -- id
@@ -435,12 +389,9 @@ ps aux | grep "sleep 3600"
 
 ```
 
-```
-
 **With User Namespace** (requires runtime support):
 
 ```bash
-
 # Root in container != root on host
 # uid=0 in container might be uid=100000 on host
 
@@ -459,8 +410,6 @@ ps aux | grep sleep
 
 ```
 
-```
-
 **Security Implications**:
 
 - Strongest namespace isolation
@@ -473,7 +422,6 @@ ps aux | grep sleep
 Isolates cgroup view - container sees itself as root of cgroup hierarchy.
 
 ```bash
-
 # Without cgroup namespace
 
 cat /proc/self/cgroup
@@ -487,8 +435,6 @@ kubectl logs test
 
 # Output: 0::/
 # Container thinks it's at cgroup root
-
-```
 
 ```
 
@@ -519,7 +465,6 @@ Cgroups limit and account for resource usage.
 **Set Memory Limits**:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -535,12 +480,9 @@ spec:
         memory: "128Mi"
 ```
 
-```
-
 **Check Memory Cgroup**:
 
 ```bash
-
 # Find cgroup path
 
 kubectl get pod memory-limit -o jsonpath='{.metadata.uid}'
@@ -561,14 +503,11 @@ sudo cat /sys/fs/cgroup/kubepods.slice/kubepods-pod<uid>.slice/memory.current
 
 ```
 
-```
-
 **OOM Kill**:
 
 When container exceeds memory limit, kernel kills it:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -585,9 +524,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Pod will be OOMKilled
 
 kubectl get pod oom-demo
@@ -604,14 +540,11 @@ kubectl describe pod oom-demo
 
 ```
 
-```
-
 ### CPU Cgroup
 
 **Set CPU Limits**:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -627,12 +560,9 @@ spec:
         cpu: "500m"  # 0.5 CPU cores
 ```
 
-```
-
 **Check CPU Cgroup**:
 
 ```bash
-
 # CPU quota (max CPU time per period)
 
 sudo cat /sys/fs/cgroup/kubepods.slice/kubepods-pod<uid>.slice/cpu.max
@@ -648,14 +578,11 @@ sudo cat /sys/fs/cgroup/kubepods.slice/kubepods-pod<uid>.slice/cpu.weight
 
 ```
 
-```
-
 **CPU Throttling**:
 
 Container using more CPU than limit is throttled:
 
 ```bash
-
 # Check throttling stats
 
 sudo cat /sys/fs/cgroup/kubepods.slice/kubepods-pod<uid>.slice/cpu.stat
@@ -668,14 +595,11 @@ sudo cat /sys/fs/cgroup/kubepods.slice/kubepods-pod<uid>.slice/cpu.stat
 
 ```
 
-```
-
 ### PID Cgroup
 
 Limits number of processes/threads:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -687,9 +611,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Check PID limit
 
 sudo cat /sys/fs/cgroup/kubepods.slice/kubepods-pod<uid>.slice/pids.max
@@ -701,19 +622,14 @@ sudo cat /sys/fs/cgroup/kubepods.slice/kubepods-pod<uid>.slice/pids.max
 
 ```
 
-```
-
 **Fork Bomb Protection**:
 
 ```yaml
-
 # Set PID limit in security context (future Kubernetes feature)
 
 securityContext:
   procMount: Default
   pidLimit: 100
-```
-
 ```
 
 ## Capabilities
@@ -745,7 +661,6 @@ Linux capabilities divide root privileges into distinct units.
 **Default Container Capabilities** (Docker/containerd):
 
 ```
-
 CAP_CHOWN
 CAP_DAC_OVERRIDE
 CAP_FSETID
@@ -762,14 +677,12 @@ CAP_KILL
 CAP_AUDIT_WRITE
 
 ```
-```
 
 ### Viewing Capabilities
 
 **Check Process Capabilities**:
 
 ```bash
-
 # Host process
 
 cat /proc/self/status | grep Cap
@@ -789,12 +702,9 @@ capsh --decode=000001ffffffffff
 
 ```
 
-```
-
 **Container Capabilities**:
 
 ```bash
-
 # Inside container
 
 kubectl exec <pod> -- cat /proc/1/status | grep Cap
@@ -804,14 +714,11 @@ kubectl exec <pod> -- cat /proc/1/status | grep Cap
 kubectl exec <pod> -- sh -c 'grep Cap /proc/1/status | cut -f2'
 ```
 
-```
-
 ### Dropping Capabilities
 
 **Drop ALL capabilities** (recommended):
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -826,12 +733,9 @@ spec:
         add: ["NET_BIND_SERVICE"]  # Only what's needed
 ```
 
-```
-
 **Verify**:
 
 ```bash
-
 kubectl exec no-caps -- cat /proc/1/status | grep CapEff
 
 # Output: CapEff:    0000000000000400
@@ -843,12 +747,9 @@ capsh --decode=0000000000000400
 
 ```
 
-```
-
 **Test Capability Restrictions**:
 
 ```bash
-
 # Without CAP_NET_RAW, can't ping
 
 kubectl exec no-caps -- ping 8.8.8.8
@@ -863,14 +764,11 @@ kubectl exec no-caps -- chown 1000:1000 /tmp/test
 
 ```
 
-```
-
 ### Privileged Containers
 
 **Privileged containers** get ALL capabilities:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -883,12 +781,9 @@ spec:
       privileged: true  # Dangerous!
 ```
 
-```
-
 **Capabilities of privileged container**:
 
 ```bash
-
 kubectl exec privileged -- cat /proc/1/status | grep CapEff
 
 # Output: CapEff:    000001ffffffffff
@@ -903,8 +798,6 @@ kubectl exec privileged -- cat /proc/1/status | grep CapEff
 
 ```
 
-```
-
 **NEVER use privileged containers** unless absolutely necessary (e.g., CNI plugins, device drivers).
 
 ## Kernel Security Parameters
@@ -914,7 +807,6 @@ kubectl exec privileged -- cat /proc/1/status | grep CapEff
 **View All Kernel Parameters**:
 
 ```bash
-
 sudo sysctl -a | wc -l
 
 # Output: ~1000 parameters
@@ -924,14 +816,11 @@ sudo sysctl -a | wc -l
 sudo sysctl -a | grep -E "kernel\.|net\."
 ```
 
-```
-
 ### Important Security Parameters
 
 **Address Space Layout Randomization (ASLR)**:
 
 ```bash
-
 # Check ASLR status
 
 sudo sysctl kernel.randomize_va_space
@@ -945,23 +834,17 @@ sudo sysctl kernel.randomize_va_space
 
 ```
 
-```
-
 **Restrict dmesg**:
 
 ```bash
-
 # Prevent non-root users from reading kernel logs
 
 sudo sysctl kernel.dmesg_restrict=1
 ```
 
-```
-
 **Restrict ptrace**:
 
 ```bash
-
 # Prevent processes from tracing other processes
 
 sudo sysctl kernel.yama.ptrace_scope=1
@@ -974,17 +857,12 @@ sudo sysctl kernel.yama.ptrace_scope=1
 
 ```
 
-```
-
 **Prevent core dumps**:
 
 ```bash
-
 # Disable core dumps for SUID programs
 
 sudo sysctl fs.suid_dumpable=0
-```
-
 ```
 
 ### Kubernetes-Required Parameters
@@ -992,7 +870,6 @@ sudo sysctl fs.suid_dumpable=0
 These must be enabled for Kubernetes:
 
 ```bash
-
 # Enable IP forwarding
 
 sudo sysctl -w net.ipv4.ip_forward=1
@@ -1013,8 +890,6 @@ EOF
 sudo sysctl -p /etc/sysctl.d/99-kubernetes.conf
 ```
 
-```
-
 ### Unsafe sysctl Parameters
 
 Some sysctls affect the entire host and are not namespace-aware:
@@ -1022,7 +897,6 @@ Some sysctls affect the entire host and are not namespace-aware:
 **Unsafe sysctls** (denied by default in Kubernetes):
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1038,9 +912,6 @@ spec:
 ```
 
 ```
-
-```bash
-
 # Pod creation fails
 
 kubectl apply -f unsafe-sysctl.yaml
@@ -1049,17 +920,12 @@ kubectl apply -f unsafe-sysctl.yaml
 
 ```
 
-```
-
 **Allow unsafe sysctls** (kubelet flag):
 
 ```bash
-
 # In kubelet configuration
 
 --allowed-unsafe-sysctls=kernel.shm_rmid_forced,net.core.somaxconn
-```
-
 ```
 
 **Safe sysctls** (namespace-aware, allowed by default):
@@ -1086,7 +952,6 @@ SELinux is an alternative to AppArmor (Red Hat/CentOS/Fedora).
 ### SELinux Modes
 
 ```bash
-
 # Check SELinux status
 
 getenforce
@@ -1099,12 +964,9 @@ sudo setenforce 0  # Permissive
 sudo setenforce 1  # Enforcing
 ```
 
-```
-
 ### SELinux in Kubernetes
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1121,19 +983,14 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 **Check SELinux Context**:
 
 ```bash
-
 # Inside container
 
 kubectl exec selinux-demo -- ps auxZ
 
 # Output: system_u:spc_r:spc_t:s0:c123,c456 root 1 0.0 0.1 ...
-
-```
 
 ```
 
@@ -1144,7 +1001,6 @@ kubectl exec selinux-demo -- ps auxZ
 ### View Loaded Modules
 
 ```bash
-
 # List all modules
 
 lsmod
@@ -1154,14 +1010,11 @@ lsmod
 lsmod | grep ip_tables
 ```
 
-```
-
 ### Block Module Loading
 
 **Prevent loading modules** in container:
 
 ```bash
-
 # Drop CAP_SYS_MODULE capability
 
 kubectl run test --image=busybox --restart=Never \
@@ -1175,19 +1028,14 @@ kubectl exec test -- modprobe ip_tables
 
 ```
 
-```
-
 **Block kernel module loading host-wide**:
 
 ```bash
-
 # Disable module loading
 
 sudo sysctl kernel.modules_disabled=1
 
 # This is irreversible until reboot!
-
-```
 
 ```
 
@@ -1227,7 +1075,6 @@ sudo sysctl kernel.modules_disabled=1
 ### Defense-in-Depth Example
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1301,8 +1148,6 @@ spec:
     emptyDir: {}
 ```
 
-```
-
 ## Troubleshooting
 
 ### Issue 1: Container Can't Bind to Port
@@ -1314,13 +1159,10 @@ spec:
 **Solution**:
 
 ```yaml
-
 securityContext:
   capabilities:
     drop: ["ALL"]
     add: ["NET_BIND_SERVICE"]
-```
-
 ```
 
 Or use port >= 1024.
@@ -1332,7 +1174,6 @@ Or use port >= 1024.
 **Debug**:
 
 ```bash
-
 # Check memory limit
 
 kubectl get pod <pod> -o jsonpath='{.spec.containers[0].resources.limits.memory}'
@@ -1346,8 +1187,6 @@ kubectl top pod <pod>
 kubectl describe pod <pod> | grep -A 10 Events
 ```
 
-```
-
 **Solution**: Increase memory limit or optimize application.
 
 ### Issue 3: Permission Denied in Container
@@ -1357,7 +1196,6 @@ kubectl describe pod <pod> | grep -A 10 Events
 **Check**:
 
 ```bash
-
 # Check capabilities
 
 kubectl exec <pod> -- cat /proc/1/status | grep Cap
@@ -1370,8 +1208,6 @@ kubectl exec <pod> -- grep Seccomp /proc/1/status
 # Check user
 
 kubectl exec <pod> -- id
-```
-
 ```
 
 **Solution**: Add required capability, adjust AppArmor profile, or run as root (carefully).

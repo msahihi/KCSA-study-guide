@@ -76,7 +76,6 @@ Falco uses one of two drivers to capture system calls:
 | **eBPF Probe** | Extended BPF program | No kernel module needed | Requires newer kernel (4.14+) | Restricted environments |
 
 ```bash
-
 # Check which driver is loaded
 
 falco --list-events
@@ -86,8 +85,6 @@ falco --list-events
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i "driver"
 ```
 
-```
-
 ## Falco Rules Language
 
 ### Rule Structure
@@ -95,7 +92,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i "driver"
 A Falco rule consists of several components:
 
 ```yaml
-
 - rule: Shell in Container
   desc: A shell was spawned in a container
   condition: >
@@ -111,8 +107,6 @@ A Falco rule consists of several components:
      cmdline=%proc.cmdline)
   priority: WARNING
   tags: [container, shell, mitre_execution]
-```
-
 ```
 
 **Components**:
@@ -133,7 +127,6 @@ Conditions are boolean expressions using fields and operators:
 #### Field Types
 
 ```yaml
-
 # Process fields
 
 proc.name           # Process name
@@ -176,12 +169,9 @@ evt.dir             # Direction (< for enter, > for exit)
 evt.time            # Timestamp
 ```
 
-```
-
 #### Operators
 
 ```yaml
-
 # Comparison
 
 =, !=               # Equals, not equals
@@ -201,12 +191,9 @@ and, or, not        # Boolean logic
 ()                  # Grouping
 ```
 
-```
-
 #### Example Conditions
 
 ```yaml
-
 # Shell in container
 
 spawned_process and container and proc.name in (bash, sh)
@@ -236,14 +223,11 @@ proc.name in (bash, sh, nc, ncat) and
 not k8s.pod.label.app="debug-tools"
 ```
 
-```
-
 ### Macros
 
 Macros are reusable condition snippets that make rules cleaner:
 
 ```yaml
-
 # Define macros
 
 - macro: spawned_process
@@ -272,8 +256,6 @@ Macros are reusable condition snippets that make rules cleaner:
   priority: ERROR
 ```
 
-```
-
 **Benefits of macros**:
 
 - Reduce repetition
@@ -286,7 +268,6 @@ Macros are reusable condition snippets that make rules cleaner:
 Lists define reusable collections of values:
 
 ```yaml
-
 # Define lists
 
 - list: shell_binaries
@@ -321,8 +302,6 @@ Lists define reusable collections of values:
   priority: CRITICAL
 ```
 
-```
-
 **Benefits of lists**:
 
 - Easy to update without changing rules
@@ -334,7 +313,6 @@ Lists define reusable collections of values:
 You can override or append to default Falco rules:
 
 ```yaml
-
 # Append items to existing list
 
 - list: shell_binaries
@@ -367,14 +345,11 @@ You can override or append to default Falco rules:
       values: [["debug-tools"]]
 ```
 
-```
-
 ## Common Falco Rules
 
 ### Container Security
 
 ```yaml
-
 # Detect shell in container
 
 - rule: Shell Spawned in Container
@@ -419,12 +394,9 @@ You can override or append to default Falco rules:
   priority: WARNING
 ```
 
-```
-
 ### File System Activity
 
 ```yaml
-
 # Detect sensitive file read
 
 - rule: Read Sensitive File
@@ -466,12 +438,9 @@ You can override or append to default Falco rules:
   priority: ERROR
 ```
 
-```
-
 ### Network Activity
 
 ```yaml
-
 # Detect outbound connection to suspicious IP
 
 - rule: Outbound Connection to Suspicious IP
@@ -514,12 +483,9 @@ You can override or append to default Falco rules:
   priority: CRITICAL
 ```
 
-```
-
 ### Process Execution
 
 ```yaml
-
 # Detect unexpected process execution
 
 - rule: Unexpected Process in Container
@@ -562,12 +528,9 @@ You can override or append to default Falco rules:
   priority: WARNING
 ```
 
-```
-
 ### Crypto Mining Detection
 
 ```yaml
-
 # Detect known crypto mining processes
 
 - rule: Detect Crypto Mining
@@ -598,8 +561,6 @@ You can override or append to default Falco rules:
   priority: CRITICAL
 ```
 
-```
-
 ## Installing Falco
 
 ### Installation Methods
@@ -607,7 +568,6 @@ You can override or append to default Falco rules:
 #### 1. Helm (Recommended)
 
 ```bash
-
 # Add Falco Helm repository
 
 helm repo add falcosecurity https://falcosecurity.github.io/charts
@@ -626,12 +586,9 @@ kubectl get pods -n falco
 kubectl logs -n falco -l app.kubernetes.io/name=falco
 ```
 
-```
-
 #### 2. DaemonSet (Manual)
 
 ```yaml
-
 # falco-daemonset.yaml
 
 apiVersion: apps/v1
@@ -695,12 +652,9 @@ spec:
           path: /etc
 ```
 
-```
-
 ### Configuration
 
 ```yaml
-
 # values.yaml for Helm
 
 falco:
@@ -750,8 +704,6 @@ falcosidekick:
     enabled: true
 ```
 
-```
-
 ## Falco Outputs
 
 ### Output Formats
@@ -759,16 +711,13 @@ falcosidekick:
 #### 1. Text Output (Default)
 
 ```
-
 15:04:05.123456789: Warning Shell spawned in container (user=root container=nginx-pod proc=bash parent=containerd-shim cmdline=bash)
 
-```
 ```
 
 #### 2. JSON Output
 
 ```json
-
 {
   "output": "Shell spawned in container (user=root container=nginx-pod proc=bash)",
   "priority": "Warning",
@@ -784,47 +733,35 @@ falcosidekick:
 }
 ```
 
-```
-
 ### Output Destinations
 
 #### 1. Standard Output (Default)
 
 ```yaml
-
 # Falco config
 
 log_stderr: true
 json_output: true
 ```
 
-```
-
 View with kubectl:
 
 ```bash
-
 kubectl logs -n falco -l app.kubernetes.io/name=falco -f
-```
-
 ```
 
 #### 2. File Output
 
 ```yaml
-
 file_output:
   enabled: true
   keep_alive: false
   filename: /var/log/falco/events.log
 ```
 
-```
-
 #### 3. Webhook Output
 
 ```yaml
-
 http_output:
   enabled: true
   url: "http://alertmanager:9093/api/v1/alerts"
@@ -832,16 +769,11 @@ http_output:
   ca_cert: "/etc/ssl/ca.crt"
 ```
 
-```
-
 #### 4. Syslog Output
 
 ```yaml
-
 syslog_output:
   enabled: true
-```
-
 ```
 
 #### 5. Falcosidekick (Output Router)
@@ -849,7 +781,6 @@ syslog_output:
 Falcosidekick routes Falco alerts to multiple destinations:
 
 ```yaml
-
 # Helm values for Falcosidekick
 
 falcosidekick:
@@ -868,8 +799,6 @@ falcosidekick:
 
     loki:
       hostport: "http://loki:3100"
-```
-
 ```
 
 **Supported outputs**:
@@ -900,7 +829,6 @@ falcosidekick:
 **Behavior**: sshd process starts
 
 ```yaml
-
 # Step 1: Basic detection
 
 - rule: SSH Server in Container
@@ -929,14 +857,11 @@ falcosidekick:
   tags: [container, ssh, pci_dss_10.2.5]
 ```
 
-```
-
 ### Example: Detect Package Manager Execution
 
 **Threat**: Package managers used in production containers (supply chain attack indicator)
 
 ```yaml
-
 - list: package_managers
   items: [apt, apt-get, yum, dnf, rpm, dpkg, pip, pip3, npm, gem]
 
@@ -955,14 +880,11 @@ falcosidekick:
   tags: [container, software, mitre_persistence]
 ```
 
-```
-
 ### Example: Detect Binary Download and Execute
 
 **Threat**: Downloading and executing binaries (common attack pattern)
 
 ```yaml
-
 - rule: Download and Execute
   desc: Detect downloading file to /tmp and executing it
   condition: >
@@ -978,8 +900,6 @@ falcosidekick:
   tags: [container, mitre_execution]
 ```
 
-```
-
 ## Response Automation
 
 ### Alert Response Patterns
@@ -987,7 +907,6 @@ falcosidekick:
 #### 1. Log and Alert (Passive)
 
 ```yaml
-
 # Just log the event
 
 - rule: Suspicious Activity
@@ -995,12 +914,9 @@ falcosidekick:
   priority: WARNING
 ```
 
-```
-
 #### 2. Log, Alert, and Investigate (Active Monitoring)
 
 ```bash
-
 # On alert, gather additional context
 #!/bin/bash
 # triggered by Falco alert
@@ -1021,12 +937,9 @@ kubectl logs $POD_NAME > /var/log/incidents/$POD_NAME-logs.txt
 kubectl exec $POD_NAME -- netstat -antp > /var/log/incidents/$POD_NAME-network.txt
 ```
 
-```
-
 #### 3. Automated Response (Active Defense)
 
 ```bash
-
 #!/bin/bash
 # Kill pod on critical alert
 
@@ -1051,14 +964,11 @@ if [ "$PRIORITY" == "CRITICAL" ]; then
 fi
 ```
 
-```
-
 ### Integration with Kubernetes
 
 #### Kubernetes Response Controller
 
 ```yaml
-
 # Example: Kubernetes controller that watches Falco events
 
 apiVersion: apps/v1
@@ -1110,8 +1020,6 @@ subjects:
   namespace: falco
 ```
 
-```
-
 ## Performance Tuning
 
 ### Falco Performance Considerations
@@ -1130,19 +1038,15 @@ Falco can impact system performance if misconfigured:
 #### 1. Disable Unused Rules
 
 ```yaml
-
 # In custom rules file
 
 - rule: Unused Default Rule
   enabled: false
 ```
 
-```
-
 #### 2. Use Event Type Hints
 
 ```yaml
-
 # Without hint - checks all syscall types
 
 - rule: Slow Rule
@@ -1156,12 +1060,9 @@ Falco can impact system performance if misconfigured:
     - execve
 ```
 
-```
-
 #### 3. Tune Output Rate
 
 ```yaml
-
 # Rate limit specific rules
 
 - rule: Noisy Rule
@@ -1178,14 +1079,11 @@ Falco can impact system performance if misconfigured:
     max_burst: 10
 ```
 
-```
-
 #### 4. Use Appropriate Priority
 
 Only alert on what matters:
 
 ```yaml
-
 # Too noisy - fires on every file read
 
 - rule: Bad Rule
@@ -1199,12 +1097,9 @@ Only alert on what matters:
   priority: WARNING
 ```
 
-```
-
 ### Monitoring Falco Performance
 
 ```bash
-
 # Check Falco metrics
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i "drops"
@@ -1218,8 +1113,6 @@ kubectl top pods -n falco
 curl http://falco-pod:8765/metrics
 ```
 
-```
-
 ## Troubleshooting
 
 ### Common Issues
@@ -1227,7 +1120,6 @@ curl http://falco-pod:8765/metrics
 #### Falco Not Starting
 
 ```bash
-
 # Check pod status
 
 kubectl get pods -n falco
@@ -1243,12 +1135,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco
 
 ```
 
-```
-
 **Solutions**:
 
 ```bash
-
 # Check if driver loaded
 
 kubectl exec -n falco <pod> -- falco --list
@@ -1258,12 +1147,9 @@ kubectl exec -n falco <pod> -- falco --list
 helm upgrade falco falcosecurity/falco -n falco --set driver.kind=ebpf
 ```
 
-```
-
 #### No Events Detected
 
 ```bash
-
 # Verify Falco is receiving events
 
 kubectl exec -n falco <pod> -- falco --list
@@ -1273,12 +1159,9 @@ kubectl exec -n falco <pod> -- falco --list
 kubectl exec -n falco <pod> -- cat /etc/falco/falco_rules.yaml
 ```
 
-```
-
 **Test with known-bad action**:
 
 ```bash
-
 # Should trigger "Shell in Container" rule
 
 kubectl exec <some-pod> -- bash -c "echo test"
@@ -1288,12 +1171,9 @@ kubectl exec <some-pod> -- bash -c "echo test"
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "Shell"
 ```
 
-```
-
 #### High False Positive Rate
 
 ```yaml
-
 # Add exceptions
 
 - rule: Shell in Container
@@ -1313,8 +1193,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "Shell"
     not k8s.ns.name in (development, staging) and
     not k8s.pod.label.debug = "true"
   append: false
-```
-
 ```
 
 ## Exam Tips

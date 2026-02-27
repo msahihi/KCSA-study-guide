@@ -158,7 +158,6 @@ Before diving into Domain 1, ensure you have:
 ### Common kubectl Commands for Domain 1
 
 ```bash
-
 # Network Policies
 
 kubectl get networkpolicies -n <namespace>
@@ -186,8 +185,6 @@ kubectl expose deployment <name> --port=80 --type=ClusterIP
 
 kubectl auth can-i create networkpolicies --as=system:serviceaccount:default:default
 kubectl get pods -n <namespace> -o jsonpath='{.items[*].spec.securityContext}'
-```
-
 ```
 
 ## Next Steps

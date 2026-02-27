@@ -35,7 +35,6 @@ Your organization uses private container registries to store proprietary applica
 Create a secret for Docker Hub:
 
 ```bash
-
 # Create namespace
 
 kubectl create namespace registry-lab
@@ -50,25 +49,17 @@ kubectl create secret docker-registry dockerhub-secret \\
   --docker-email=your-email@example.com
 ```
 
-```
-
 Verify the secret:
 
 ```bash
-
 kubectl get secret dockerhub-secret
 kubectl describe secret dockerhub-secret
-```
-
 ```
 
 View secret data:
 
 ```bash
-
 kubectl get secret dockerhub-secret -o jsonpath='{.data.\\.dockerconfigjson}' | base64 -d | jq .
-```
-
 ```
 
 ### Exercise 2: Create Secret from Docker Config
@@ -76,7 +67,6 @@ kubectl get secret dockerhub-secret -o jsonpath='{.data.\\.dockerconfigjson}' | 
 Login to registries first:
 
 ```bash
-
 docker login
 
 # Or specific registry
@@ -84,17 +74,12 @@ docker login
 docker login myregistry.com
 ```
 
-```
-
 Create secret from existing Docker config:
 
 ```bash
-
 kubectl create secret generic docker-config-secret \\
   --from-file=.dockerconfigjson=$HOME/.docker/config.json \\
   --type=kubernetes.io/dockerconfigjson
-```
-
 ```
 
 ### Exercise 3: Create Secret from YAML
@@ -102,7 +87,6 @@ kubectl create secret generic docker-config-secret \\
 Create a manual secret:
 
 ```bash
-
 # Encode credentials
 
 AUTH=$(echo -n 'username:password' | base64)
@@ -121,8 +105,6 @@ EOF
 kubectl apply -f registry-secret.yaml
 ```
 
-```
-
 ## Part 2: Using ImagePullSecrets
 
 ### Exercise 4: Use Secret in Pod Spec
@@ -130,7 +112,6 @@ kubectl apply -f registry-secret.yaml
 Create a deployment with ImagePullSecret:
 
 ```bash
-
 cat > private-image-deployment.yaml <<EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -159,16 +140,11 @@ EOF
 kubectl apply -f private-image-deployment.yaml
 ```
 
-```
-
 Check pod status:
 
 ```bash
-
 kubectl get pods -l app=private-app
 kubectl describe pod -l app=private-app
-```
-
 ```
 
 ### Exercise 5: Attach Secret to ServiceAccount
@@ -176,7 +152,6 @@ kubectl describe pod -l app=private-app
 Create ServiceAccount with ImagePullSecret:
 
 ```bash
-
 cat > serviceaccount-with-secret.yaml <<EOF
 apiVersion: v1
 kind: ServiceAccount
@@ -190,12 +165,9 @@ EOF
 kubectl apply -f serviceaccount-with-secret.yaml
 ```
 
-```
-
 Use ServiceAccount in Pod:
 
 ```bash
-
 cat > pod-with-sa.yaml <<EOF
 apiVersion: v1
 kind: Pod
@@ -212,28 +184,20 @@ EOF
 kubectl apply -f pod-with-sa.yaml
 ```
 
-```
-
 ### Exercise 6: Patch Default ServiceAccount
 
 Add ImagePullSecret to default ServiceAccount:
 
 ```bash
-
 kubectl patch serviceaccount default \\
   -p '{"imagePullSecrets": [{"name": "dockerhub-secret"}]}' \\
   -n registry-lab
 ```
 
-```
-
 Verify:
 
 ```bash
-
 kubectl get serviceaccount default -o yaml | grep -A 2 imagePullSecrets
-```
-
 ```
 
 Now all pods without explicit ServiceAccount will use this secret.
@@ -245,7 +209,6 @@ Now all pods without explicit ServiceAccount will use this secret.
 Create a secret for multiple registries:
 
 ```bash
-
 # Create combined auth
 
 cat > docker-config.json <<EOF
@@ -270,12 +233,9 @@ kubectl create secret generic multi-registry-secret \\
   -n registry-lab
 ```
 
-```
-
 Use in deployment:
 
 ```bash
-
 cat > multi-registry-deployment.yaml <<EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -305,8 +265,6 @@ EOF
 kubectl apply -f multi-registry-deployment.yaml
 ```
 
-```
-
 ## Part 4: Cloud Registry Integration
 
 ### Exercise 8: Amazon ECR Authentication
@@ -314,7 +272,6 @@ kubectl apply -f multi-registry-deployment.yaml
 Setup ECR authentication:
 
 ```bash
-
 # Install AWS CLI if needed
 # curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 # unzip awscliv2.zip
@@ -340,12 +297,9 @@ kubectl create secret docker-registry ecr-secret \\
   -n registry-lab
 ```
 
-```
-
 Note: ECR tokens expire after 12 hours. Consider using a CronJob for rotation:
 
 ```bash
-
 cat > ecr-credential-refresher.yaml <<EOF
 apiVersion: batch/v1
 kind: CronJob
@@ -375,14 +329,11 @@ spec:
 EOF
 ```
 
-```
-
 ### Exercise 9: Google Container Registry (GCR)
 
 Setup GCR authentication:
 
 ```bash
-
 # Service account key file (download from GCP)
 
 GCR_KEY_FILE="path/to/keyfile.json"
@@ -398,12 +349,9 @@ kubectl create secret docker-registry gcr-secret \\
   -n registry-lab
 ```
 
-```
-
 For Google Artifact Registry:
 
 ```bash
-
 GAR_URL="us-central1-docker.pkg.dev"
 
 kubectl create secret docker-registry gar-secret \\
@@ -413,14 +361,11 @@ kubectl create secret docker-registry gar-secret \\
   -n registry-lab
 ```
 
-```
-
 ### Exercise 10: Azure Container Registry (ACR)
 
 Setup ACR authentication:
 
 ```bash
-
 ACR_NAME="myregistry"
 ACR_URL="${ACR_NAME}.azurecr.io"
 
@@ -440,12 +385,9 @@ kubectl create secret docker-registry acr-secret \\
   -n registry-lab
 ```
 
-```
-
 Better: Use service principal:
 
 ```bash
-
 # Create service principal
 
 SP_PASSWORD=$(az ad sp create-for-rbac \\
@@ -464,8 +406,6 @@ kubectl create secret docker-registry acr-sp-secret \\
   -n registry-lab
 ```
 
-```
-
 ## Part 5: Docker Content Trust
 
 ### Exercise 11: Enable Docker Content Trust
@@ -473,16 +413,12 @@ kubectl create secret docker-registry acr-sp-secret \\
 Enable DCT globally:
 
 ```bash
-
 export DOCKER_CONTENT_TRUST=1
-```
-
 ```
 
 Sign and push an image:
 
 ```bash
-
 # Build image
 
 docker build -t docker.io/youruser/trusted-app:v1.0 .
@@ -492,12 +428,9 @@ docker build -t docker.io/youruser/trusted-app:v1.0 .
 docker push docker.io/youruser/trusted-app:v1.0
 ```
 
-```
-
 You'll be prompted to create keys:
 
 ```
-
 You are about to create a new root signing key passphrase.
 This passphrase will be used to protect the most sensitive key in your signing system.
 
@@ -507,36 +440,26 @@ Enter passphrase for new repository key with ID def5678:
 Repeat passphrase for new repository key with ID def5678:
 
 ```
-```
 
 Pull with DCT (only signed images allowed):
 
 ```bash
-
 docker pull docker.io/youruser/trusted-app:v1.0
-```
-
 ```
 
 Try pulling unsigned image (will fail):
 
 ```bash
-
 docker pull docker.io/youruser/unsigned-app:v1.0
 
 # Error: remote trust data does not exist
 
 ```
 
-```
-
 View trust data:
 
 ```bash
-
 docker trust inspect docker.io/youruser/trusted-app:v1.0
-```
-
 ```
 
 ## Part 6: Admission Control for Registries
@@ -546,19 +469,13 @@ docker trust inspect docker.io/youruser/trusted-app:v1.0
 Install Kyverno for policy enforcement:
 
 ```bash
-
 kubectl create -f https://github.com/kyverno/kyverno/releases/download/v1.11.0/install.yaml
-```
-
 ```
 
 Wait for Kyverno to be ready:
 
 ```bash
-
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kyverno -n kyverno --timeout=300s
-```
-
 ```
 
 ### Exercise 13: Restrict Allowed Registries
@@ -566,7 +483,6 @@ kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kyverno -n kyve
 Create policy to allow only specific registries:
 
 ```bash
-
 cat > allowed-registries-policy.yaml <<EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -593,12 +509,9 @@ EOF
 kubectl apply -f allowed-registries-policy.yaml
 ```
 
-```
-
 Test the policy:
 
 ```bash
-
 # Should succeed (allowed registry)
 
 kubectl run allowed-app --image=docker.io/youruser/app:v1.0 -n registry-lab
@@ -608,14 +521,11 @@ kubectl run allowed-app --image=docker.io/youruser/app:v1.0 -n registry-lab
 kubectl run disallowed-app --image=docker.io/nginx:latest -n registry-lab
 ```
 
-```
-
 ### Exercise 14: Require Signed Images
 
 Policy to require image signatures:
 
 ```bash
-
 cat > require-signatures-policy.yaml <<EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -648,12 +558,9 @@ EOF
 kubectl apply -f require-signatures-policy.yaml
 ```
 
-```
-
 Test with signed and unsigned images:
 
 ```bash
-
 # Signed image (should succeed)
 
 kubectl run signed-app --image=docker.io/youruser/signed-app:v1.0 -n registry-lab
@@ -663,8 +570,6 @@ kubectl run signed-app --image=docker.io/youruser/signed-app:v1.0 -n registry-la
 kubectl run unsigned-app --image=docker.io/youruser/unsigned-app:v1.0 -n registry-lab
 ```
 
-```
-
 ## Part 7: Troubleshooting
 
 ### Exercise 15: Debug ImagePullBackOff
@@ -672,7 +577,6 @@ kubectl run unsigned-app --image=docker.io/youruser/unsigned-app:v1.0 -n registr
 Create a pod with invalid credentials:
 
 ```bash
-
 cat > broken-pod.yaml <<EOF
 apiVersion: v1
 kind: Pod
@@ -689,12 +593,9 @@ EOF
 kubectl apply -f broken-pod.yaml
 ```
 
-```
-
 Debug:
 
 ```bash
-
 # Check pod status
 
 kubectl get pod broken-pod
@@ -716,8 +617,6 @@ kubectl get secret dockerhub-secret -o jsonpath='{.data.\\.dockerconfigjson}' | 
 docker pull docker.io/private/image:v1.0
 ```
 
-```
-
 Common issues:
 
 1. Secret doesn't exist
@@ -731,7 +630,6 @@ Common issues:
 Create debug pod to test registry access:
 
 ```bash
-
 kubectl run registry-debug \\
   --image=curlimages/curl:latest \\
   --rm -it --restart=Never \\
@@ -747,12 +645,9 @@ curl -v https://index.docker.io/v2/
 curl -u username:password https://index.docker.io/v2/
 ```
 
-```
-
 ## Verification Script
 
 ```bash
-
 cat > test-registry-security.sh <<'EOF'
 
 #!/bin/bash
@@ -807,12 +702,9 @@ chmod +x test-registry-security.sh
 ./test-registry-security.sh
 ```
 
-```
-
 ## Cleanup
 
 ```bash
-
 # Delete namespace
 
 kubectl delete namespace registry-lab
@@ -828,8 +720,6 @@ kubectl config set-context --current --namespace=default
 # Remove working files
 
 rm -f *.yaml *.json *.sh
-```
-
 ```
 
 ## Key Takeaways

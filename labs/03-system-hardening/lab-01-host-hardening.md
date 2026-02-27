@@ -28,7 +28,6 @@ By the end of this lab, you will be able to:
 We'll use a Kind cluster to simulate a Kubernetes node:
 
 ```bash
-
 # Create lab cluster
 
 cat <<EOF | kind create cluster --name host-hardening --config=-
@@ -49,14 +48,11 @@ EOF
 kubectl get nodes
 ```
 
-```
-
 ## Part 1: Initial Security Audit
 
 ### Step 1.1: Access the Worker Node
 
 ```bash
-
 # List Kind nodes
 
 docker ps --filter name=host-hardening
@@ -73,12 +69,9 @@ hostname
 
 ```
 
-```
-
 ### Step 1.2: Audit Running Services
 
 ```bash
-
 # List all active services
 
 systemctl list-units --type=service --state=running
@@ -95,14 +88,11 @@ systemctl list-units --type=service --state=running
 systemctl list-units --type=service --state=running | wc -l
 ```
 
-```
-
 **Analysis**: Note which services are running. In a production environment, you should disable any unnecessary services.
 
 ### Step 1.3: Check Open Network Ports
 
 ```bash
-
 # Install net-tools if not available
 
 apt-get update && apt-get install -y net-tools
@@ -123,8 +113,6 @@ netstat -tulpn
 
 ```
 
-```
-
 **Analysis**: Identify which ports are open and which services are listening.
 
 ### Step 1.4: Find SUID/SGID Binaries
@@ -132,7 +120,6 @@ netstat -tulpn
 SUID binaries can be privilege escalation risks:
 
 ```bash
-
 # Find SUID binaries
 
 find / -perm -4000 -type f 2>/dev/null
@@ -149,14 +136,11 @@ find / -perm -4000 -type f 2>/dev/null
 find / -perm -2000 -type f 2>/dev/null
 ```
 
-```
-
 **Analysis**: Review the list. Are any unexpected programs SUID?
 
 ### Step 1.5: Check File Permissions on Sensitive Files
 
 ```bash
-
 # Check Kubernetes certificate permissions
 
 ls -la /etc/kubernetes/pki/
@@ -179,8 +163,6 @@ ls -la /etc/containerd/config.toml
 
 ```
 
-```
-
 **Analysis**: Note any overly permissive files (world-writable, etc.)
 
 ## Part 2: Disable Unnecessary Services
@@ -188,7 +170,6 @@ ls -la /etc/containerd/config.toml
 ### Step 2.1: Identify Services to Disable
 
 ```bash
-
 # List all enabled services
 
 systemctl list-unit-files --type=service --state=enabled
@@ -201,14 +182,11 @@ systemctl list-unit-files --type=service --state=enabled
 
 ```
 
-```
-
 ### Step 2.2: Disable Unnecessary Services
 
 **Note**: In a Kind container, many services aren't present. This is for demonstration:
 
 ```bash
-
 # Example: If bluetooth is running (unlikely in container)
 
 systemctl stop bluetooth 2>/dev/null || echo "Bluetooth not present"
@@ -219,12 +197,9 @@ systemctl disable bluetooth 2>/dev/null || echo "Bluetooth not present"
 systemctl status bluetooth 2>/dev/null || echo "Bluetooth not present"
 ```
 
-```
-
 ### Step 2.3: Verify Essential Services Are Running
 
 ```bash
-
 # Ensure critical services are active
 
 systemctl is-active containerd
@@ -241,14 +216,11 @@ systemctl is-active kubelet
 
 ```
 
-```
-
 ## Part 3: Kernel Hardening Parameters
 
 ### Step 3.1: View Current Kernel Parameters
 
 ```bash
-
 # View all sysctl parameters
 
 sysctl -a | head -20
@@ -260,14 +232,11 @@ sysctl kernel.dmesg_restrict
 sysctl kernel.kptr_restrict
 ```
 
-```
-
 ### Step 3.2: Apply Security Hardening Parameters
 
 Create a hardening configuration:
 
 ```bash
-
 # Create sysctl configuration file
 
 cat <<EOF > /etc/sysctl.d/99-kubernetes-hardening.conf
@@ -313,12 +282,9 @@ EOF
 cat /etc/sysctl.d/99-kubernetes-hardening.conf
 ```
 
-```
-
 ### Step 3.3: Apply the Configuration
 
 ```bash
-
 # Load the module for bridge settings
 
 modprobe br_netfilter
@@ -339,12 +305,9 @@ sysctl net.ipv4.ip_forward
 
 ```
 
-```
-
 **Expected Output**:
 
 ```
-
 kernel.randomize_va_space = 2
 kernel.dmesg_restrict = 1
 kernel.kptr_restrict = 2
@@ -355,12 +318,10 @@ net.ipv4.conf.all.accept_redirects = 0
 ...
 
 ```
-```
 
 ### Step 3.4: Test Kernel Parameter Effects
 
 ```bash
-
 # Test dmesg restriction (should fail for non-root)
 
 su - nobody -s /bin/bash -c "dmesg"
@@ -372,14 +333,11 @@ su - nobody -s /bin/bash -c "dmesg"
 dmesg | tail -5
 ```
 
-```
-
 ## Part 4: Secure Kubernetes File Permissions
 
 ### Step 4.1: Set Correct Permissions on Kubelet Config
 
 ```bash
-
 # Check current permissions
 
 ls -la /var/lib/kubelet/config.yaml
@@ -397,12 +355,9 @@ ls -la /var/lib/kubelet/config.yaml
 
 ```
 
-```
-
 ### Step 4.2: Secure Certificate Files
 
 ```bash
-
 # Check PKI directory permissions
 
 ls -la /etc/kubernetes/pki/
@@ -430,12 +385,9 @@ ls -la /etc/kubernetes/pki/
 
 ```
 
-```
-
 ### Step 4.3: Secure Containerd Socket
 
 ```bash
-
 # Check containerd socket permissions
 
 ls -la /run/containerd/containerd.sock
@@ -453,8 +405,6 @@ ls -la /run/containerd/containerd.sock
 
 ```
 
-```
-
 **Why This Matters**: The containerd socket provides full control over containers. Only root should have access.
 
 ## Part 5: CIS Benchmark Audit
@@ -464,7 +414,6 @@ ls -la /run/containerd/containerd.sock
 Exit the node container and run from your host:
 
 ```bash
-
 # Exit the node
 
 exit
@@ -486,12 +435,9 @@ kubectl logs job/kube-bench
 kubectl logs job/kube-bench > /tmp/kube-bench-results.txt
 ```
 
-```
-
 ### Step 5.2: Analyze Results
 
 ```bash
-
 # View summary
 
 kubectl logs job/kube-bench | grep -A 20 "== Summary =="
@@ -505,12 +451,9 @@ kubectl logs job/kube-bench | grep -A 20 "== Summary =="
 
 ```
 
-```
-
 ### Step 5.3: Review Failing Checks
 
 ```bash
-
 # View only failures
 
 kubectl logs job/kube-bench | grep FAIL
@@ -522,14 +465,11 @@ kubectl logs job/kube-bench | grep FAIL
 
 ```
 
-```
-
 ### Step 5.4: Remediate a Specific Issue
 
 Let's fix the `--protect-kernel-defaults` issue:
 
 ```bash
-
 # Access worker node again
 
 docker exec -it host-hardening-worker bash
@@ -539,19 +479,13 @@ docker exec -it host-hardening-worker bash
 nano /var/lib/kubelet/config.yaml
 ```
 
-```
-
 Add this line:
 
 ```yaml
-
 protectKernelDefaults: true
 ```
 
 ```
-
-```bash
-
 # Restart kubelet
 
 systemctl restart kubelet
@@ -565,14 +499,11 @@ systemctl status kubelet
 exit
 ```
 
-```
-
 **Note**: In production, you'd also need to ensure kernel parameters are set correctly.
 
 ### Step 5.5: Re-run kube-bench
 
 ```bash
-
 # Delete previous job
 
 kubectl delete job kube-bench
@@ -590,14 +521,11 @@ kubectl logs job/kube-bench | grep "4.2.6"
 
 ```
 
-```
-
 ## Part 6: Audit Logging Configuration
 
 ### Step 6.1: Install and Configure auditd
 
 ```bash
-
 # Access worker node
 
 docker exec -it host-hardening-worker bash
@@ -616,12 +544,9 @@ systemctl start auditd
 systemctl status auditd
 ```
 
-```
-
 ### Step 6.2: Create Audit Rules for Kubernetes
 
 ```bash
-
 # Create audit rules file
 
 cat <<EOF > /etc/audit/rules.d/kubernetes.rules
@@ -649,12 +574,9 @@ EOF
 cat /etc/audit/rules.d/kubernetes.rules
 ```
 
-```
-
 ### Step 6.3: Load Audit Rules
 
 ```bash
-
 # Load rules
 
 augenrules --load
@@ -670,12 +592,9 @@ auditctl -l
 
 ```
 
-```
-
 ### Step 6.4: Test Audit Logging
 
 ```bash
-
 # Make a change to trigger audit
 
 echo "# Test comment" >> /etc/kubernetes/kubelet.conf
@@ -694,12 +613,9 @@ ausearch -k k8s_config -ts recent
 
 ```
 
-```
-
 ### Step 6.5: Generate Audit Report
 
 ```bash
-
 # Generate summary report
 
 aureport
@@ -712,14 +628,11 @@ aureport -k
 
 ```
 
-```
-
 ## Part 7: Verification and Testing
 
 ### Step 7.1: Verify Kernel Parameters Persist
 
 ```bash
-
 # Exit and re-enter node (simulates reboot)
 
 exit
@@ -737,12 +650,9 @@ sysctl net.ipv4.ip_forward
 
 ```
 
-```
-
 ### Step 7.2: Verify File Permissions
 
 ```bash
-
 # Check key files
 
 ls -la /etc/kubernetes/pki/ca.key
@@ -759,12 +669,9 @@ ls -la /run/containerd/containerd.sock
 
 ```
 
-```
-
 ### Step 7.3: Verify Kubernetes Functionality
 
 ```bash
-
 # Exit node
 
 exit
@@ -794,14 +701,11 @@ kubectl get pod test
 kubectl delete pod test
 ```
 
-```
-
 ## Part 8: Document Findings
 
 Create a security audit report:
 
 ```bash
-
 cat <<EOF > /tmp/host-hardening-report.txt
 ========================================
 Host Security Audit Report
@@ -839,12 +743,9 @@ EOF
 cat /tmp/host-hardening-report.txt
 ```
 
-```
-
 ## Cleanup
 
 ```bash
-
 # Delete kube-bench job
 
 kubectl delete job kube-bench
@@ -852,8 +753,6 @@ kubectl delete job kube-bench
 # Delete the cluster
 
 kind delete cluster --name host-hardening
-```
-
 ```
 
 ## Troubleshooting
@@ -865,12 +764,9 @@ kind delete cluster --name host-hardening
 **Solution**:
 
 ```bash
-
 # Some sysctl parameters may not be available in containers
 # This is expected in Kind/Minikube
 # In production bare-metal/VM nodes, all parameters should work
-
-```
 
 ```
 
@@ -881,7 +777,6 @@ kind delete cluster --name host-hardening
 **Solution**:
 
 ```bash
-
 # Check if auditd is already running
 
 systemctl status auditd
@@ -895,14 +790,11 @@ journalctl -u auditd -n 50
 systemctl restart auditd
 ```
 
-```
-
 ### Issue 3: kube-bench job doesn't complete
 
 **Solution**:
 
 ```bash
-
 # Check job status
 
 kubectl describe job kube-bench
@@ -917,8 +809,6 @@ kubectl delete job kube-bench
 kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job.yaml
 ```
 
-```
-
 ### Issue 4: Kubelet fails after hardening
 
 **Error**: Kubelet won't start after setting `protectKernelDefaults: true`
@@ -926,7 +816,6 @@ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/
 **Solution**:
 
 ```bash
-
 # Check kubelet logs
 
 journalctl -u kubelet -n 50
@@ -940,8 +829,6 @@ sysctl net.bridge.bridge-nf-call-iptables
 
 sysctl -w net.ipv4.ip_forward=1
 sysctl -w net.bridge.bridge-nf-call-iptables=1
-```
-
 ```
 
 ## Key Takeaways

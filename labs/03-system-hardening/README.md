@@ -129,7 +129,6 @@ Secure the container runtime:
 ### Option 1: Kind Cluster (Recommended)
 
 ```bash
-
 # Create a multi-node cluster for realistic scenarios
 
 cat <<EOF | kind create cluster --name kcsa-lab-3 --config=-
@@ -150,12 +149,9 @@ kubectl cluster-info --context kind-kcsa-lab-3
 kubectl get nodes
 ```
 
-```
-
 ### Option 2: Minikube
 
 ```bash
-
 # Start Minikube with containerd
 
 minikube start --driver=docker --container-runtime=containerd \
@@ -167,12 +163,9 @@ minikube start --driver=docker --container-runtime=containerd \
 kubectl get nodes
 ```
 
-```
-
 ### Required Tools
 
 ```bash
-
 # Install crictl (CRI CLI)
 
 VERSION="v1.30.0"
@@ -212,14 +205,11 @@ sudo systemctl enable auditd
 sudo systemctl start auditd
 ```
 
-```
-
 ### Accessing Worker Nodes
 
 **For Kind clusters**:
 
 ```bash
-
 # List nodes
 
 docker ps --format "table {{.Names}}\t{{.Status}}"
@@ -240,12 +230,9 @@ docker exec -it kcsa-lab-3-worker bash
 
 ```
 
-```
-
 **For Minikube**:
 
 ```bash
-
 # SSH into node
 
 minikube ssh
@@ -253,8 +240,6 @@ minikube ssh
 # For multi-node:
 
 minikube ssh -n kcsa-lab-3-m02
-```
-
 ```
 
 ## Lab Tips
@@ -306,7 +291,6 @@ minikube ssh -n kcsa-lab-3-m02
 Between labs, you may want to reset your environment:
 
 ```bash
-
 # Delete all pods in default namespace
 
 kubectl delete pods --all
@@ -320,8 +304,6 @@ kubectl delete configmap,secret --all
 kind delete cluster --name kcsa-lab-3
 
 # Then recreate with setup command above
-
-```
 
 ```
 

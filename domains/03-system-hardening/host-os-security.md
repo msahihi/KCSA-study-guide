@@ -72,7 +72,6 @@ Use minimal OS distributions designed for containers:
 **Example: Package Comparison**
 
 ```bash
-
 # Full Ubuntu Server
 
 $ dpkg -l | wc -l
@@ -88,8 +87,6 @@ $ dpkg -l | wc -l
 
 ```
 
-```
-
 ### 2. System Updates and Patching
 
 Keep the host OS and kernel updated:
@@ -97,7 +94,6 @@ Keep the host OS and kernel updated:
 **Check Current Version**:
 
 ```bash
-
 # Kernel version
 
 uname -r
@@ -118,12 +114,9 @@ sudo apt update
 apt list --upgradable
 ```
 
-```
-
 **Update System**:
 
 ```bash
-
 # Update package lists
 
 sudo apt update
@@ -141,12 +134,9 @@ sudo apt dist-upgrade -y
 sudo reboot
 ```
 
-```
-
 **Automated Updates**:
 
 ```bash
-
 # Install unattended-upgrades
 
 sudo apt install unattended-upgrades -y
@@ -160,12 +150,9 @@ sudo dpkg-reconfigure --priority=low unattended-upgrades
 sudo nano /etc/apt/apt.conf.d/50unattended-upgrades
 ```
 
-```
-
 Example configuration:
 
 ```conf
-
 Unattended-Upgrade::Allowed-Origins {
     "${distro_id}:${distro_codename}-security";
     "${distro_id}ESMApps:${distro_codename}-apps-security";
@@ -176,8 +163,6 @@ Unattended-Upgrade::MinimalSteps "true";
 Unattended-Upgrade::Remove-Unused-Dependencies "true";
 Unattended-Upgrade::Automatic-Reboot "true";
 Unattended-Upgrade::Automatic-Reboot-Time "03:00";
-```
-
 ```
 
 **Best Practices**:
@@ -195,7 +180,6 @@ Reduce attack surface by disabling unused services:
 **List Running Services**:
 
 ```bash
-
 # List all running services
 
 sudo systemctl list-units --type=service --state=running
@@ -208,12 +192,9 @@ sudo systemctl list-units --type=service --state=running
 
 ```
 
-```
-
 **Common Services to Disable**:
 
 ```bash
-
 # Print services (if not using printing)
 
 sudo systemctl stop cups
@@ -235,8 +216,6 @@ sudo systemctl stop snapd
 sudo systemctl disable snapd
 ```
 
-```
-
 **Essential Services for Kubernetes**:
 
 Keep these enabled:
@@ -250,7 +229,6 @@ Keep these enabled:
 **Verify Service Status**:
 
 ```bash
-
 # Check if service is enabled
 
 sudo systemctl is-enabled ssh
@@ -265,8 +243,6 @@ sudo systemctl is-active ssh
 
 ```
 
-```
-
 ### 4. Secure SSH Access
 
 SSH is often the only remote access method - secure it properly:
@@ -274,16 +250,12 @@ SSH is often the only remote access method - secure it properly:
 **Edit SSH Configuration**:
 
 ```bash
-
 sudo nano /etc/ssh/sshd_config
-```
-
 ```
 
 **Hardened SSH Configuration**:
 
 ```
-
 # Disable root login
 
 PermitRootLogin no
@@ -332,12 +304,10 @@ SyslogFacility AUTH
 LogLevel VERBOSE
 
 ```
-```
 
 **Apply Changes**:
 
 ```bash
-
 # Test configuration
 
 sudo sshd -t
@@ -347,12 +317,9 @@ sudo sshd -t
 sudo systemctl restart sshd
 ```
 
-```
-
 **SSH Key Authentication**:
 
 ```bash
-
 # On your local machine, generate key pair
 
 ssh-keygen -t ed25519 -C "your_email@example.com"
@@ -366,12 +333,9 @@ ssh-copy-id -i ~/.ssh/id_ed25519.pub user@server
 ssh -i ~/.ssh/id_ed25519 user@server
 ```
 
-```
-
 **Additional SSH Security**:
 
 ```bash
-
 # Install fail2ban to prevent brute force
 
 sudo apt install fail2ban -y
@@ -382,9 +346,6 @@ sudo nano /etc/fail2ban/jail.local
 ```
 
 ```
-
-```ini
-
 [sshd]
 enabled = true
 port = ssh
@@ -395,9 +356,6 @@ bantime = 3600
 ```
 
 ```
-
-```bash
-
 # Start fail2ban
 
 sudo systemctl enable fail2ban
@@ -408,8 +366,6 @@ sudo systemctl start fail2ban
 sudo fail2ban-client status sshd
 ```
 
-```
-
 ### 5. File System Security
 
 Protect critical files and directories:
@@ -417,7 +373,6 @@ Protect critical files and directories:
 **Set Secure Permissions**:
 
 ```bash
-
 # Secure SSH directory
 
 chmod 700 ~/.ssh
@@ -435,14 +390,11 @@ sudo chmod 644 /etc/group
 chmod 600 ~/.kube/config
 ```
 
-```
-
 **Find SUID/SGID Binaries**:
 
 SUID binaries run with owner privileges - potential privilege escalation risk:
 
 ```bash
-
 # Find all SUID binaries
 
 sudo find / -perm -4000 -type f 2>/dev/null
@@ -459,12 +411,9 @@ sudo find / -perm -2000 -type f 2>/dev/null
 
 ```
 
-```
-
 **Remove Unnecessary SUID Bits**:
 
 ```bash
-
 # Remove SUID from unnecessary binaries
 
 sudo chmod u-s /path/to/binary
@@ -474,12 +423,9 @@ sudo chmod u-s /path/to/binary
 sudo chmod u-s /usr/bin/at
 ```
 
-```
-
 **World-Writable Files**:
 
 ```bash
-
 # Find world-writable files (dangerous!)
 
 sudo find / -perm -002 -type f 2>/dev/null
@@ -493,23 +439,17 @@ sudo find / -perm -002 -type d 2>/dev/null
 sudo chmod o-w /path/to/file
 ```
 
-```
-
 **Read-Only Mount Points**:
 
 Mount certain directories as read-only:
 
 ```bash
-
 # Edit /etc/fstab
 
 sudo nano /etc/fstab
 ```
 
 ```
-
-```
-
 # Mount /boot as read-only
 
 UUID=xxxx /boot ext4 ro,defaults 0 2
@@ -519,15 +459,11 @@ UUID=xxxx /boot ext4 ro,defaults 0 2
 tmpfs /tmp tmpfs defaults,noexec,nosuid,nodev 0 0
 
 ```
+
 ```
-
-```bash
-
 # Remount with new options
 
 sudo mount -o remount /boot
-```
-
 ```
 
 ### 6. Kernel Hardening
@@ -537,7 +473,6 @@ Configure kernel parameters for security:
 **View Current Settings**:
 
 ```bash
-
 # View all kernel parameters
 
 sudo sysctl -a
@@ -547,23 +482,17 @@ sudo sysctl -a
 sudo sysctl kernel.dmesg_restrict
 ```
 
-```
-
 **Apply Kernel Hardening**:
 
 ```bash
-
 # Edit sysctl configuration
 
 sudo nano /etc/sysctl.d/99-kubernetes-hardening.conf
 ```
 
-```
-
 **Recommended Kernel Parameters**:
 
 ```conf
-
 # Prevent kernel information leaks
 
 kernel.dmesg_restrict = 1
@@ -614,12 +543,9 @@ kernel.yama.ptrace_scope = 1
 kernel.dmesg_restrict = 1
 ```
 
-```
-
 **Apply Settings**:
 
 ```bash
-
 # Apply immediately
 
 sudo sysctl -p /etc/sysctl.d/99-kubernetes-hardening.conf
@@ -632,21 +558,16 @@ sudo sysctl kernel.randomize_va_space
 
 ```
 
-```
-
 **Important Note for Kubernetes**:
 
 Some settings affect Kubernetes functionality:
 
 ```conf
-
 # These MUST be enabled for Kubernetes
 
 net.ipv4.ip_forward = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
-```
-
 ```
 
 ### 7. Audit and Logging
@@ -656,7 +577,6 @@ Enable comprehensive logging for security monitoring:
 **Auditd Configuration**:
 
 ```bash
-
 # Install auditd
 
 sudo apt install auditd audispd-plugins -y
@@ -667,21 +587,15 @@ sudo systemctl enable auditd
 sudo systemctl start auditd
 ```
 
-```
-
 **Add Audit Rules**:
 
 ```bash
-
 # Edit audit rules
 
 sudo nano /etc/audit/rules.d/kubernetes.rules
 ```
 
 ```
-
-```bash
-
 # Audit file access to sensitive files
 
 -w /etc/shadow -p wa -k shadow_file
@@ -710,9 +624,6 @@ sudo nano /etc/audit/rules.d/kubernetes.rules
 ```
 
 ```
-
-```bash
-
 # Reload audit rules
 
 sudo augenrules --load
@@ -730,14 +641,11 @@ sudo ausearch -k k8s_config
 sudo aureport
 ```
 
-```
-
 **Centralized Logging**:
 
 Forward logs to a central server:
 
 ```bash
-
 # Install rsyslog
 
 sudo apt install rsyslog -y
@@ -748,9 +656,6 @@ sudo nano /etc/rsyslog.d/50-remote.conf
 ```
 
 ```
-
-```
-
 # Forward all logs to remote syslog server
 
 *.* @192.168.1.100:514  # UDP
@@ -760,15 +665,11 @@ sudo nano /etc/rsyslog.d/50-remote.conf
 *.* @@192.168.1.100:514  # TCP (more reliable)
 
 ```
+
 ```
-
-```bash
-
 # Restart rsyslog
 
 sudo systemctl restart rsyslog
-```
-
 ```
 
 ## CIS Benchmark Compliance
@@ -780,38 +681,26 @@ The CIS Kubernetes Benchmark includes host security recommendations:
 **4.1.1 Ensure kubelet configuration files have permissions of 644 or more restrictive**:
 
 ```bash
-
 sudo chmod 644 /var/lib/kubelet/config.yaml
-```
-
 ```
 
 **4.1.2 Ensure kubelet configuration files are owned by root:root**:
 
 ```bash
-
 sudo chown root:root /var/lib/kubelet/config.yaml
-```
-
 ```
 
 **4.1.3 Ensure Kubernetes PKI directory has permissions of 750 or more restrictive**:
 
 ```bash
-
 sudo chmod -R 750 /etc/kubernetes/pki
-```
-
 ```
 
 **4.1.4 Ensure certificate authority file permissions are 600 or more restrictive**:
 
 ```bash
-
 sudo chmod 600 /etc/kubernetes/pki/ca.crt
 sudo chmod 600 /etc/kubernetes/pki/ca.key
-```
-
 ```
 
 ### Section 4.2: Kubelet Configuration
@@ -819,7 +708,6 @@ sudo chmod 600 /etc/kubernetes/pki/ca.key
 These are configured in `/var/lib/kubelet/config.yaml`:
 
 ```yaml
-
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 
@@ -846,14 +734,11 @@ tlsCertFile: /var/lib/kubelet/pki/kubelet.crt
 tlsPrivateKeyFile: /var/lib/kubelet/pki/kubelet.key
 ```
 
-```
-
 ### Automated CIS Scanning
 
 Use kube-bench to audit your hosts:
 
 ```bash
-
 # Run kube-bench as a Job
 
 kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job.yaml
@@ -867,8 +752,6 @@ kubectl logs job/kube-bench
 # [PASS] 4.1.1 Ensure kubelet config file permissions are set to 644
 # [FAIL] 4.1.5 Ensure kubelet service file permissions are set to 644
 # [PASS] 4.2.1 Ensure anonymous-auth is set to false
-
-```
 
 ```
 
@@ -938,7 +821,6 @@ Use this checklist for hardening Kubernetes nodes:
 **Solution**: Ensure kernel parameters are set correctly:
 
 ```bash
-
 # Required kernel settings for Kubernetes
 
 sudo sysctl -w net.ipv4.ip_forward=1
@@ -950,8 +832,6 @@ echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf
 echo "net.bridge.bridge-nf-call-iptables=1" | sudo tee -a /etc/sysctl.conf
 ```
 
-```
-
 ### Issue 2: SSH Key Authentication Not Working
 
 **Problem**: Can't login with SSH keys after hardening
@@ -959,7 +839,6 @@ echo "net.bridge.bridge-nf-call-iptables=1" | sudo tee -a /etc/sysctl.conf
 **Solution**: Check permissions and configuration:
 
 ```bash
-
 # On server
 
 chmod 700 ~/.ssh
@@ -974,8 +853,6 @@ sudo tail -f /var/log/auth.log
 sudo sshd -t
 ```
 
-```
-
 ### Issue 3: Automatic Updates Breaking Cluster
 
 **Problem**: Kernel update causes node issues
@@ -983,7 +860,6 @@ sudo sshd -t
 **Solution**: Implement controlled update process:
 
 ```bash
-
 # Drain node before update
 
 kubectl drain node-1 --ignore-daemonsets --delete-emptydir-data
@@ -999,8 +875,6 @@ sudo reboot
 # Uncordon node after reboot
 
 kubectl uncordon node-1
-```
-
 ```
 
 ## Best Practices Summary

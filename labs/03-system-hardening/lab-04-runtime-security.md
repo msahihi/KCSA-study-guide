@@ -27,7 +27,6 @@ By the end of this lab, you will be able to:
 ## Lab Environment Setup
 
 ```bash
-
 # Create cluster with specific runtime configuration
 
 cat <<EOF | kind create cluster --name runtime-security --config=-
@@ -45,14 +44,11 @@ EOF
 kubectl get nodes
 ```
 
-```
-
 ## Part 1: Containerd Configuration
 
 ### Step 1.1: Examine Containerd Configuration
 
 ```bash
-
 # Access worker node
 
 docker exec -it runtime-security-worker bash
@@ -73,12 +69,9 @@ containerd --version
 
 ```
 
-```
-
 ### Step 1.2: Check Runtime Security Settings
 
 ```bash
-
 # Check CRI plugin configuration
 
 containerd config dump | grep -A 20 'plugins."io.containerd.grpc.v1.cri"'
@@ -95,12 +88,9 @@ containerd config dump | grep -A 5 SystemdCgroup
 
 ```
 
-```
-
 ### Step 1.3: Verify Containerd Socket Security
 
 ```bash
-
 # Check socket permissions
 
 ls -la /run/containerd/containerd.sock
@@ -118,8 +108,6 @@ stat -c "%a %U:%G" /run/containerd/containerd.sock
 su - nobody -s /bin/bash -c "crictl ps" 2>&1 || echo "Access denied (expected)"
 ```
 
-```
-
 ## Part 2: Namespace Isolation
 
 ### Step 2.1: Deploy Test Pods
@@ -127,7 +115,6 @@ su - nobody -s /bin/bash -c "crictl ps" 2>&1 || echo "Access denied (expected)"
 Exit the node and create test pods:
 
 ```bash
-
 # Exit node
 
 exit
@@ -172,12 +159,9 @@ kubectl apply -f /tmp/pod-host-ns.yaml
 kubectl wait --for=condition=Ready pod/pod-host-ns --timeout=60s
 ```
 
-```
-
 ### Step 2.2: Compare Namespace Isolation
 
 ```bash
-
 # Test 1: PID namespace isolation
 
 echo "=== Default pod (isolated PID namespace) ==="
@@ -216,12 +200,9 @@ kubectl exec pod-host-ns -- ipcs
 
 ```
 
-```
-
 ### Step 2.3: Verify Namespace Separation on Node
 
 ```bash
-
 # Access worker node
 
 docker exec -it runtime-security-worker bash
@@ -261,14 +242,11 @@ ls -la /proc/self/ns/
 exit
 ```
 
-```
-
 ## Part 3: Control Groups (cgroups)
 
 ### Step 3.1: Create Pods with Resource Limits
 
 ```bash
-
 # Pod without limits
 
 cat <<EOF > /tmp/pod-no-limits.yaml
@@ -310,12 +288,9 @@ kubectl apply -f /tmp/pod-with-limits.yaml
 kubectl wait --for=condition=Ready pod/pod-with-limits --timeout=60s
 ```
 
-```
-
 ### Step 3.2: Verify Cgroup Limits
 
 ```bash
-
 # Access worker node
 
 docker exec -it runtime-security-worker bash
@@ -366,12 +341,9 @@ fi
 exit
 ```
 
-```
-
 ### Step 3.3: Test Memory Limits (OOM Kill)
 
 ```bash
-
 # Create pod that exceeds memory limit
 
 cat <<EOF > /tmp/pod-oom.yaml
@@ -414,14 +386,11 @@ kubectl logs pod-oom
 
 ```
 
-```
-
 ## Part 4: Capabilities
 
 ### Step 4.1: View Default Container Capabilities
 
 ```bash
-
 # Deploy pod with default capabilities
 
 cat <<EOF > /tmp/pod-default-caps.yaml
@@ -478,12 +447,9 @@ capsh --decode=$CAPEFF
 exit
 ```
 
-```
-
 ### Step 4.2: Drop All Capabilities
 
 ```bash
-
 # Create pod with no capabilities
 
 cat <<EOF > /tmp/pod-no-caps.yaml
@@ -512,12 +478,9 @@ kubectl exec pod-no-caps -- sh -c "cat /proc/1/status | grep CapEff"
 
 ```
 
-```
-
 ### Step 4.3: Test Capability Restrictions
 
 ```bash
-
 # Test 1: Try to change file ownership (needs CAP_CHOWN)
 
 echo "=== Pod with default capabilities ==="
@@ -556,12 +519,9 @@ kubectl exec pod-no-caps -- sh -c "kill -0 1" 2>&1 || echo "kill failed (expecte
 
 ```
 
-```
-
 ### Step 4.4: Selective Capability Addition
 
 ```bash
-
 # Create pod with only NET_BIND_SERVICE capability
 
 cat <<EOF > /tmp/pod-selective-caps.yaml
@@ -593,14 +553,11 @@ kubectl exec pod-selective-caps -- sh -c "cat /proc/1/status | grep CapEff"
 
 ```
 
-```
-
 ## Part 5: Privileged Containers
 
 ### Step 5.1: Create Privileged Container
 
 ```bash
-
 # Create privileged pod
 
 cat <<EOF > /tmp/pod-privileged.yaml
@@ -621,12 +578,9 @@ kubectl apply -f /tmp/pod-privileged.yaml
 kubectl wait --for=condition=Ready pod/pod-privileged --timeout=60s
 ```
 
-```
-
 ### Step 5.2: Compare Privileged vs. Unprivileged
 
 ```bash
-
 # Check capabilities
 
 echo "=== Unprivileged pod ==="
@@ -654,14 +608,11 @@ kubectl exec pod-privileged -- mount -t tmpfs tmpfs /mnt && echo "Mount succeede
 kubectl exec pod-privileged -- umount /mnt
 ```
 
-```
-
 ### Step 5.3: Demonstrate Container Escape Risk
 
 **WARNING**: This is for educational purposes only. Never do this in production!
 
 ```bash
-
 # Privileged containers can access host filesystem
 
 echo "=== Privileged container can access host ==="
@@ -691,14 +642,11 @@ kubectl exec pod-privileged -- sh -c "cat /proc/1/root/tmp/host-secret.txt" 2>/d
 
 ```
 
-```
-
 ## Part 6: Read-Only Root Filesystem
 
 ### Step 6.1: Deploy Pod with Read-Only Root
 
 ```bash
-
 # Create pod with read-only root filesystem
 
 cat <<EOF > /tmp/pod-readonly.yaml
@@ -725,12 +673,9 @@ kubectl apply -f /tmp/pod-readonly.yaml
 kubectl wait --for=condition=Ready pod/pod-readonly --timeout=60s
 ```
 
-```
-
 ### Step 6.2: Test Read-Only Enforcement
 
 ```bash
-
 # Test 1: Try to write to root filesystem (should fail)
 
 kubectl exec pod-readonly -- touch /test.txt 2>&1 || echo "Write to root blocked (expected)"
@@ -746,14 +691,11 @@ kubectl exec pod-readonly -- touch /tmp/test.txt && echo "Write to /tmp succeede
 kubectl exec pod-readonly -- sh -c "echo 'hacked' > /etc/passwd" 2>&1 || echo "Write blocked (expected)"
 ```
 
-```
-
 ## Part 7: Monitoring Runtime Events
 
 ### Step 7.1: Monitor Containerd Events
 
 ```bash
-
 # Access worker node
 
 docker exec -it runtime-security-worker bash
@@ -772,12 +714,9 @@ sleep 5
 kill $CTR_PID
 ```
 
-```
-
 ### Step 7.2: Use crictl for Runtime Inspection
 
 ```bash
-
 # Still on worker node
 
 # List all pods
@@ -806,12 +745,9 @@ crictl stats $CONTAINER
 crictl info | jq . | head -30
 ```
 
-```
-
 ### Step 7.3: Check Container Process Tree
 
 ```bash
-
 # View container process tree
 
 CONTAINER=$(crictl ps --name app -q | head -1)
@@ -836,8 +772,6 @@ cat /proc/$PID/cgroup
 exit
 ```
 
-```
-
 ## Part 8: Defense-in-Depth Example
 
 ### Step 8.1: Create Hardened Pod
@@ -845,7 +779,6 @@ exit
 Combining all security measures:
 
 ```bash
-
 cat <<EOF > /tmp/pod-hardened.yaml
 apiVersion: v1
 kind: Pod
@@ -942,12 +875,9 @@ kubectl apply -f /tmp/pod-hardened.yaml 2>&1
 
 ```
 
-```
-
 ### Step 8.2: Verify Security Settings
 
 ```bash
-
 # If pod is running, check security context
 
 kubectl get pod pod-hardened -o jsonpath='{.spec.securityContext}' | jq .
@@ -963,14 +893,11 @@ kubectl get pod pod-hardened -o jsonpath='{.spec.containers[0].resources}' | jq 
 kubectl describe pod pod-hardened | grep -A 10 "Events"
 ```
 
-```
-
 ## Part 9: Detecting Container Escapes
 
 ### Step 9.1: Simulate Suspicious Activity
 
 ```bash
-
 # Create a pod that tries suspicious actions
 
 cat <<EOF > /tmp/pod-suspicious.yaml
@@ -989,12 +916,9 @@ kubectl apply -f /tmp/pod-suspicious.yaml
 kubectl wait --for=condition=Ready pod/pod-suspicious --timeout=60s
 ```
 
-```
-
 ### Step 9.2: Try Common Escape Techniques
 
 ```bash
-
 # Technique 1: Access Docker socket (if mounted - it's not)
 
 kubectl exec pod-suspicious -- ls -la /var/run/docker.sock 2>&1 || echo "Docker socket not accessible (good!)"
@@ -1015,12 +939,9 @@ kubectl exec pod-suspicious -- modprobe ip_tables 2>&1 || echo "Cannot load modu
 
 ```
 
-```
-
 ### Step 9.3: Monitor for Suspicious Behavior
 
 ```bash
-
 # Access worker node
 
 docker exec -it runtime-security-worker bash
@@ -1048,12 +969,9 @@ ls -la /proc/$SUSPICIOUS_PID/ns/
 exit
 ```
 
-```
-
 ## Part 10: Cleanup
 
 ```bash
-
 # Delete all test pods
 
 kubectl delete pod --all
@@ -1061,8 +979,6 @@ kubectl delete pod --all
 # Delete cluster
 
 kind delete cluster --name runtime-security
-```
-
 ```
 
 ## Troubleshooting
@@ -1074,7 +990,6 @@ kind delete cluster --name runtime-security
 **Solution**:
 
 ```bash
-
 # Install crictl (on worker node)
 
 VERSION="v1.30.0"
@@ -1091,8 +1006,6 @@ timeout: 10
 EOF
 ```
 
-```
-
 ### Issue 2: Can't Find Cgroup Files
 
 **Issue**: Cgroup files not in expected locations
@@ -1100,7 +1013,6 @@ EOF
 **Solution**:
 
 ```bash
-
 # Cgroups v2 uses unified hierarchy
 # Files are in /sys/fs/cgroup/<path>/
 
@@ -1114,8 +1026,6 @@ cat /proc/$PID/cgroup
 
 ```
 
-```
-
 ### Issue 3: Capabilities Not Showing
 
 **Issue**: `capsh` command not found
@@ -1123,7 +1033,6 @@ cat /proc/$PID/cgroup
 **Solution**:
 
 ```bash
-
 # Install libcap2-bin
 
 apt-get update && apt-get install -y libcap2-bin
@@ -1131,8 +1040,6 @@ apt-get update && apt-get install -y libcap2-bin
 # Use capsh to decode
 
 capsh --decode=<hex-value>
-```
-
 ```
 
 ## Key Takeaways

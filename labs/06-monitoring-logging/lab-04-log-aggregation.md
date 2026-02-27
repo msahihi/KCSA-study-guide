@@ -25,12 +25,9 @@
 kubectl create namespace logging
 ```
 
-```
-
 ### Step 2: Deploy Elasticsearch
 
 ```bash
-
 # Add Elastic Helm repository
 
 helm repo add elastic https://helm.elastic.co
@@ -73,14 +70,11 @@ helm install elasticsearch elastic/elasticsearch \
 kubectl get pods -n logging -w
 ```
 
-```
-
 **Wait**: Elasticsearch takes 2-5 minutes to start.
 
 ### Step 3: Verify Elasticsearch
 
 ```bash
-
 # Check pod is running
 
 kubectl get pods -n logging
@@ -109,8 +103,6 @@ curl http://localhost:9200/_cluster/health?pretty
 
 ```
 
-```
-
 **Verification**:
 
 - [ ] Elasticsearch pod is running
@@ -122,7 +114,6 @@ curl http://localhost:9200/_cluster/health?pretty
 ### Step 4: Install Kibana
 
 ```bash
-
 cat <<EOF > kibana-values.yaml
 resources:
   requests:
@@ -150,19 +141,14 @@ helm install kibana elastic/kibana \
 kubectl get pods -n logging -l app=kibana -w
 ```
 
-```
-
 ### Step 5: Access Kibana
 
 ```bash
-
 # Port-forward Kibana
 
 kubectl port-forward -n logging svc/kibana-kibana 5601:5601
 
 # Access in browser: http://localhost:5601
-
-```
 
 ```
 
@@ -177,7 +163,6 @@ kubectl port-forward -n logging svc/kibana-kibana 5601:5601
 ### Step 6: Configure Fluent Bit
 
 ```bash
-
 cat <<'EOF' > fluent-bit-values.yaml
 daemonSetVolumes:
   - name: varlog
@@ -293,12 +278,9 @@ helm repo update
 helm install fluent-bit fluent/fluent-bit -n logging -f fluent-bit-values.yaml
 ```
 
-```
-
 ### Step 7: Verify Log Collection
 
 ```bash
-
 # Check Fluent Bit pods (should be one per node)
 
 kubectl get pods -n logging -l app.kubernetes.io/name=fluent-bit
@@ -312,12 +294,9 @@ kubectl logs -n logging -l app.kubernetes.io/name=fluent-bit --tail=50
 kubectl logs -n logging -l app.kubernetes.io/name=fluent-bit | grep "connected to"
 ```
 
-```
-
 ### Step 8: Configure Falco to Send to Fluent Bit
 
 ```bash
-
 # Update Falco to output JSON to stdout (already configured in Lab 2)
 # Fluent Bit will automatically collect from container logs
 
@@ -331,8 +310,6 @@ kubectl exec test-pod -- bash -c "echo test" 2>/dev/null || \
 kubectl logs -n logging -l app.kubernetes.io/name=fluent-bit | grep -i falco
 ```
 
-```
-
 **Verification**:
 
 - [ ] Fluent Bit pods running on all nodes
@@ -344,12 +321,9 @@ kubectl logs -n logging -l app.kubernetes.io/name=fluent-bit | grep -i falco
 ### Step 9: Create Index Patterns in Kibana
 
 ```bash
-
 # Port-forward if not already running
 
 kubectl port-forward -n logging svc/kibana-kibana 5601:5601 &
-```
-
 ```
 
 **In Kibana UI** (http://localhost:5601):
@@ -374,7 +348,6 @@ kubectl port-forward -n logging svc/kibana-kibana 5601:5601 &
 **Search Examples**:
 
 ```
-
 # Find Falco alerts
 
 kubernetes.namespace_name: "falco" AND log: "priority"
@@ -392,7 +365,6 @@ log: "error" OR log: "Error" OR log: "ERROR"
 Select audit-* index pattern
 objectRef.resource: "secrets"
 
-```
 ```
 
 ### Step 11: Create Saved Searches
@@ -450,7 +422,6 @@ objectRef.resource: "secrets"
 **In Kibana Discover**:
 
 ```
-
 # Secret access in audit logs (audit-* index)
 
 objectRef.resource: "secrets" AND verb: "get"
@@ -470,8 +441,6 @@ kubernetes.namespace_name: "falco" AND priority: "Critical"
 # Pod exec events (audit-* index)
 
 objectRef.subresource: "exec"
-```
-
 ```
 
 ### Step 14: Create Dashboard
@@ -526,7 +495,6 @@ objectRef.subresource: "exec"
 ### Issue 1: Elasticsearch Won't Start
 
 ```bash
-
 # Check pod events
 
 kubectl describe pod -n logging -l app=elasticsearch-master
@@ -541,12 +509,9 @@ kubectl describe pod -n logging -l app=elasticsearch-master
 kubectl logs -n logging -l app=elasticsearch-master
 ```
 
-```
-
 ### Issue 2: No Logs in Kibana
 
 ```bash
-
 # Check Fluent Bit is running
 
 kubectl get pods -n logging -l app.kubernetes.io/name=fluent-bit
@@ -564,12 +529,9 @@ curl http://localhost:9200/_cat/indices?v
 kubectl run test-logs --image=busybox --command -- sh -c "while true; do echo 'Test log'; sleep 5; done"
 ```
 
-```
-
 ### Issue 3: Kibana Can't Connect to Elasticsearch
 
 ```bash
-
 # Check Kibana logs
 
 kubectl logs -n logging -l app=kibana
@@ -581,8 +543,6 @@ kubectl get svc -n logging elasticsearch-master
 # Check network connectivity
 
 kubectl run test-curl --image=curlimages/curl -it --rm -- curl http://elasticsearch-master.logging:9200
-```
-
 ```
 
 ## Verification Checklist
@@ -601,7 +561,6 @@ kubectl run test-curl --image=curlimages/curl -it --rm -- curl http://elasticsea
 ## Cleanup
 
 ```bash
-
 # Remove test resources
 
 kubectl delete pod test-pod test-logs --ignore-not-found
@@ -610,8 +569,6 @@ kubectl delete pod test-pod test-logs --ignore-not-found
 # To completely remove:
 # helm uninstall fluent-bit elasticsearch kibana -n logging
 # kubectl delete namespace logging
-
-```
 
 ```
 

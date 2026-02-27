@@ -26,7 +26,6 @@ By the end of this lab, you will be able to:
 ## Lab Environment Setup
 
 ```bash
-
 # Create cluster with AppArmor support
 
 cat <<EOF | kind create cluster --name apparmor-lab --config=-
@@ -44,14 +43,11 @@ EOF
 kubectl get nodes
 ```
 
-```
-
 ## Part 1: AppArmor Basics
 
 ### Step 1.1: Check AppArmor Status
 
 ```bash
-
 # Access worker node
 
 docker exec -it apparmor-lab-worker bash
@@ -68,12 +64,9 @@ aa-status
 
 ```
 
-```
-
 If `aa-status` command is not found:
 
 ```bash
-
 # Install AppArmor utilities
 
 apt-get update && apt-get install -y apparmor-utils
@@ -83,12 +76,9 @@ apt-get update && apt-get install -y apparmor-utils
 aa-status
 ```
 
-```
-
 ### Step 1.2: Understand AppArmor Modes
 
 ```bash
-
 # View profiles in enforce mode
 
 aa-status | grep -A 50 "profiles are in enforce mode"
@@ -102,12 +92,9 @@ aa-status | grep -A 10 "profiles are in complain mode"
 aa-status | grep docker-default
 ```
 
-```
-
 ### Step 1.3: Examine Default Docker Profile
 
 ```bash
-
 # View docker-default profile
 
 cat /etc/apparmor.d/docker 2>/dev/null || \
@@ -120,14 +107,11 @@ cat /etc/apparmor.d/docker 2>/dev/null || \
 cat /sys/kernel/security/apparmor/profiles | grep docker
 ```
 
-```
-
 ## Part 2: Create Basic AppArmor Profile
 
 ### Step 2.1: Create Directory for Custom Profiles
 
 ```bash
-
 # Create directory for our profiles
 
 mkdir -p /etc/apparmor.d/containers
@@ -137,14 +121,11 @@ mkdir -p /etc/apparmor.d/containers
 cd /etc/apparmor.d/containers
 ```
 
-```
-
 ### Step 2.2: Create a Restrictive Profile for Nginx
 
 Create a profile that allows nginx to run but denies shell access:
 
 ```bash
-
 cat <<'EOF' > /etc/apparmor.d/containers/k8s-nginx-restrictive
 
 #include <tunables/global>
@@ -249,12 +230,9 @@ EOF
 cat /etc/apparmor.d/containers/k8s-nginx-restrictive
 ```
 
-```
-
 ### Step 2.3: Load the Profile
 
 ```bash
-
 # Parse and load the profile
 
 apparmor_parser -r /etc/apparmor.d/containers/k8s-nginx-restrictive
@@ -271,14 +249,11 @@ aa-status | grep k8s-nginx-restrictive
 aa-status | grep -A 50 "profiles are in enforce mode" | grep k8s-nginx-restrictive
 ```
 
-```
-
 ## Part 3: Apply AppArmor Profile to Kubernetes Pod
 
 ### Step 3.1: Exit Node and Create Pod Manifest
 
 ```bash
-
 # Exit the node
 
 exit
@@ -308,12 +283,9 @@ EOF
 cat /tmp/nginx-apparmor.yaml
 ```
 
-```
-
 ### Step 3.2: Deploy the Pod
 
 ```bash
-
 # Apply the manifest
 
 kubectl apply -f /tmp/nginx-apparmor.yaml
@@ -327,12 +299,9 @@ kubectl get pod nginx-apparmor
 kubectl wait --for=condition=Ready pod/nginx-apparmor --timeout=60s
 ```
 
-```
-
 ### Step 3.3: Verify AppArmor Profile is Applied
 
 ```bash
-
 # Get container ID
 
 CONTAINER_ID=$(kubectl get pod nginx-apparmor -o jsonpath='{.status.containerStatuses[0].containerID}' | cut -d/ -f3)
@@ -356,12 +325,9 @@ crictl inspect $CONTAINER_ID | jq -r '.info.runtimeSpec.process.apparmorProfile'
 
 ```
 
-```
-
 ### Step 3.4: Test Profile Enforcement
 
 ```bash
-
 # Exit node
 
 exit
@@ -405,12 +371,9 @@ kubectl exec nginx-apparmor -- sh -c "echo 'test' >> /etc/nginx/nginx.conf"
 
 ```
 
-```
-
 ### Step 3.5: Check AppArmor Denials
 
 ```bash
-
 # Access node to check logs
 
 docker exec -it apparmor-lab-worker bash
@@ -429,14 +392,11 @@ dmesg | grep apparmor | tail -20
 exit
 ```
 
-```
-
 ## Part 4: Create Permissive Profile (Complain Mode)
 
 ### Step 4.1: Create Profile in Complain Mode
 
 ```bash
-
 # Access worker node
 
 docker exec -it apparmor-lab-worker bash
@@ -478,12 +438,9 @@ aa-status | grep -A 10 "profiles are in complain mode" | grep k8s-nginx-permissi
 exit
 ```
 
-```
-
 ### Step 4.2: Deploy Pod with Permissive Profile
 
 ```bash
-
 # Create pod with permissive profile
 
 cat <<EOF > /tmp/nginx-permissive.yaml
@@ -510,12 +467,9 @@ kubectl apply -f /tmp/nginx-permissive.yaml
 kubectl wait --for=condition=Ready pod/nginx-permissive --timeout=60s
 ```
 
-```
-
 ### Step 4.3: Test Permissive Profile
 
 ```bash
-
 # Test 1: Shell access (will work in complain mode)
 
 kubectl exec nginx-permissive -- /bin/bash -c "echo 'Shell access works!'"
@@ -531,12 +485,9 @@ kubectl exec nginx-permissive -- cat /etc/shadow 2>/dev/null || echo "Cannot rea
 kubectl exec nginx-permissive -- /bin/bash -c "ls -la /etc/ && whoami && id"
 ```
 
-```
-
 ### Step 4.4: Analyze Complain Mode Logs
 
 ```bash
-
 # Access node
 
 docker exec -it apparmor-lab-worker bash
@@ -557,14 +508,11 @@ dmesg | grep apparmor | grep k8s-nginx-permissive | tail -20
 exit
 ```
 
-```
-
 ## Part 5: Create Production-Ready Profile
 
 ### Step 5.1: Create Minimal Nginx Profile Based on Logs
 
 ```bash
-
 # Access worker node
 
 docker exec -it apparmor-lab-worker bash
@@ -649,12 +597,9 @@ aa-status | grep k8s-nginx-production
 exit
 ```
 
-```
-
 ### Step 5.2: Deploy with Production Profile
 
 ```bash
-
 # Create pod
 
 cat <<EOF > /tmp/nginx-production.yaml
@@ -701,12 +646,9 @@ kubectl apply -f /tmp/nginx-production.yaml
 kubectl wait --for=condition=Ready pod/nginx-production --timeout=60s
 ```
 
-```
-
 ### Step 5.3: Test Production Profile
 
 ```bash
-
 # Test 1: Nginx functionality
 
 kubectl port-forward nginx-production 8081:80 &
@@ -735,14 +677,11 @@ kubectl exec nginx-production -- cat /etc/nginx/nginx.conf | head -5
 kubectl exec nginx-production -- sh -c "echo 'test' > /tmp/test.txt" 2>/dev/null || echo "Write blocked (expected)"
 ```
 
-```
-
 ## Part 6: Debugging AppArmor Issues
 
 ### Step 6.1: Create a Profile That's Too Restrictive
 
 ```bash
-
 # Access worker node
 
 docker exec -it apparmor-lab-worker bash
@@ -774,12 +713,9 @@ apparmor_parser -r /etc/apparmor.d/containers/k8s-nginx-broken
 exit
 ```
 
-```
-
 ### Step 6.2: Deploy Pod with Broken Profile
 
 ```bash
-
 # Create pod
 
 cat <<EOF > /tmp/nginx-broken.yaml
@@ -808,12 +744,9 @@ kubectl get pod nginx-broken
 kubectl logs nginx-broken 2>&1 | head -20
 ```
 
-```
-
 ### Step 6.3: Debug the Issue
 
 ```bash
-
 # Access worker node
 
 docker exec -it apparmor-lab-worker bash
@@ -841,12 +774,9 @@ aa-status | grep k8s-nginx-broken
 exit
 ```
 
-```
-
 ### Step 6.4: Fix the Profile
 
 ```bash
-
 # Delete broken pod
 
 kubectl delete pod nginx-broken
@@ -898,14 +828,11 @@ kubectl wait --for=condition=Ready pod/nginx-broken --timeout=60s
 kubectl get pod nginx-broken
 ```
 
-```
-
 ## Part 7: Managing Profiles with aa-* Tools
 
 ### Step 7.1: Use AppArmor Helper Tools
 
 ```bash
-
 # Access worker node
 
 docker exec -it apparmor-lab-worker bash
@@ -935,12 +862,9 @@ aa-disable /etc/apparmor.d/containers/k8s-nginx-broken
 aa-enforce /etc/apparmor.d/containers/k8s-nginx-broken
 ```
 
-```
-
 ### Step 7.2: Validate Profile Syntax
 
 ```bash
-
 # Check for syntax errors
 
 apparmor_parser -Q /etc/apparmor.d/containers/k8s-nginx-production
@@ -953,14 +877,11 @@ apparmor_parser -Q /etc/apparmor.d/containers/k8s-nginx-production
 exit
 ```
 
-```
-
 ## Part 8: Cleanup and Summary
 
 ### Step 8.1: Review Deployed Pods
 
 ```bash
-
 # List all pods with AppArmor annotations
 
 kubectl get pods -o json | jq -r '.items[] | select(.metadata.annotations | has("container.apparmor.security.beta.kubernetes.io/nginx")) | .metadata.name'
@@ -973,12 +894,9 @@ kubectl get pods -o json | jq -r '.items[] | select(.metadata.annotations | has(
 
 ```
 
-```
-
 ### Step 8.2: Clean Up
 
 ```bash
-
 # Delete all test pods
 
 kubectl delete pod nginx-apparmor nginx-permissive nginx-production nginx-broken
@@ -986,8 +904,6 @@ kubectl delete pod nginx-apparmor nginx-permissive nginx-production nginx-broken
 # Delete cluster
 
 kind delete cluster --name apparmor-lab
-```
-
 ```
 
 ## Troubleshooting
@@ -999,7 +915,6 @@ kind delete cluster --name apparmor-lab
 **Solution**:
 
 ```bash
-
 # Ensure profile is loaded on ALL nodes
 
 docker exec -it apparmor-lab-worker bash
@@ -1014,14 +929,11 @@ exit
 
 ```
 
-```
-
 ### Issue 2: Pod Fails to Start
 
 **Solution**:
 
 ```bash
-
 # Check pod events
 
 kubectl describe pod <pod-name> | grep -A 10 Events
@@ -1035,8 +947,6 @@ kubectl logs <pod-name>
 docker exec -it apparmor-lab-worker dmesg | grep apparmor | tail -20
 ```
 
-```
-
 ### Issue 3: Can't Execute Commands in Container
 
 **Expected Behavior**: If AppArmor profile denies shell access, you won't be able to exec into the container.
@@ -1044,7 +954,6 @@ docker exec -it apparmor-lab-worker dmesg | grep apparmor | tail -20
 **Workaround** for debugging:
 
 ```bash
-
 # Temporarily switch profile to complain mode
 
 docker exec -it apparmor-lab-worker aa-complain /etc/apparmor.d/containers/<profile-name>
@@ -1059,8 +968,6 @@ kubectl apply -f <manifest>
 kubectl exec <pod-name> -- /bin/sh
 
 # Remember to switch back to enforce mode when done!
-
-```
 
 ```
 

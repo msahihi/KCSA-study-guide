@@ -27,7 +27,6 @@ By the end of this lab, you will:
 ### Step 1: Add Falco Helm Repository
 
 ```bash
-
 # Add the Falcosecurity Helm repository
 
 helm repo add falcosecurity https://falcosecurity.github.io/charts
@@ -41,22 +40,17 @@ helm repo update
 helm search repo falco
 ```
 
-```
-
 **Expected Output**:
 
 ```
-
 NAME                          CHART VERSION   APP VERSION   DESCRIPTION
 falcosecurity/falco          4.0.0           0.37.1        Falco - Runtime Security
 
-```
 ```
 
 ### Step 2: Create Falco Namespace
 
 ```bash
-
 # Create namespace for Falco
 
 kubectl create namespace falco
@@ -66,12 +60,9 @@ kubectl create namespace falco
 kubectl get namespace falco
 ```
 
-```
-
 ### Step 3: Install Falco
 
 ```bash
-
 # Install Falco with recommended settings
 
 helm install falco falcosecurity/falco \
@@ -87,14 +78,11 @@ helm install falco falcosecurity/falco \
 kubectl get pods -n falco -w
 ```
 
-```
-
 **Expected**: Falco should start as a DaemonSet with one pod per node.
 
 ### Step 4: Verify Installation
 
 ```bash
-
 # Check Falco pods are running
 
 kubectl get pods -n falco
@@ -108,21 +96,16 @@ kubectl get daemonset -n falco
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep "Falco version"
 ```
 
-```
-
 **Expected Output**:
 
 ```
-
 Falco version: 0.37.1
 
-```
 ```
 
 ### Step 5: Check Falco Driver
 
 ```bash
-
 # Check which driver Falco is using
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i driver
@@ -130,8 +113,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i driver
 # Verify syscalls are being captured
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "Events detected"
-```
-
 ```
 
 **Expected**: Should see either kernel module or eBPF probe loaded successfully.
@@ -148,7 +129,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "Events detected"
 ### Step 6: List Loaded Rules
 
 ```bash
-
 # Get one Falco pod name
 
 FALCO_POD=$(kubectl get pods -n falco -l app.kubernetes.io/name=falco -o jsonpath='{.items[0].metadata.name}')
@@ -162,14 +142,11 @@ kubectl exec -n falco $FALCO_POD -- falco --list | grep "^-"
 kubectl exec -n falco $FALCO_POD -- falco --list | grep "^-" | wc -l
 ```
 
-```
-
 **Expected**: Should see 50+ default rules.
 
 ### Step 7: Examine Specific Rules
 
 ```bash
-
 # View Falco rules configuration
 
 kubectl exec -n falco $FALCO_POD -- cat /etc/falco/falco_rules.yaml | head -100
@@ -179,14 +156,11 @@ kubectl exec -n falco $FALCO_POD -- cat /etc/falco/falco_rules.yaml | head -100
 kubectl exec -n falco $FALCO_POD -- grep -A 10 "Shell in Container" /etc/falco/falco_rules.yaml
 ```
 
-```
-
 ### Step 8: Understand Common Default Rules
 
 View documentation of key rules:
 
 ```bash
-
 # Get pod for exec
 
 FALCO_POD=$(kubectl get pods -n falco -l app.kubernetes.io/name=falco -o jsonpath='{.items[0].metadata.name}')
@@ -194,8 +168,6 @@ FALCO_POD=$(kubectl get pods -n falco -l app.kubernetes.io/name=falco -o jsonpat
 # View specific rules
 
 kubectl exec -n falco $FALCO_POD -- grep -A 15 "rule: Terminal shell in container" /etc/falco/falco_rules.yaml
-```
-
 ```
 
 **Common Default Rules**:
@@ -219,7 +191,6 @@ kubectl exec -n falco $FALCO_POD -- grep -A 15 "rule: Terminal shell in containe
 ### Step 9: Create Test Pod
 
 ```bash
-
 # Create a simple test pod
 
 kubectl run test-pod --image=nginx:1.27 -n default
@@ -233,14 +204,11 @@ kubectl wait --for=condition=Ready pod/test-pod -n default --timeout=60s
 kubectl get pod test-pod
 ```
 
-```
-
 ### Step 10: Trigger Falco Alerts
 
 **Test 1: Shell in Container**
 
 ```bash
-
 # Exec into pod (should trigger "Terminal shell in container")
 
 kubectl exec -it test-pod -- /bin/bash
@@ -254,12 +222,9 @@ exit
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep -i "shell"
 ```
 
-```
-
 **Expected Alert**:
 
 ```json
-
 {
   "output": "Notice A shell was spawned in a container with an attached terminal (user=root user_loginuid=0 k8s.ns=default k8s.pod=test-pod container=test-pod shell=bash parent=runc cmdline=bash terminal=34816 container_id=abc123)",
   "priority": "Notice",
@@ -277,12 +242,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep -i "shell
 }
 ```
 
-```
-
 **Test 2: Sensitive File Read**
 
 ```bash
-
 # Try to read /etc/shadow
 
 kubectl exec test-pod -- cat /etc/shadow
@@ -292,12 +254,9 @@ kubectl exec test-pod -- cat /etc/shadow
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep -i "sensitive"
 ```
 
-```
-
 **Test 3: Write to Binary Directory**
 
 ```bash
-
 # Try to write to /bin
 
 kubectl exec test-pod -- sh -c "touch /bin/malicious || true"
@@ -307,12 +266,9 @@ kubectl exec test-pod -- sh -c "touch /bin/malicious || true"
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep -i "binary"
 ```
 
-```
-
 **Test 4: Network Tool Execution**
 
 ```bash
-
 # Install and run nc (netcat)
 
 kubectl exec test-pod -- sh -c "apt-get update && apt-get install -y netcat-openbsd && nc -l 12345 &" || true
@@ -322,32 +278,24 @@ kubectl exec test-pod -- sh -c "apt-get update && apt-get install -y netcat-open
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep -i "network"
 ```
 
-```
-
 ### Step 11: Real-time Alert Monitoring
 
 Open a new terminal and stream Falco alerts:
 
 ```bash
-
 # Terminal 1: Stream Falco logs
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco -f
 ```
 
-```
-
 In another terminal, trigger various events:
 
 ```bash
-
 # Terminal 2: Trigger events
 
 kubectl exec test-pod -- bash -c "echo 'test' > /tmp/file"
 kubectl exec test-pod -- bash -c "ls /etc/shadow"
 kubectl exec test-pod -- bash -c "whoami"
-```
-
 ```
 
 Watch Terminal 1 for real-time alerts.
@@ -364,7 +312,6 @@ Watch Terminal 1 for real-time alerts.
 ### Step 12: Parse Falco JSON Output
 
 ```bash
-
 # Get all Warning and higher priority alerts
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco | \
@@ -387,12 +334,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | \
   jq 'select(.output_fields."k8s.pod.name" == "test-pod")'
 ```
 
-```
-
 ### Step 13: Create Falco Alert Parser Script
 
 ```bash
-
 cat > ~/falco-alerts.sh <<'EOF'
 
 #!/bin/bash
@@ -448,8 +392,6 @@ chmod +x ~/falco-alerts.sh
 ~/falco-alerts.sh summary
 ```
 
-```
-
 **Verification**:
 
 - [ ] Can parse JSON alerts
@@ -466,7 +408,6 @@ chmod +x ~/falco-alerts.sh
 **Solutions**:
 
 ```bash
-
 # Check pod status
 
 kubectl describe pod -n falco -l app.kubernetes.io/name=falco
@@ -486,8 +427,6 @@ helm upgrade falco falcosecurity/falco -n falco --set driver.kind=ebpf
 
 ```
 
-```
-
 ### Issue 2: No Events Detected
 
 **Symptoms**: Falco running but no alerts generated
@@ -495,7 +434,6 @@ helm upgrade falco falcosecurity/falco -n falco --set driver.kind=ebpf
 **Solutions**:
 
 ```bash
-
 # Verify driver loaded
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i driver
@@ -513,8 +451,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "Events detected"
 helm get values falco -n falco
 ```
 
-```
-
 ### Issue 3: Can't Parse JSON Output
 
 **Symptoms**: jq errors when parsing logs
@@ -522,7 +458,6 @@ helm get values falco -n falco
 **Solutions**:
 
 ```bash
-
 # Check if JSON output is enabled
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=1
@@ -536,8 +471,6 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=1 | jq .
 helm upgrade falco falcosecurity/falco -n falco \
   --set falco.json_output=true \
   --set falco.json_include_output_property=true
-```
-
 ```
 
 ## Verification Checklist
@@ -555,7 +488,6 @@ Before proceeding, verify:
 ## Cleanup
 
 ```bash
-
 # Remove test pod
 
 kubectl delete pod test-pod
@@ -564,8 +496,6 @@ kubectl delete pod test-pod
 # To uninstall Falco:
 # helm uninstall falco -n falco
 # kubectl delete namespace falco
-
-```
 
 ```
 

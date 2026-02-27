@@ -191,7 +191,6 @@ Complete these labs in order to build practical skills:
 ### Essential Commands
 
 ```bash
-
 # Host security
 
 sudo systemctl list-units --type=service --state=running
@@ -222,12 +221,9 @@ crictl info
 sudo crictl ps
 ```
 
-```
-
 ### AppArmor Profile Example
 
 ```
-
 # include <tunables/global>
 
 profile k8s-nginx flags=(attach_disconnected,mediate_deleted) {
@@ -247,12 +243,10 @@ profile k8s-nginx flags=(attach_disconnected,mediate_deleted) {
 }
 
 ```
-```
 
 ### Seccomp Profile Example
 
 ```json
-
 {
   "defaultAction": "SCMP_ACT_ERRNO",
   "architectures": ["SCMP_ARCH_X86_64"],
@@ -265,12 +259,9 @@ profile k8s-nginx flags=(attach_disconnected,mediate_deleted) {
 }
 ```
 
-```
-
 ### Pod with Security Profiles
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -290,8 +281,6 @@ spec:
       capabilities:
         drop: ["ALL"]
       readOnlyRootFilesystem: true
-```
-
 ```
 
 ## Common Pitfalls and Tips

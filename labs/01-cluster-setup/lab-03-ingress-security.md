@@ -45,17 +45,12 @@ kubectl create namespace lab-ingress
 kubectl config set-context --current --namespace=lab-ingress
 ```
 
-```
-
 ### Step 2: Install NGINX Ingress Controller (if not already installed)
 
 Check if already installed:
 
 ```bash
-
 kubectl get pods -n ingress-nginx
-```
-
 ```
 
 If not installed, install it:
@@ -63,41 +58,29 @@ If not installed, install it:
 **For cloud providers**:
 
 ```bash
-
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.0/deploy/static/provider/cloud/deploy.yaml
-```
-
 ```
 
 **For kind or local clusters**:
 
 ```bash
-
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.0/deploy/static/provider/kind/deploy.yaml
-```
-
 ```
 
 Wait for the controller to be ready:
 
 ```bash
-
 kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller \
   --timeout=90s
 ```
 
-```
-
 Verify installation:
 
 ```bash
-
 kubectl get pods -n ingress-nginx
 kubectl get svc -n ingress-nginx
-```
-
 ```
 
 Expected output: Ingress controller pod running and service created.
@@ -107,7 +90,6 @@ Expected output: Ingress controller pod running and service created.
 Create a file named `apps-deployment.yaml`:
 
 ```yaml
-
 ---
 
 # Frontend Application
@@ -245,30 +227,21 @@ spec:
     targetPort: 5678
 ```
 
-```
-
 Apply the deployment:
 
 ```bash
-
 kubectl apply -f apps-deployment.yaml
-```
-
 ```
 
 Verify pods are running:
 
 ```bash
-
 kubectl get pods -n lab-ingress
-```
-
 ```
 
 Expected output:
 
 ```
-
 NAME                        READY   STATUS    RESTARTS   AGE
 frontend-xxxxx-yyyyy        1/1     Running   0          30s
 frontend-xxxxx-zzzzz        1/1     Running   0          30s
@@ -276,7 +249,6 @@ api-xxxxx-yyyyy             1/1     Running   0          30s
 api-xxxxx-zzzzz             1/1     Running   0          30s
 admin-xxxxx-yyyyy           1/1     Running   0          30s
 
-```
 ```
 
 ## Exercise 1: Basic HTTP Ingress (Unsecured)
@@ -288,7 +260,6 @@ First, let's create a basic HTTP Ingress to understand the structure.
 Create a file named `basic-ingress.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -316,25 +287,17 @@ spec:
               number: 8080
 ```
 
-```
-
 Apply the Ingress:
 
 ```bash
-
 kubectl apply -f basic-ingress.yaml
-```
-
 ```
 
 Verify Ingress:
 
 ```bash
-
 kubectl get ingress -n lab-ingress
 kubectl describe ingress basic-ingress -n lab-ingress
-```
-
 ```
 
 ### Step 2: Test HTTP Access
@@ -342,10 +305,7 @@ kubectl describe ingress basic-ingress -n lab-ingress
 Get the Ingress IP/hostname:
 
 ```bash
-
 kubectl get ingress basic-ingress -n lab-ingress
-```
-
 ```
 
 Test access (using curl with Host header):
@@ -353,7 +313,6 @@ Test access (using curl with Host header):
 **For LoadBalancer**:
 
 ```bash
-
 INGRESS_IP=$(kubectl get ingress basic-ingress -n lab-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo $INGRESS_IP
 
@@ -366,12 +325,9 @@ curl -H "Host: app.example.com" http://$INGRESS_IP/
 curl -H "Host: app.example.com" http://$INGRESS_IP/api
 ```
 
-```
-
 **For NodePort (kind/minikube)**:
 
 ```bash
-
 # For kind
 
 INGRESS_IP="localhost"
@@ -386,8 +342,6 @@ curl -H "Host: app.example.com" http://$INGRESS_IP/
 curl -H "Host: app.example.com" http://$INGRESS_IP/api
 ```
 
-```
-
 Expected: Frontend HTML and API response visible.
 
 **Problem**: Traffic is unencrypted! Let's fix that.
@@ -399,7 +353,6 @@ Expected: Frontend HTML and API response visible.
 For production, use Let's Encrypt or a trusted CA. For this lab, we'll create self-signed certificates.
 
 ```bash
-
 # Generate private key
 
 openssl genrsa -out tls.key 2048
@@ -417,46 +370,32 @@ openssl x509 -req -days 365 -in tls.csr -signkey tls.key -out tls.crt
 openssl x509 -in tls.crt -text -noout | head -20
 ```
 
-```
-
 ### Step 2: Create Kubernetes TLS Secret
 
 ```bash
-
 kubectl create secret tls app-tls \
   --cert=tls.crt \
   --key=tls.key \
   -n lab-ingress
 ```
 
-```
-
 Verify secret:
 
 ```bash
-
 kubectl get secret app-tls -n lab-ingress
 kubectl describe secret app-tls -n lab-ingress
-```
-
 ```
 
 View secret contents (base64 encoded):
 
 ```bash
-
 kubectl get secret app-tls -n lab-ingress -o yaml
-```
-
 ```
 
 Decode certificate from secret:
 
 ```bash
-
 kubectl get secret app-tls -n lab-ingress -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -text -noout | head -20
-```
-
 ```
 
 ## Exercise 3: Configure HTTPS Ingress
@@ -466,7 +405,6 @@ kubectl get secret app-tls -n lab-ingress -o jsonpath='{.data.tls\.crt}' | base6
 Create a file named `tls-ingress.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -507,22 +445,16 @@ spec:
               number: 8080
 ```
 
-```
-
 Delete the old HTTP-only Ingress and apply TLS version:
 
 ```bash
-
 kubectl delete ingress basic-ingress -n lab-ingress
 kubectl apply -f tls-ingress.yaml
-```
-
 ```
 
 ### Step 2: Test HTTPS Access
 
 ```bash
-
 # Test HTTPS (using -k to ignore self-signed certificate warning)
 
 curl -k -H "Host: app.example.com" https://$INGRESS_IP/
@@ -540,8 +472,6 @@ curl -k -H "Host: app.example.com" https://$INGRESS_IP/api
 curl -v -H "Host: app.example.com" http://$INGRESS_IP/
 ```
 
-```
-
 Expected:
 
 - HTTPS requests succeed
@@ -550,7 +480,6 @@ Expected:
 ### Step 3: Verify TLS Configuration
 
 ```bash
-
 # Check certificate details
 
 echo | openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com 2>/dev/null | openssl x509 -noout -text | head -20
@@ -558,8 +487,6 @@ echo | openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com 2
 # Check TLS protocols
 
 nmap --script ssl-enum-ciphers -p 443 $INGRESS_IP
-```
-
 ```
 
 ## Exercise 4: Add Security Headers
@@ -571,7 +498,6 @@ Security headers protect against common web vulnerabilities.
 Create a file named `secure-ingress.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -620,31 +546,22 @@ spec:
               number: 8080
 ```
 
-```
-
 Apply the updated Ingress:
 
 ```bash
-
 kubectl delete ingress tls-ingress -n lab-ingress
 kubectl apply -f secure-ingress.yaml
-```
-
 ```
 
 ### Step 2: Verify Security Headers
 
 ```bash
-
 curl -k -I -H "Host: app.example.com" https://$INGRESS_IP/
-```
-
 ```
 
 Expected output includes:
 
 ```
-
 HTTP/1.1 200 OK
 X-Frame-Options: DENY
 X-Content-Type-Options: nosniff
@@ -654,7 +571,6 @@ Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; 
 Referrer-Policy: strict-origin-when-cross-origin
 
 ```
-```
 
 ## Exercise 5: Implement Basic Authentication
 
@@ -663,7 +579,6 @@ Protect admin endpoints with username/password authentication.
 ### Step 1: Create Basic Auth Credentials
 
 ```bash
-
 # Install htpasswd (if not available)
 # For Ubuntu/Debian: sudo apt-get install apache2-utils
 # For Mac: brew install httpd
@@ -680,29 +595,21 @@ htpasswd -c auth admin
 cat auth
 ```
 
-```
-
 Expected output: `admin:$apr1$...` (encrypted password)
 
 ### Step 2: Create Kubernetes Secret for Auth
 
 ```bash
-
 kubectl create secret generic admin-auth \
   --from-file=auth \
   -n lab-ingress
 ```
 
-```
-
 Verify:
 
 ```bash
-
 kubectl get secret admin-auth -n lab-ingress
 kubectl describe secret admin-auth -n lab-ingress
-```
-
 ```
 
 ### Step 3: Create Ingress with Authentication for Admin Path
@@ -710,7 +617,6 @@ kubectl describe secret admin-auth -n lab-ingress
 Create a file named `auth-ingress.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -777,22 +683,16 @@ spec:
               number: 8080
 ```
 
-```
-
 Apply the configuration:
 
 ```bash
-
 kubectl delete ingress secure-ingress -n lab-ingress
 kubectl apply -f auth-ingress.yaml
-```
-
 ```
 
 ### Step 4: Test Authentication
 
 ```bash
-
 # Try accessing admin without credentials (should fail with 401)
 
 curl -k -H "Host: app.example.com" https://$INGRESS_IP/admin
@@ -805,8 +705,6 @@ curl -k -u admin:admin123 -H "Host: app.example.com" https://$INGRESS_IP/admin
 
 curl -k -H "Host: app.example.com" https://$INGRESS_IP/
 curl -k -H "Host: app.example.com" https://$INGRESS_IP/api
-```
-
 ```
 
 Expected:
@@ -824,7 +722,6 @@ Protect your API from abuse with rate limiting.
 Create a file named `ratelimit-ingress.yaml`:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -864,29 +761,21 @@ spec:
               number: 8080
 ```
 
-```
-
 Apply:
 
 ```bash
-
 kubectl apply -f ratelimit-ingress.yaml
-```
-
 ```
 
 ### Step 2: Test Rate Limiting
 
 ```bash
-
 # Make rapid requests (should eventually get 503)
 
 for i in {1..30}; do
   curl -k -H "Host: app.example.com" -w "\nStatus: %{http_code}\n" https://$INGRESS_IP/api
   sleep 0.05
 done
-```
-
 ```
 
 Expected: First ~10-20 requests succeed (200), then you'll see 503 Service Temporarily Unavailable.
@@ -898,13 +787,10 @@ Restrict admin access to specific IP addresses.
 ### Step 1: Get Your Current IP
 
 ```bash
-
 # Get your current public IP
 
 MY_IP=$(curl -s ifconfig.me)
 echo "My IP: $MY_IP"
-```
-
 ```
 
 ### Step 2: Create Ingress with IP Whitelist
@@ -912,7 +798,6 @@ echo "My IP: $MY_IP"
 Update `auth-ingress.yaml` to add IP whitelisting:
 
 ```yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -947,15 +832,10 @@ spec:
               number: 8080
 ```
 
-```
-
 Apply:
 
 ```bash
-
 kubectl apply -f auth-ingress.yaml
-```
-
 ```
 
 ### Step 3: Test IP Restriction
@@ -963,10 +843,7 @@ kubectl apply -f auth-ingress.yaml
 If your IP is not in the whitelist:
 
 ```bash
-
 curl -k -u admin:admin123 -H "Host: app.example.com" https://$INGRESS_IP/admin
-```
-
 ```
 
 Expected: 403 Forbidden (if your IP is not whitelisted)
@@ -974,10 +851,7 @@ Expected: 403 Forbidden (if your IP is not whitelisted)
 To test, temporarily allow all IPs:
 
 ```yaml
-
 nginx.ingress.kubernetes.io/whitelist-source-range: "0.0.0.0/0"
-```
-
 ```
 
 ## Exercise 8: Complete Production-Ready Configuration
@@ -989,7 +863,6 @@ Let's combine everything into a production-ready configuration.
 Create a file named `production-ingress.yaml`:
 
 ```yaml
-
 ---
 
 # Public Frontend and API
@@ -1106,16 +979,11 @@ spec:
               number: 8080
 ```
 
-```
-
 Apply the complete configuration:
 
 ```bash
-
 kubectl delete ingress --all -n lab-ingress
 kubectl apply -f production-ingress.yaml
-```
-
 ```
 
 ### Step 2: Comprehensive Testing
@@ -1123,7 +991,6 @@ kubectl apply -f production-ingress.yaml
 Create a test script:
 
 ```bash
-
 cat > test-ingress.sh << 'EOF'
 
 #!/bin/bash
@@ -1207,14 +1074,11 @@ chmod +x test-ingress.sh
 ./test-ingress.sh $INGRESS_IP
 ```
 
-```
-
 ## Verification and Troubleshooting
 
 ### View Ingress Configuration
 
 ```bash
-
 # List all Ingress resources
 
 kubectl get ingress -n lab-ingress
@@ -1229,12 +1093,9 @@ kubectl describe ingress admin-ingress -n lab-ingress
 kubectl get ingress public-ingress -n lab-ingress -o yaml
 ```
 
-```
-
 ### Check Ingress Controller Logs
 
 ```bash
-
 # Get controller pod name
 
 CONTROLLER_POD=$(kubectl get pods -n ingress-nginx -l app.kubernetes.io/component=controller -o jsonpath='{.items[0].metadata.name}')
@@ -1248,12 +1109,9 @@ kubectl logs -n ingress-nginx $CONTROLLER_POD --tail=50
 kubectl logs -n ingress-nginx $CONTROLLER_POD -f
 ```
 
-```
-
 ### Test TLS Certificate
 
 ```bash
-
 # View certificate details
 
 echo | openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com 2>/dev/null | openssl x509 -noout -dates -subject -issuer
@@ -1261,8 +1119,6 @@ echo | openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com 2
 # Test TLS handshake
 
 openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com < /dev/null
-```
-
 ```
 
 ## Challenge Questions
@@ -1289,7 +1145,6 @@ openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com < /dev/n
    Yes! You can specify multiple entries in the `tls` section:
 
    ```yaml
-
    tls:
    - hosts:
 
@@ -1332,7 +1187,6 @@ openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com < /dev/n
 1. Check service exists and has endpoints:
 
    ```bash
-
    kubectl get svc -n lab-ingress
    kubectl get endpoints -n lab-ingress
 
@@ -1341,7 +1195,6 @@ openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com < /dev/n
 1. Verify Ingress path matches your request:
 
    ```bash
-
    kubectl get ingress -n lab-ingress -o yaml | grep path
 
    ```
@@ -1359,7 +1212,6 @@ openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com < /dev/n
 1. Verify secret contains valid cert/key:
 
    ```bash
-
    kubectl get secret app-tls -n lab-ingress -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -noout -text
 
    ```
@@ -1373,7 +1225,6 @@ openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com < /dev/n
 1. Verify secret exists:
 
    ```bash
-
    kubectl get secret admin-auth -n lab-ingress
 
    ```
@@ -1381,7 +1232,6 @@ openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com < /dev/n
 1. Check Ingress annotations:
 
    ```bash
-
    kubectl get ingress admin-ingress -n lab-ingress -o yaml | grep auth
 
    ```
@@ -1389,7 +1239,6 @@ openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com < /dev/n
 1. Test with verbose curl:
 
    ```bash
-
    curl -v -k -H "Host: app.example.com" https://$INGRESS_IP/admin
 
    ```
@@ -1397,7 +1246,6 @@ openssl s_client -connect ${INGRESS_IP}:443 -servername app.example.com < /dev/n
 ## Cleanup
 
 ```bash
-
 # Delete all Ingress resources
 
 kubectl delete ingress --all -n lab-ingress
@@ -1423,8 +1271,6 @@ rm -f test-ingress.sh
 # Reset context
 
 kubectl config set-context --current --namespace=default
-```
-
 ```
 
 ## Key Takeaways

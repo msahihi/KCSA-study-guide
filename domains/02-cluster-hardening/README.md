@@ -168,7 +168,6 @@ Practice your skills with these comprehensive labs:
 ### Essential Commands
 
 ```bash
-
 # RBAC commands
 
 kubectl get roles,rolebindings -n <namespace>
@@ -190,8 +189,6 @@ kubectl get pod <pod-name> -o yaml | grep -A10 securityContext
 
 kubectl label namespace <ns> pod-security.kubernetes.io/enforce=restricted
 kubectl label namespace <ns> pod-security.kubernetes.io/audit=baseline
-```
-
 ```
 
 ### Key Files and Paths

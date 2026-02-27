@@ -51,7 +51,6 @@ AppArmor is a Mandatory Access Control (MAC) system that restricts programs base
 ### Check AppArmor Status
 
 ```bash
-
 # Check if AppArmor is enabled
 
 sudo aa-status
@@ -79,14 +78,11 @@ sudo apparmor_status | grep docker
 sudo aa-status --json | jq '.profiles'
 ```
 
-```
-
 ### AppArmor Profile Structure
 
 **Basic Profile Syntax**:
 
 ```
-
 # include <tunables/global>
 
 profile <profile-name> flags=(attach_disconnected,mediate_deleted) {
@@ -118,7 +114,6 @@ profile <profile-name> flags=(attach_disconnected,mediate_deleted) {
 }
 
 ```
-```
 
 **Permission Modes**:
 
@@ -137,7 +132,6 @@ profile <profile-name> flags=(attach_disconnected,mediate_deleted) {
 Kubernetes uses the `docker-default` AppArmor profile:
 
 ```bash
-
 # View docker-default profile
 
 sudo cat /etc/apparmor.d/docker
@@ -147,12 +141,9 @@ sudo cat /etc/apparmor.d/docker
 sudo cat /sys/kernel/security/apparmor/profiles | grep docker
 ```
 
-```
-
 **Key Restrictions in docker-default**:
 
 ```
-
 profile docker-default flags=(attach_disconnected,mediate_deleted) {
 
 # Deny dangerous capabilities
@@ -182,7 +173,6 @@ profile docker-default flags=(attach_disconnected,mediate_deleted) {
 }
 
 ```
-```
 
 ### Creating Custom AppArmor Profiles
 
@@ -193,7 +183,6 @@ profile docker-default flags=(attach_disconnected,mediate_deleted) {
 **Profile** (`/etc/apparmor.d/k8s-nginx`):
 
 ```
-
 #include <tunables/global>
 
 profile k8s-nginx flags=(attach_disconnected,mediate_deleted) {
@@ -276,12 +265,9 @@ profile k8s-nginx flags=(attach_disconnected,mediate_deleted) {
 }
 ```
 
-```
-
 **Load the Profile**:
 
 ```bash
-
 # Copy profile to AppArmor directory
 
 sudo cp k8s-nginx /etc/apparmor.d/
@@ -298,12 +284,9 @@ sudo aa-status | grep k8s-nginx
 
 ```
 
-```
-
 **Use in Kubernetes**:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -321,12 +304,9 @@ spec:
     - containerPort: 80
 ```
 
-```
-
 **Test the Profile**:
 
 ```bash
-
 # Create pod
 
 kubectl apply -f nginx-hardened.yaml
@@ -353,14 +333,11 @@ curl localhost:8080
 
 ```
 
-```
-
 #### Example 2: Deny Network Access
 
 **Profile** (`/etc/apparmor.d/k8s-no-network`):
 
 ```
-
 # include <tunables/global>
 
 profile k8s-no-network flags=(attach_disconnected,mediate_deleted) {
@@ -385,19 +362,14 @@ profile k8s-no-network flags=(attach_disconnected,mediate_deleted) {
 }
 
 ```
-```
 
 **Load and Apply**:
 
 ```bash
-
 sudo apparmor_parser -r /etc/apparmor.d/k8s-no-network
 ```
 
 ```
-
-```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -411,12 +383,9 @@ spec:
     command: ["sleep", "3600"]
 ```
 
-```
-
 **Test**:
 
 ```bash
-
 # Network should fail
 
 kubectl exec no-network -- ping 8.8.8.8
@@ -426,14 +395,11 @@ kubectl exec no-network -- ping 8.8.8.8
 
 ```
 
-```
-
 #### Example 3: Read-Only File System
 
 **Profile** (`/etc/apparmor.d/k8s-readonly`):
 
 ```
-
 # include <tunables/global>
 
 profile k8s-readonly flags=(attach_disconnected,mediate_deleted) {
@@ -459,7 +425,6 @@ profile k8s-readonly flags=(attach_disconnected,mediate_deleted) {
 }
 
 ```
-```
 
 ### Debugging AppArmor Issues
 
@@ -468,7 +433,6 @@ profile k8s-readonly flags=(attach_disconnected,mediate_deleted) {
 **Error 1**: `Pod failed to start - apparmor profile not found`
 
 ```bash
-
 # Check profile is loaded on all nodes
 
 ssh node-1 'sudo aa-status | grep k8s-nginx'
@@ -478,12 +442,9 @@ ssh node-1 'sudo aa-status | grep k8s-nginx'
 ssh node-1 'sudo apparmor_parser -r /etc/apparmor.d/k8s-nginx'
 ```
 
-```
-
 **Error 2**: `Permission denied` in container logs
 
 ```bash
-
 # Check AppArmor denials
 
 sudo dmesg | grep apparmor | grep DENIED
@@ -499,8 +460,6 @@ sudo ausearch -m AVC -ts recent
 
 ```
 
-```
-
 **Solution**: Update profile to allow the operation or fix the application.
 
 #### Audit/Complain Mode
@@ -508,7 +467,6 @@ sudo ausearch -m AVC -ts recent
 Test profiles in complain mode before enforcing:
 
 ```bash
-
 # Set profile to complain mode
 
 sudo aa-complain /etc/apparmor.d/k8s-nginx
@@ -528,14 +486,11 @@ sudo dmesg | grep apparmor | grep ALLOWED
 sudo aa-enforce /etc/apparmor.d/k8s-nginx
 ```
 
-```
-
 ### Generating Profiles Automatically
 
 Use `aa-genprof` to create profiles based on observed behavior:
 
 ```bash
-
 # Install apparmor-utils
 
 sudo apt install apparmor-utils -y
@@ -550,8 +505,6 @@ sudo aa-genprof /usr/sbin/nginx
 # Follow prompts to allow/deny operations
 
 # Save the generated profile
-
-```
 
 ```
 
@@ -575,7 +528,6 @@ Seccomp filters system calls (syscalls) made by a process. It answers: "What sys
 **How It Works**:
 
 ```
-
 ┌─────────────────┐
 │   Application   │
 └────────┬────────┘
@@ -591,7 +543,6 @@ Seccomp filters system calls (syscalls) made by a process. It answers: "What sys
 └─────────────────┘
 
 ```
-```
 
 ### Seccomp Modes
 
@@ -604,7 +555,6 @@ Kubernetes uses Mode 2 (Filter) with JSON profiles.
 ### Check Seccomp Status
 
 ```bash
-
 # Check if seccomp is enabled in kernel
 
 grep CONFIG_SECCOMP /boot/config-$(uname -r)
@@ -618,8 +568,6 @@ kubectl exec <pod> -- grep Seccomp /proc/1/status
 # Output:
 # Seccomp:        2
 # Seccomp_filters:        1
-
-```
 
 ```
 
@@ -654,7 +602,6 @@ Kubernetes applies a default seccomp profile that blocks dangerous syscalls:
 **JSON Structure**:
 
 ```json
-
 {
   "defaultAction": "SCMP_ACT_ERRNO",
   "defaultErrnoRet": 1,
@@ -676,8 +623,6 @@ Kubernetes applies a default seccomp profile that blocks dangerous syscalls:
 }
 ```
 
-```
-
 **Actions**:
 
 - `SCMP_ACT_ALLOW` - Allow the syscall
@@ -694,7 +639,6 @@ Kubernetes applies a default seccomp profile that blocks dangerous syscalls:
 **Profile** (`/var/lib/kubelet/seccomp/profiles/minimal.json`):
 
 ```json
-
 {
   "defaultAction": "SCMP_ACT_ERRNO",
   "architectures": [
@@ -1043,8 +987,6 @@ Kubernetes applies a default seccomp profile that blocks dangerous syscalls:
 }
 ```
 
-```
-
 This profile is still quite permissive. For tighter security:
 
 #### Example 2: Deny Dangerous Syscalls
@@ -1052,7 +994,6 @@ This profile is still quite permissive. For tighter security:
 **Profile** (`/var/lib/kubelet/seccomp/profiles/deny-dangerous.json`):
 
 ```json
-
 {
   "defaultAction": "SCMP_ACT_ALLOW",
   "architectures": [
@@ -1109,12 +1050,9 @@ This profile is still quite permissive. For tighter security:
 }
 ```
 
-```
-
 **Apply to Pod**:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1129,12 +1067,9 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 **Test**:
 
 ```bash
-
 # Should fail to mount
 
 kubectl exec seccomp-demo -- mount -t tmpfs tmpfs /mnt
@@ -1149,14 +1084,11 @@ kubectl exec seccomp-demo -- modprobe ip_tables
 
 ```
 
-```
-
 #### Example 3: Audit Mode (Log syscalls)
 
 **Profile** (`/var/lib/kubelet/seccomp/profiles/audit.json`):
 
 ```json
-
 {
   "defaultAction": "SCMP_ACT_LOG",
   "architectures": [
@@ -1165,12 +1097,9 @@ kubectl exec seccomp-demo -- modprobe ip_tables
 }
 ```
 
-```
-
 This allows everything but logs all syscalls - useful for generating a whitelist:
 
 ```bash
-
 # Check audit log
 
 sudo ausearch -m SECCOMP -ts recent
@@ -1182,8 +1111,6 @@ sudo ausearch -m SECCOMP -ts recent
 
 ```
 
-```
-
 ### Using Seccomp in Kubernetes
 
 **Three ways to specify seccomp profiles**:
@@ -1191,7 +1118,6 @@ sudo ausearch -m SECCOMP -ts recent
 1. **RuntimeDefault** (Recommended):
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1205,12 +1131,9 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 1. **Localhost** (Custom profile):
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1225,12 +1148,9 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 1. **Unconfined** (Disable - not recommended):
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1244,12 +1164,9 @@ spec:
     image: nginx:1.27
 ```
 
-```
-
 **Per-Container Seccomp**:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1270,14 +1187,11 @@ spec:
         localhostProfile: profiles/debug.json
 ```
 
-```
-
 ### Profile Deployment
 
 Seccomp profiles must be on each node:
 
 ```bash
-
 # Create profile directory
 
 sudo mkdir -p /var/lib/kubelet/seccomp/profiles
@@ -1294,12 +1208,9 @@ sudo chmod 644 /var/lib/kubelet/seccomp/profiles/my-profile.json
 
 ```
 
-```
-
 **Automate with DaemonSet**:
 
 ```yaml
-
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -1343,14 +1254,11 @@ spec:
           path: /
 ```
 
-```
-
 ## Combining AppArmor and Seccomp
 
 Use both for defense-in-depth:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1388,8 +1296,6 @@ spec:
     emptyDir: {}
 ```
 
-```
-
 **Security Layers**:
 
 1. **AppArmor**: Restricts file access, network, execution
@@ -1407,7 +1313,6 @@ spec:
 **Solution**:
 
 ```bash
-
 # Verify profile exists on node
 
 kubectl debug node/worker-1 -it --image=busybox
@@ -1422,14 +1327,11 @@ for node in $(kubectl get nodes -o name); do
 done
 ```
 
-```
-
 ### Issue 2: Application Breaks After Applying Profile
 
 **Debug**:
 
 ```bash
-
 # Check seccomp denials
 
 sudo ausearch -m SECCOMP -ts recent | grep comm="<app-name>"
@@ -1443,8 +1345,6 @@ kubectl logs -n kube-system <audit-pod>
 
 ```
 
-```
-
 **Identify missing syscalls from audit log**, then update profile.
 
 ### Issue 3: AppArmor Profile Not Loading
@@ -1454,7 +1354,6 @@ kubectl logs -n kube-system <audit-pod>
 **Solution**:
 
 ```bash
-
 # Check profile syntax
 
 sudo apparmor_parser -Q /etc/apparmor.d/k8s-nginx
@@ -1466,8 +1365,6 @@ sudo apparmor_parser -r /etc/apparmor.d/k8s-nginx
 # Verify loaded
 
 sudo aa-status | grep k8s-nginx
-```
-
 ```
 
 ## Best Practices

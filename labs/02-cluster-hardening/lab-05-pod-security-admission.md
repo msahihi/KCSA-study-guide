@@ -25,7 +25,6 @@ Master Pod Security Admission (PSA) configuration and enforcement. Learn to appl
 ## Lab Setup
 
 ```bash
-
 # Create lab namespaces
 
 kubectl create namespace psa-privileged
@@ -38,14 +37,11 @@ kubectl create namespace psa-migration
 kubectl get namespaces | grep psa-
 ```
 
-```
-
 ## Exercises
 
 ### Exercise 1: Privileged Profile (No Restrictions)
 
 ```bash
-
 # Label namespace for privileged profile
 
 kubectl label namespace psa-privileged \
@@ -85,14 +81,11 @@ kubectl describe pod privileged-pod -n psa-privileged | grep -A5 Events
 
 ```
 
-```
-
 ---
 
 ### Exercise 2: Baseline Profile (Block Dangerous Configs)
 
 ```bash
-
 # Label namespace for baseline profile
 
 kubectl label namespace psa-baseline \
@@ -162,14 +155,11 @@ EOF
 kubectl get pod baseline-compliant -n psa-baseline
 ```
 
-```
-
 ---
 
 ### Exercise 3: Restricted Profile (Maximum Security)
 
 ```bash
-
 # Label namespace for restricted profile
 
 kubectl label namespace psa-restricted \
@@ -241,14 +231,11 @@ kubectl get pod restricted-compliant -n psa-restricted
 kubectl wait --for=condition=ready pod/restricted-compliant -n psa-restricted --timeout=60s
 ```
 
-```
-
 ---
 
 ### Exercise 4: Multiple Modes (Enforce + Audit + Warn)
 
 ```bash
-
 # Apply all three modes to migration namespace
 
 kubectl label namespace psa-migration \
@@ -291,14 +278,11 @@ EOF
 
 ```
 
-```
-
 ---
 
 ### Exercise 5: Dry-Run Testing
 
 ```bash
-
 # Test pod against restricted namespace without creating
 
 cat <<EOF | kubectl apply -f - --dry-run=server
@@ -345,14 +329,11 @@ EOF
 
 ```
 
-```
-
 ---
 
 ### Exercise 6: Version Pinning
 
 ```bash
-
 # Create namespace with version-pinned PSA
 
 kubectl create namespace psa-versioned
@@ -395,14 +376,11 @@ EOF
 kubectl get pod versioned-pod -n psa-versioned
 ```
 
-```
-
 ---
 
 ### Exercise 7: Gradual Migration Strategy
 
 ```bash
-
 # Week 1: Audit only (no enforcement)
 
 kubectl create namespace psa-gradual
@@ -473,14 +451,11 @@ kubectl label namespace psa-gradual \
 
 ```
 
-```
-
 ---
 
 ### Exercise 8: Fix Non-Compliant Deployments
 
 ```bash
-
 # Create deployment that violates restricted
 
 cat <<EOF | kubectl apply -f -
@@ -562,14 +537,11 @@ kubectl get pods -n psa-migration -l app=secure-app
 
 ```
 
-```
-
 ---
 
 ### Exercise 9: Understand Allowed Volume Types
 
 ```bash
-
 # Restricted profile limits volume types
 # Test allowed volume types
 
@@ -653,14 +625,11 @@ EOF
 
 ```
 
-```
-
 ---
 
 ### Exercise 10: PSA Comparison Matrix
 
 ```bash
-
 # Create test matrix namespace
 
 kubectl create namespace psa-test-matrix
@@ -722,14 +691,11 @@ done
 kubectl delete namespace psa-test-matrix
 ```
 
-```
-
 ---
 
 ## Verification
 
 ```bash
-
 # 1. Check all namespace labels
 
 kubectl get namespaces -o custom-columns=\
@@ -768,14 +734,11 @@ kubectl run violation-test --image=nginx:1.27 -n psa-restricted 2>&1 | grep forb
 kubectl get deployments -n psa-migration
 ```
 
-```
-
 ## Restricted Profile Checklist
 
 Create this checklist pod template:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -815,14 +778,11 @@ spec:
     emptyDir: {}                      # ✓ Allowed
 ```
 
-```
-
 ## Troubleshooting
 
 ### PSA Violations
 
 ```bash
-
 # Use dry-run to see all violations
 
 kubectl apply -f pod.yaml --dry-run=server -n psa-restricted 2>&1
@@ -836,12 +796,9 @@ kubectl get namespace psa-restricted -o yaml | grep pod-security
 kubectl get pod <pod> -n psa-restricted -o yaml
 ```
 
-```
-
 ### Common Fixes
 
 ```yaml
-
 # Add these to fix restricted violations:
 
 spec:
@@ -858,12 +815,9 @@ spec:
         add: [NET_BIND_SERVICE]  # Only if needed
 ```
 
-```
-
 ## Cleanup
 
 ```bash
-
 # Delete all PSA lab namespaces
 
 kubectl delete namespace psa-privileged psa-baseline psa-restricted psa-migration psa-versioned psa-gradual
@@ -873,8 +827,6 @@ kubectl delete namespace psa-privileged psa-baseline psa-restricted psa-migratio
 kubectl get namespaces | grep psa-
 
 # Should return nothing
-
-```
 
 ```
 

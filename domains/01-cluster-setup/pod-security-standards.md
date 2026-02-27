@@ -39,13 +39,10 @@ Think of Pod Security Standards as building codes for your applications. Just as
 **Example Workloads**:
 
 ```yaml
-
 # Calico CNI Pod
 # FluentD log collectors
 # Node monitoring agents
 # Storage provisioners
-
-```
 
 ```
 
@@ -119,11 +116,8 @@ PSA is the controller that enforces Pod Security Standards. It operates in three
 **Example**:
 
 ```bash
-
 kubectl label namespace production \
   pod-security.kubernetes.io/enforce=baseline
-```
-
 ```
 
 **Result**: Pods violating baseline standard are rejected.
@@ -137,11 +131,8 @@ kubectl label namespace production \
 **Example**:
 
 ```bash
-
 kubectl label namespace production \
   pod-security.kubernetes.io/audit=restricted
-```
-
 ```
 
 **Result**: Pods are allowed, but violations are logged in the API server audit log.
@@ -155,20 +146,15 @@ kubectl label namespace production \
 **Example**:
 
 ```bash
-
 kubectl label namespace development \
   pod-security.kubernetes.io/warn=restricted
-```
-
 ```
 
 **Result**: Pods are allowed, but kubectl displays warnings:
 
 ```
-
 Warning: would violate PodSecurity "restricted:latest": ...
 
-```
 ```
 
 ### Combining Modes
@@ -176,13 +162,10 @@ Warning: would violate PodSecurity "restricted:latest": ...
 You can use all three modes simultaneously:
 
 ```bash
-
 kubectl label namespace production \
   pod-security.kubernetes.io/enforce=baseline \
   pod-security.kubernetes.io/audit=restricted \
   pod-security.kubernetes.io/warn=restricted
-```
-
 ```
 
 **Effect**:
@@ -200,7 +183,6 @@ This approach allows gradual tightening while maintaining visibility.
 **Create Namespace with PSS**:
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -211,24 +193,18 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-```
-
 **Apply to Existing Namespace**:
 
 ```bash
-
 kubectl label namespace production \
   pod-security.kubernetes.io/enforce=baseline \
   pod-security.kubernetes.io/audit=restricted \
   pod-security.kubernetes.io/warn=restricted
 ```
 
-```
-
 **With Version Pinning**:
 
 ```yaml
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -238,8 +214,6 @@ metadata:
     pod-security.kubernetes.io/enforce-version: v1.30
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn: restricted
-```
-
 ```
 
 **Version Options**:
@@ -253,7 +227,6 @@ metadata:
 Exempt specific users, namespaces, or runtimeClasses:
 
 ```yaml
-
 apiVersion: apiserver.config.k8s.io/v1
 kind: AdmissionConfiguration
 plugins:
@@ -275,8 +248,6 @@ plugins:
       - kube-node-lease
 ```
 
-```
-
 ## Security Context Configuration
 
 Security contexts define privilege and access control settings for pods and containers.
@@ -286,7 +257,6 @@ Security contexts define privilege and access control settings for pods and cont
 Applies to all containers in the pod:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -311,14 +281,11 @@ spec:
         - ALL
 ```
 
-```
-
 ### Container-Level Security Context
 
 More specific, overrides pod-level settings:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -376,8 +343,6 @@ spec:
       name: nginx-config
 ```
 
-```
-
 ## Meeting Each Standard
 
 ### Privileged Standard
@@ -385,7 +350,6 @@ spec:
 Allows everything - no configuration needed:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -410,14 +374,11 @@ spec:
       type: Directory
 ```
 
-```
-
 ### Baseline Standard
 
 Basic security with some flexibility:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -468,12 +429,9 @@ spec:
       claimName: app-pvc
 ```
 
-```
-
 **Baseline Key Requirements**:
 
 ```yaml
-
 # Required securityContext settings
 
 securityContext:
@@ -488,14 +446,11 @@ securityContext:
 
 ```
 
-```
-
 ### Restricted Standard
 
 Maximum security, best practices:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -574,12 +529,9 @@ spec:
 
 ```
 
-```
-
 **Restricted Key Requirements**:
 
 ```yaml
-
 # All Baseline requirements PLUS:
 
 # Pod securityContext (required)
@@ -605,14 +557,11 @@ securityContext:
   readOnlyRootFilesystem: true
 ```
 
-```
-
 ## Common Patterns and Examples
 
 ### 1. Web Application (Restricted)
 
 ```yaml
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -680,14 +629,11 @@ spec:
           name: nginx-config
 ```
 
-```
-
 ### 2. Database (Baseline)
 
 Some databases need more flexibility:
 
 ```yaml
-
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -756,14 +702,11 @@ spec:
           storage: 10Gi
 ```
 
-```
-
 ### 3. Monitoring Agent (Privileged)
 
 System-level monitoring needs privileges:
 
 ```yaml
-
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -824,14 +767,11 @@ spec:
           path: /
 ```
 
-```
-
 ### 4. Init Container Pattern
 
 Using init containers with restricted standard:
 
 ```yaml
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -894,8 +834,6 @@ spec:
     emptyDir: {}
 ```
 
-```
-
 ## Migration Strategy
 
 Migrating from permissive to restricted standards:
@@ -903,7 +841,6 @@ Migrating from permissive to restricted standards:
 ### Step 1: Assess Current State
 
 ```bash
-
 # Check existing namespaces
 
 kubectl get namespaces -L pod-security.kubernetes.io/enforce
@@ -915,18 +852,13 @@ kubectl label namespace production \
   --dry-run=server
 ```
 
-```
-
 ### Step 2: Enable Warn Mode
 
 ```bash
-
 # Add warnings first
 
 kubectl label namespace production \
   pod-security.kubernetes.io/warn=baseline
-```
-
 ```
 
 ### Step 3: Monitor and Fix
@@ -934,33 +866,24 @@ kubectl label namespace production \
 Deploy applications and observe warnings:
 
 ```bash
-
 kubectl apply -f app.yaml
 
 # Warning: would violate PodSecurity "baseline:latest": allowPrivilegeEscalation != false
 
 ```
 
-```
-
 Fix issues in manifests:
 
 ```yaml
-
 securityContext:
   allowPrivilegeEscalation: false
-```
-
 ```
 
 ### Step 4: Enable Audit Mode
 
 ```bash
-
 kubectl label namespace production \
   pod-security.kubernetes.io/audit=baseline
-```
-
 ```
 
 Check audit logs for violations.
@@ -968,11 +891,8 @@ Check audit logs for violations.
 ### Step 5: Enable Enforce Mode
 
 ```bash
-
 kubectl label namespace production \
   pod-security.kubernetes.io/enforce=baseline
-```
-
 ```
 
 ### Step 6: Progress to Restricted
@@ -980,7 +900,6 @@ kubectl label namespace production \
 Repeat steps 2-5 with restricted standard:
 
 ```bash
-
 kubectl label namespace production \
   pod-security.kubernetes.io/warn=restricted \
   pod-security.kubernetes.io/audit=restricted
@@ -989,8 +908,6 @@ kubectl label namespace production \
 
 kubectl label namespace production \
   pod-security.kubernetes.io/enforce=restricted
-```
-
 ```
 
 ## Troubleshooting
@@ -1002,21 +919,16 @@ kubectl label namespace production \
 **Error**:
 
 ```
-
 Warning: would violate PodSecurity "baseline:latest":
 allowPrivilegeEscalation != false
 
-```
 ```
 
 **Fix**:
 
 ```yaml
-
 securityContext:
   allowPrivilegeEscalation: false
-```
-
 ```
 
 #### 2. Running as root
@@ -1024,22 +936,17 @@ securityContext:
 **Error**:
 
 ```
-
 Warning: would violate PodSecurity "restricted:latest":
 runAsNonRoot != true
 
-```
 ```
 
 **Fix**:
 
 ```yaml
-
 securityContext:
   runAsNonRoot: true
   runAsUser: 1000
-```
-
 ```
 
 #### 3. Missing seccomp profile
@@ -1047,22 +954,17 @@ securityContext:
 **Error**:
 
 ```
-
 Warning: would violate PodSecurity "restricted:latest":
 seccompProfile
 
-```
 ```
 
 **Fix**:
 
 ```yaml
-
 securityContext:
   seccompProfile:
     type: RuntimeDefault
-```
-
 ```
 
 #### 4. Capabilities not dropped
@@ -1070,23 +972,18 @@ securityContext:
 **Error**:
 
 ```
-
 Warning: would violate PodSecurity "restricted:latest":
 unrestricted capabilities
 
-```
 ```
 
 **Fix**:
 
 ```yaml
-
 securityContext:
   capabilities:
     drop:
     - ALL
-```
-
 ```
 
 #### 5. hostPath volume
@@ -1094,11 +991,9 @@ securityContext:
 **Error**:
 
 ```
-
 Error: pods "mypod" is forbidden:
 hostPath volumes are not allowed to be used
 
-```
 ```
 
 **Fix**: Use alternative volume types (emptyDir, ConfigMap, Secret, PVC).
@@ -1108,46 +1003,31 @@ hostPath volumes are not allowed to be used
 **1. Check namespace labels**:
 
 ```bash
-
 kubectl get namespace production -o yaml | grep pod-security
-```
-
 ```
 
 **2. Dry-run pod creation**:
 
 ```bash
-
 kubectl apply -f pod.yaml --dry-run=server
-```
-
 ```
 
 **3. Describe pod for admission errors**:
 
 ```bash
-
 kubectl describe pod failing-pod
-```
-
 ```
 
 **4. Check API server audit logs**:
 
 ```bash
-
 kubectl logs -n kube-system kube-apiserver-<node> | grep PodSecurity
-```
-
 ```
 
 **5. Use --v=8 for detailed output**:
 
 ```bash
-
 kubectl apply -f pod.yaml --v=8
-```
-
 ```
 
 ## Linux Capabilities Reference
@@ -1176,10 +1056,7 @@ Common capabilities you might need to add (after dropping ALL):
 1. **Pin Versions**: Use version pinning to prevent surprises:
 
 ```yaml
-
 pod-security.kubernetes.io/enforce-version: v1.30
-```
-
 ```
 
 1. **Document Exceptions**: Clearly document why privileged workloads need privileges.
@@ -1240,7 +1117,6 @@ pod-security.kubernetes.io/enforce-version: v1.30
 ### Common Commands
 
 ```bash
-
 # Apply PSS labels
 
 kubectl label namespace <namespace> \
@@ -1264,12 +1140,9 @@ kubectl label namespace <namespace> \
 kubectl apply -f pod.yaml --dry-run=server
 ```
 
-```
-
 ### Security Context Template (Restricted)
 
 ```yaml
-
 # Pod-level
 
 securityContext:
@@ -1292,12 +1165,9 @@ securityContext:
     type: RuntimeDefault
 ```
 
-```
-
 ### Namespace PSS Configuration
 
 ```yaml
-
 # Development (permissive)
 
 pod-security.kubernetes.io/enforce: privileged
@@ -1319,8 +1189,6 @@ pod-security.kubernetes.io/warn: restricted
 # System (permissive)
 
 pod-security.kubernetes.io/enforce: privileged
-```
-
 ```
 
 ---

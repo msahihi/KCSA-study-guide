@@ -226,7 +226,6 @@ Before diving into Domain 4, ensure you have:
 ### Common kubectl Commands for Domain 4
 
 ```bash
-
 # Secrets Management
 
 kubectl create secret generic <name> --from-literal=key=value
@@ -262,12 +261,9 @@ kubectl get pod <name> -o jsonpath='{.spec.securityContext}'
 kubectl get pod <name> -o jsonpath='{.spec.containers[*].securityContext}'
 ```
 
-```
-
 ### Essential Command-Line Tools
 
 ```bash
-
 # Trivy - Image Scanning
 
 trivy image <image-name>
@@ -288,8 +284,6 @@ falco -r /etc/falco/falco_rules.yaml --list
 # OPA - Policy Testing
 
 opa eval -d policy.rego -i input.json "data.kubernetes.admission.deny"
-```
-
 ```
 
 ### Security Best Practices Checklist
@@ -313,7 +307,6 @@ opa eval -d policy.rego -i input.json "data.kubernetes.admission.deny"
 Understanding how different security components work together is crucial:
 
 ```
-
 ┌─────────────────────────────────────────────────────────────┐
 │                    Kubernetes Cluster                        │
 │                                                              │
@@ -350,7 +343,6 @@ Understanding how different security components work together is crucial:
 │  └────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
 
-```
 ```
 
 ## Common Vulnerabilities and Mitigations

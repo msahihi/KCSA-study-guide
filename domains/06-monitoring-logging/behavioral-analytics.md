@@ -58,7 +58,6 @@ Normal Behavior (Baseline)
 Use statistical methods to identify outliers:
 
 ```bash
-
 # Example: Find pods using unusual CPU
 # 1. Collect normal CPU usage (baseline)
 
@@ -73,8 +72,6 @@ kubectl top pods -A > current.txt
 diff baseline.txt current.txt
 ```
 
-```
-
 **Statistical Concepts**:
 
 - **Mean**: Average value
@@ -87,15 +84,12 @@ diff baseline.txt current.txt
 Simple but effective for known ranges:
 
 ```yaml
-
 # Example: Alert on excessive API calls
 
 alert: ExcessiveAPICalls
 condition: |
   rate(apiserver_request_total[5m]) > 1000
 description: "API call rate exceeds normal threshold"
-```
-
 ```
 
 **Pros**: Easy to understand and implement
@@ -106,7 +100,6 @@ description: "API call rate exceeds normal threshold"
 Detect unusual sequences of events:
 
 ```
-
 Normal Pattern:
   Login → List Pods → Get Pod → View Logs → Logout
 
@@ -114,7 +107,6 @@ Suspicious Pattern:
   Login → List Secrets → Get Secret → Get Secret → Get Secret → ...
   (Excessive secret access suggests data exfiltration)
 
-```
 ```
 
 #### 4. Machine Learning (Advanced)
@@ -142,7 +134,6 @@ ML can learn complex patterns automatically:
 #### API Activity Baselines
 
 ```bash
-
 # Most frequent API endpoints
 
 cat audit.log | jq -r '.requestURI' | sort | uniq -c | sort -rn | head -20
@@ -160,8 +151,6 @@ cat audit.log | jq -r '.verb' | sort | uniq -c
 cat audit.log | jq -r '.objectRef.resource' | sort | uniq -c | sort -rn
 ```
 
-```
-
 **Normal baseline includes**:
 
 - Which users access which resources
@@ -172,7 +161,6 @@ cat audit.log | jq -r '.objectRef.resource' | sort | uniq -c | sort -rn
 #### Resource Baselines
 
 ```bash
-
 # Normal pod count per namespace
 
 kubectl get pods -A --no-headers | awk '{print $1}' | sort | uniq -c
@@ -192,12 +180,9 @@ kubectl get pods -A -o json | \
   jq '[.items[] | select(.spec.containers[].securityContext.privileged==true)] | length'
 ```
 
-```
-
 #### Network Baselines
 
 ```bash
-
 # With Falco - normal outbound connections
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco | \
@@ -210,12 +195,9 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | \
 kubectl get pods -A -o wide
 ```
 
-```
-
 #### Authentication Baselines
 
 ```bash
-
 # Normal authentication sources (from audit logs)
 
 cat audit.log | jq -r '.sourceIPs[]' | sort | uniq -c | sort -rn
@@ -228,8 +210,6 @@ cat audit.log | jq -r '.userAgent' | sort | uniq -c | sort -rn
 
 cat audit.log | jq -r '.user.username' | \
   grep "system:serviceaccount" | sort | uniq -c | sort -rn
-```
-
 ```
 
 ### Baseline Collection Period
@@ -253,7 +233,6 @@ cat audit.log | jq -r '.user.username' | \
 Store baselines for comparison:
 
 ```bash
-
 # Example baseline storage structure
 
 /var/lib/baselines/
@@ -268,8 +247,6 @@ Store baselines for comparison:
     └── allowed-destinations.txt
 ```
 
-```
-
 ## Behavioral Indicators of Compromise (BIoCs)
 
 ### Account Compromise Indicators
@@ -277,7 +254,6 @@ Store baselines for comparison:
 #### Unusual Authentication Patterns
 
 ```bash
-
 # Multiple failed auth attempts followed by success
 
 cat audit.log | jq -r 'select(.objectRef.resource=="tokenreviews") |
@@ -293,8 +269,6 @@ cat audit.log | jq 'select(.requestReceivedTimestamp | strptime("%Y-%m-%dT%H:%M:
   .hour < 6 or .hour > 22)'  # Before 6 AM or after 10 PM
 ```
 
-```
-
 **Indicators**:
 
 - Login from unusual IP address or location
@@ -307,7 +281,6 @@ cat audit.log | jq 'select(.requestReceivedTimestamp | strptime("%Y-%m-%dT%H:%M:
 #### Privilege Escalation Attempts
 
 ```bash
-
 # Attempts to create privileged pods
 
 cat audit.log | jq 'select(.verb=="create" and
@@ -327,8 +300,6 @@ cat audit.log | jq 'select(.verb=="create" and
    .objectRef.resource=="clusterrolebindings"))'
 ```
 
-```
-
 **Indicators**:
 
 - Creating privileged pods
@@ -342,7 +313,6 @@ cat audit.log | jq 'select(.verb=="create" and
 #### Suspicious Runtime Activity
 
 ```yaml
-
 # Falco rules for container compromise
 
 - rule: Shell Spawned in Container
@@ -370,8 +340,6 @@ cat audit.log | jq 'select(.verb=="create" and
   priority: CRITICAL
 ```
 
-```
-
 **Indicators**:
 
 - Shell spawned in container (especially if no shell expected)
@@ -384,7 +352,6 @@ cat audit.log | jq 'select(.verb=="create" and
 #### Resource Abuse
 
 ```bash
-
 # With Prometheus/metrics
 # Unusual CPU usage spike
 
@@ -399,8 +366,6 @@ kubectl top pods -A | awk '{if($4 ~ /[0-9]+Mi/ && $4+0 > 2000) print $0}'
 kubectl get pods -A | grep -E "CrashLoopBackOff|Error"
 ```
 
-```
-
 **Indicators**:
 
 - Sudden CPU/memory spike
@@ -413,7 +378,6 @@ kubectl get pods -A | grep -E "CrashLoopBackOff|Error"
 #### Excessive Data Access
 
 ```bash
-
 # Excessive secret reading
 
 cat audit.log | jq -r 'select(.objectRef.resource=="secrets") |
@@ -427,8 +391,6 @@ cat audit.log | jq -r 'select(.verb=="get" or .verb=="list") |
   uniq -c | sort -rn
 ```
 
-```
-
 **Indicators**:
 
 - User accessing many secrets in short period
@@ -440,14 +402,11 @@ cat audit.log | jq -r 'select(.verb=="get" or .verb=="list") |
 #### Unusual Network Patterns
 
 ```bash
-
 # With Falco - connections to external IPs
 
 kubectl logs -n falco -l app.kubernetes.io/name=falco | \
   grep "Outbound connection" | \
   grep -v "10\.\|172\.\|192\.168\."  # Exclude internal IPs
-```
-
 ```
 
 **Indicators**:
@@ -463,15 +422,12 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | \
 #### Cross-Namespace Access
 
 ```bash
-
 # Users accessing multiple namespaces
 
 cat audit.log | jq -r 'select(.objectRef.namespace!=null) |
   "\(.user.username) \(.objectRef.namespace)"' | \
   sort | uniq | \
   awk '{users[$1]++} END {for(u in users) if(users[u]>5) print u, users[u]}'
-```
-
 ```
 
 **Indicators**:
@@ -484,14 +440,11 @@ cat audit.log | jq -r 'select(.objectRef.namespace!=null) |
 #### Service Discovery
 
 ```bash
-
 # Excessive list/watch operations
 
 cat audit.log | jq 'select(.verb=="list" or .verb=="watch") |
   {user: .user.username, resource: .objectRef.resource, count: 1}' | \
   jq -s 'group_by(.user) | map({user: .[0].user, count: length})'
-```
-
 ```
 
 **Indicators**:
@@ -508,7 +461,6 @@ cat audit.log | jq 'select(.verb=="list" or .verb=="watch") |
 #### Anomaly Detection with PromQL
 
 ```yaml
-
 # Alert on unusual API request rate
 
 - alert: UnusualAPIRequestRate
@@ -537,14 +489,11 @@ cat audit.log | jq 'select(.verb=="list" or .verb=="watch") |
     summary: "High authentication failure rate detected"
 ```
 
-```
-
 ### Using Audit Logs for Behavior Analysis
 
 #### Pattern Detection Scripts
 
 ```bash
-
 #!/bin/bash
 # detect-anomalies.sh - Simple anomaly detection
 
@@ -571,14 +520,11 @@ while read count user; do
 done <<< "$current_counts"
 ```
 
-```
-
 ### Using Falco for Runtime Behavior
 
 Falco can detect runtime behavioral anomalies:
 
 ```yaml
-
 # Detect processes that don't normally run
 
 - rule: Unexpected Process Spawned
@@ -610,8 +556,6 @@ Falco can detect runtime behavioral anomalies:
   items: [/etc/nginx/nginx.conf, /etc/hosts, /etc/resolv.conf]
 ```
 
-```
-
 ## Alert Tuning and False Positives
 
 ### Common False Positive Causes
@@ -628,7 +572,6 @@ Falco can detect runtime behavioral anomalies:
 #### 1. Adjust Thresholds
 
 ```yaml
-
 # Before (too sensitive)
 
 - alert: HighAPICalls
@@ -641,12 +584,9 @@ Falco can detect runtime behavioral anomalies:
   for: 15m  # Must persist for 15 minutes
 ```
 
-```
-
 #### 2. Add Context
 
 ```yaml
-
 # Add allow-lists
 
 - rule: Shell in Container
@@ -659,12 +599,9 @@ Falco can detect runtime behavioral anomalies:
   priority: WARNING
 ```
 
-```
-
 #### 3. Implement Severity Levels
 
 ```yaml
-
 # Info - expected but worth noting
 
 - rule: Config File Modified
@@ -691,14 +628,11 @@ Falco can detect runtime behavioral anomalies:
   priority: CRITICAL
 ```
 
-```
-
 #### 4. Correlation and Enrichment
 
 Don't alert on single event - correlate multiple signals:
 
 ```python
-
 # Pseudo-code for correlation
 
 if (failed_auth_attempts > 5 and
@@ -710,8 +644,6 @@ elif (failed_auth_attempts > 5 and successful_auth):
     severity = WARNING
 else:
     severity = INFO
-```
-
 ```
 
 ### Alert Fatigue Prevention
@@ -727,7 +659,6 @@ else:
 1. **Regular review**: Disable rules that never provide value
 
 ```yaml
-
 # Example alert with good context
 
 - rule: Suspicious Activity Detected
@@ -743,8 +674,6 @@ else:
   priority: WARNING
 ```
 
-```
-
 ## Integration with SIEM
 
 ### Sending Data to SIEM
@@ -758,7 +687,6 @@ Most SIEM systems can ingest:
 #### Example: Falco to Splunk
 
 ```yaml
-
 # Falco config for Splunk HEC (HTTP Event Collector)
 
 http_output:
@@ -771,12 +699,9 @@ json_output: true
 json_include_output_property: true
 ```
 
-```
-
 #### Example: Audit Logs to ELK
 
 ```yaml
-
 # Filebeat config for audit logs
 
 filebeat.inputs:
@@ -794,44 +719,35 @@ output.elasticsearch:
   index: "k8s-audit-%{+yyyy.MM.dd}"
 ```
 
-```
-
 ### SIEM Correlation Examples
 
 #### Correlation Rule 1: Account Compromise
 
 ```
-
 IF (failed_auth_attempts > 5 in last 5 minutes)
 AND (successful_auth from same user)
 AND (source_ip NOT IN known_user_ips)
 THEN alert "Possible account compromise"
 
 ```
-```
 
 #### Correlation Rule 2: Data Exfiltration
 
 ```
-
 IF (secret_access_count > 20 in last 1 hour)
 AND (large_outbound_transfer)
 AND (destination_ip NOT IN whitelist)
 THEN alert "Possible data exfiltration"
 ```
 
-```
-
 #### Correlation Rule 3: Lateral Movement
 
 ```
-
 IF (new_pod_exec from user)
 AND (user accessed multiple namespaces in last hour)
 AND (outbound_connections to internal IPs)
 THEN alert "Possible lateral movement"
 
-```
 ```
 
 ## Real-World Scenarios
@@ -852,7 +768,6 @@ THEN alert "Possible lateral movement"
 **Detection**:
 
 ```yaml
-
 # Falco rule
 
 - rule: Cryptocurrency Mining
@@ -869,8 +784,6 @@ THEN alert "Possible lateral movement"
   expr: |
     rate(container_cpu_usage_seconds_total[5m]) > 0.9
   for: 1h
-```
-
 ```
 
 ### Scenario 2: Insider Threat
@@ -890,14 +803,11 @@ THEN alert "Possible lateral movement"
 **Detection**:
 
 ```bash
-
 # Audit log analysis
 
 cat audit.log | jq 'select(.user.username=="developer@example.com") |
   select(.requestReceivedTimestamp | strptime("%Y-%m-%dT%H:%M:%S") | .hour < 6 or .hour > 22) |
   select(.objectRef.resource=="secrets")'
-```
-
 ```
 
 ### Scenario 3: Container Escape
@@ -917,7 +827,6 @@ cat audit.log | jq 'select(.user.username=="developer@example.com") |
 **Detection**:
 
 ```yaml
-
 # Falco rules
 
 - rule: Container Escape - Host Mount
@@ -935,8 +844,6 @@ cat audit.log | jq 'select(.user.username=="developer@example.com") |
     container.privileged=true and
     not container.name in (privileged_whitelist)
   priority: CRITICAL
-```
-
 ```
 
 ## Exam Tips
