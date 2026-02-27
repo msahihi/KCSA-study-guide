@@ -5,6 +5,7 @@
 Cluster hardening focuses on securing access to the Kubernetes cluster and implementing security controls at the cluster level. This domain represents **20% of the KCSA exam** and covers essential security mechanisms that control who can access your cluster and what they can do.
 
 **Why Cluster Hardening Matters**:
+
 - Prevents unauthorized access to cluster resources
 - Implements the principle of least privilege
 - Reduces the attack surface of your cluster
@@ -16,6 +17,7 @@ Cluster hardening focuses on securing access to the Kubernetes cluster and imple
 ## Topics Covered
 
 ### 1. [Role-Based Access Control (RBAC)](rbac.md)
+
 **Exam Weight**: ~8-10%
 
 - Understanding Kubernetes authentication and authorization
@@ -25,12 +27,14 @@ Cluster hardening focuses on securing access to the Kubernetes cluster and imple
 - Best practices for least privilege access
 
 **Key Concepts**:
+
 - Authentication vs Authorization
 - Subjects (Users, Groups, ServiceAccounts)
 - Resources and Verbs
 - Namespace-scoped vs Cluster-scoped permissions
 
 ### 2. [Service Accounts Security](service-accounts.md)
+
 **Exam Weight**: ~3-4%
 
 - Understanding ServiceAccount purpose and usage
@@ -41,12 +45,14 @@ Cluster hardening focuses on securing access to the Kubernetes cluster and imple
 - Token management and rotation
 
 **Key Concepts**:
+
 - ServiceAccount tokens
 - API authentication with ServiceAccounts
 - Bound ServiceAccount tokens (v1.22+)
 - ServiceAccount best practices
 
 ### 3. [Security Contexts](security-contexts.md)
+
 **Exam Weight**: ~4-5%
 
 - Pod-level vs Container-level security contexts
@@ -57,12 +63,14 @@ Cluster hardening focuses on securing access to the Kubernetes cluster and imple
 - fsGroup and supplemental groups
 
 **Key Concepts**:
+
 - runAsUser and runAsGroup
 - allowPrivilegeEscalation
 - capabilities (add/drop)
 - seccompProfile and seLinuxOptions
 
 ### 4. [Pod Security Admission](pod-security-admission.md)
+
 **Exam Weight**: ~3-4%
 
 - Understanding Pod Security Standards (PSS)
@@ -72,6 +80,7 @@ Cluster hardening focuses on securing access to the Kubernetes cluster and imple
 - Migrating from Pod Security Policies (deprecated)
 
 **Key Concepts**:
+
 - Pod Security Standards
 - Admission modes: enforce, audit, warn
 - Namespace labels for PSA
@@ -82,24 +91,28 @@ Cluster hardening focuses on securing access to the Kubernetes cluster and imple
 After completing this domain, you should be able to:
 
 1. **Configure RBAC**:
+
    - Create Roles and ClusterRoles with appropriate permissions
    - Bind roles to users, groups, and service accounts
    - Test and verify RBAC configurations
    - Troubleshoot permission issues
 
-2. **Secure ServiceAccounts**:
+1. **Secure ServiceAccounts**:
+
    - Create and configure custom ServiceAccounts
    - Disable automatic token mounting when not needed
    - Understand token lifecycle and security implications
    - Apply least privilege to ServiceAccounts
 
-3. **Implement Security Contexts**:
+1. **Implement Security Contexts**:
+
    - Configure pods to run as non-root users
    - Set read-only root filesystems
    - Manage Linux capabilities appropriately
    - Prevent privilege escalation
 
-4. **Apply Pod Security Standards**:
+1. **Apply Pod Security Standards**:
+
    - Understand the three security levels
    - Configure namespace-level pod security
    - Enforce security policies across workloads
@@ -126,25 +139,25 @@ Practice your skills with these comprehensive labs:
    - Implement least privilege access
    - Troubleshoot common RBAC issues
 
-2. **[Lab 02: RBAC Advanced](../../labs/02-cluster-hardening/lab-02-rbac-advanced.md)**
+1. **[Lab 02: RBAC Advanced](../../labs/02-cluster-hardening/lab-02-rbac-advanced.md)**
    - Work with ClusterRoles and ClusterRoleBindings
    - Aggregate roles for flexibility
    - Create custom roles for specific use cases
    - Implement service-to-service RBAC
 
-3. **[Lab 03: Service Accounts](../../labs/02-cluster-hardening/lab-03-service-accounts.md)**
+1. **[Lab 03: Service Accounts](../../labs/02-cluster-hardening/lab-03-service-accounts.md)**
    - Create custom ServiceAccounts
    - Disable token automounting
    - Configure pod ServiceAccount usage
    - Test ServiceAccount permissions
 
-4. **[Lab 04: Security Contexts](../../labs/02-cluster-hardening/lab-04-security-contexts.md)**
+1. **[Lab 04: Security Contexts](../../labs/02-cluster-hardening/lab-04-security-contexts.md)**
    - Configure non-root containers
    - Set read-only root filesystems
    - Drop capabilities for security
    - Prevent privilege escalation
 
-5. **[Lab 05: Pod Security Admission](../../labs/02-cluster-hardening/lab-05-pod-security-admission.md)**
+1. **[Lab 05: Pod Security Admission](../../labs/02-cluster-hardening/lab-05-pod-security-admission.md)**
    - Configure Pod Security Standards
    - Apply namespace-level policies
    - Test enforcement, audit, and warn modes
@@ -155,23 +168,30 @@ Practice your skills with these comprehensive labs:
 ### Essential Commands
 
 ```bash
+
 # RBAC commands
+
 kubectl get roles,rolebindings -n <namespace>
 kubectl get clusterroles,clusterrolebindings
 kubectl auth can-i <verb> <resource> --as=<user>
 kubectl auth can-i --list --as=<user>
 
 # ServiceAccount commands
+
 kubectl get serviceaccounts -n <namespace>
 kubectl describe sa <sa-name> -n <namespace>
 kubectl create sa <sa-name> -n <namespace>
 
 # Security Context inspection
+
 kubectl get pod <pod-name> -o yaml | grep -A10 securityContext
 
 # Pod Security Admission
+
 kubectl label namespace <ns> pod-security.kubernetes.io/enforce=restricted
 kubectl label namespace <ns> pod-security.kubernetes.io/audit=baseline
+```
+
 ```
 
 ### Key Files and Paths
@@ -183,18 +203,22 @@ kubectl label namespace <ns> pod-security.kubernetes.io/audit=baseline
 ## Common Exam Scenarios
 
 ### Scenario 1: Locked Out User
+
 **Problem**: A developer can't list pods in their namespace.
 **Solution**: Check RBAC permissions with `kubectl auth can-i`, create appropriate Role and RoleBinding.
 
 ### Scenario 2: Overprivileged Pod
+
 **Problem**: A pod runs as root with all capabilities.
 **Solution**: Add security context to run as non-root, drop unnecessary capabilities, set read-only filesystem.
 
 ### Scenario 3: ServiceAccount Token Exposure
+
 **Problem**: Pods don't need API access but have ServiceAccount tokens mounted.
 **Solution**: Disable automounting with `automountServiceAccountToken: false`.
 
 ### Scenario 4: Policy Violations
+
 **Problem**: Pods fail to start after implementing Pod Security Standards.
 **Solution**: Review PSA warnings, adjust pod specifications to meet security requirements.
 
@@ -202,17 +226,17 @@ kubectl label namespace <ns> pod-security.kubernetes.io/audit=baseline
 
 1. **Practice RBAC extensively**: RBAC is complex and appears frequently on the exam. Create various roles and test them thoroughly.
 
-2. **Understand the hierarchy**: Know the difference between namespace-scoped (Role, RoleBinding) and cluster-scoped (ClusterRole, ClusterRoleBinding) resources.
+1. **Understand the hierarchy**: Know the difference between namespace-scoped (Role, RoleBinding) and cluster-scoped (ClusterRole, ClusterRoleBinding) resources.
 
-3. **Security by default**: Remember that Kubernetes is permissive by default. You must explicitly configure security controls.
+1. **Security by default**: Remember that Kubernetes is permissive by default. You must explicitly configure security controls.
 
-4. **Test your configurations**: Always use `kubectl auth can-i` to verify RBAC rules before considering them complete.
+1. **Test your configurations**: Always use `kubectl auth can-i` to verify RBAC rules before considering them complete.
 
-5. **Know the security contexts**: Memorize common security context fields and their purposes. These appear frequently in exam questions.
+1. **Know the security contexts**: Memorize common security context fields and their purposes. These appear frequently in exam questions.
 
-6. **PSA levels**: Understand the three Pod Security Standards levels and what each allows/restricts.
+1. **PSA levels**: Understand the three Pod Security Standards levels and what each allows/restricts.
 
-7. **Real-world thinking**: Consider "why" each security control exists. Understanding the threat model helps remember the configurations.
+1. **Real-world thinking**: Consider "why" each security control exists. Understanding the threat model helps remember the configurations.
 
 ## Prerequisites
 
@@ -227,17 +251,18 @@ Before studying this domain, you should:
 
 1. **Confusing authentication with authorization**: Authentication proves who you are; authorization determines what you can do.
 
-2. **Using ClusterRoles when Roles suffice**: Always prefer namespace-scoped Roles when possible (least privilege).
+1. **Using ClusterRoles when Roles suffice**: Always prefer namespace-scoped Roles when possible (least privilege).
 
-3. **Forgetting namespace scope**: RoleBindings only work in their namespace, even when referencing a ClusterRole.
+1. **Forgetting namespace scope**: RoleBindings only work in their namespace, even when referencing a ClusterRole.
 
-4. **Ignoring security contexts**: Security contexts are critical for production security but often overlooked in development.
+1. **Ignoring security contexts**: Security contexts are critical for production security but often overlooked in development.
 
-5. **Overly permissive wildcards**: Using `resources: ["*"]` and `verbs: ["*"]` violates least privilege principles.
+1. **Overly permissive wildcards**: Using `resources: ["*"]` and `verbs: ["*"]` violates least privilege principles.
 
 ## Security Best Practices
 
 ### RBAC Best Practices
+
 - Apply principle of least privilege
 - Use namespace-scoped Roles when possible
 - Avoid wildcards in production
@@ -245,6 +270,7 @@ Before studying this domain, you should:
 - Document role purposes and owners
 
 ### ServiceAccount Best Practices
+
 - Create custom ServiceAccounts for each application
 - Disable token automounting when not needed
 - Use short-lived tokens (projected volumes)
@@ -252,6 +278,7 @@ Before studying this domain, you should:
 - Rotate ServiceAccount tokens regularly
 
 ### Security Context Best Practices
+
 - Always run containers as non-root
 - Drop all capabilities and add only required ones
 - Set read-only root filesystems when possible
@@ -259,6 +286,7 @@ Before studying this domain, you should:
 - Use seccomp and AppArmor/SELinux profiles
 
 ### Pod Security Admission Best Practices
+
 - Start with audit/warn modes before enforce
 - Apply Baseline standard minimum in production
 - Use Restricted standard for sensitive workloads
@@ -268,6 +296,7 @@ Before studying this domain, you should:
 ## Additional Resources
 
 ### Official Documentation
+
 - [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
 - [Configure Service Accounts](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/)
 - [Security Context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
@@ -275,6 +304,7 @@ Before studying this domain, you should:
 - [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 
 ### Security Guidelines
+
 - [Kubernetes Security Best Practices](https://kubernetes.io/docs/concepts/security/security-checklist/)
 - [CIS Kubernetes Benchmark](https://www.cisecurity.org/benchmark/kubernetes)
 - [NSA Kubernetes Hardening Guide](https://media.defense.gov/2022/Aug/29/2003066362/-1/-1/0/CTR_KUBERNETES_HARDENING_GUIDANCE_1.2_20220829.PDF)
@@ -282,11 +312,11 @@ Before studying this domain, you should:
 ## Next Steps
 
 1. Start with [RBAC basics](rbac.md) - this is the foundation of cluster security
-2. Move to [ServiceAccounts](service-accounts.md) to understand pod authentication
-3. Study [Security Contexts](security-contexts.md) for pod-level security
-4. Complete with [Pod Security Admission](pod-security-admission.md) for policy enforcement
-5. Practice with all five hands-on labs in order
-6. Review the [KCSA Cheatsheet](../../KCSA_CHEATSHEET.md) for quick reference
+1. Move to [ServiceAccounts](service-accounts.md) to understand pod authentication
+1. Study [Security Contexts](security-contexts.md) for pod-level security
+1. Complete with [Pod Security Admission](pod-security-admission.md) for policy enforcement
+1. Practice with all five hands-on labs in order
+1. Review the [KCSA Cheatsheet](../../KCSA_CHEATSHEET.md) for quick reference
 
 ## Exam Preparation Checklist
 

@@ -61,7 +61,7 @@ Security monitoring integrates multiple data sources to provide comprehensive vi
 ### Components Overview
 
 | Component | Purpose | Data Type | Use Cases |
-|-----------|---------|-----------|-----------|
+| ----------- | --------- | ----------- | ----------- |
 | **Prometheus** | Metrics storage & query | Time-series metrics | Resource usage, API rates, alert metrics |
 | **Elasticsearch** | Log storage & search | Structured logs | Audit logs, Falco alerts, app logs |
 | **Loki** | Log aggregation | Logs (lightweight) | Application logs, container logs |
@@ -75,6 +75,7 @@ Security monitoring integrates multiple data sources to provide comprehensive vi
 ### Why Aggregate Logs
 
 **Benefits**:
+
 - Centralized search across all sources
 - Correlation of related events
 - Long-term retention and archival
@@ -88,7 +89,9 @@ Security monitoring integrates multiple data sources to provide comprehensive vi
 Fluentd is a data collector for unified logging:
 
 ```yaml
+
 # fluentd-daemonset.yaml
+
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -137,10 +140,14 @@ spec:
           name: fluentd-config
 ```
 
+```
+
 #### Fluentd Configuration
 
 ```xml
+
 # fluent.conf
+
 <source>
   @type tail
   path /var/log/containers/*.log
@@ -154,12 +161,14 @@ spec:
 </source>
 
 # Kubernetes metadata enrichment
+
 <filter kubernetes.**>
   @type kubernetes_metadata
   @id filter_kube_metadata
 </filter>
 
 # Parse audit logs
+
 <source>
   @type tail
   path /var/log/kubernetes/audit.log
@@ -171,6 +180,7 @@ spec:
 </source>
 
 # Parse Falco alerts
+
 <source>
   @type http
   port 9880
@@ -182,6 +192,7 @@ spec:
 </source>
 
 # Enrich with security context
+
 <filter k8s.**>
   @type record_transformer
   <record>
@@ -191,6 +202,7 @@ spec:
 </filter>
 
 # Output to Elasticsearch
+
 <match k8s.audit>
   @type elasticsearch
   @id out_es_audit
@@ -232,12 +244,16 @@ spec:
 </match>
 ```
 
+```
+
 #### Using Fluent Bit (Lightweight)
 
 Fluent Bit is more resource-efficient than Fluentd:
 
 ```yaml
+
 # fluent-bit-daemonset.yaml
+
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -309,10 +325,14 @@ data:
         Retry_Limit     5
 ```
 
+```
+
 ### Elasticsearch Deployment
 
 ```yaml
+
 # elasticsearch.yaml
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -387,6 +407,8 @@ spec:
     name: transport
 ```
 
+```
+
 ## Metrics Collection
 
 ### Prometheus for Security Metrics
@@ -394,7 +416,9 @@ spec:
 #### Prometheus Deployment
 
 ```yaml
+
 # prometheus.yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -434,10 +458,14 @@ spec:
           claimName: prometheus-storage
 ```
 
+```
+
 #### Prometheus Configuration
 
 ```yaml
+
 # prometheus-config.yaml
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -450,10 +478,12 @@ data:
       evaluation_interval: 15s
 
     # Alert rules
+
     rule_files:
       - /etc/prometheus/alerts.yml
 
     # Alertmanager configuration
+
     alerting:
       alertmanagers:
       - static_configs:
@@ -461,8 +491,11 @@ data:
           - alertmanager:9093
 
     # Scrape configurations
+
     scrape_configs:
+
       # Kubernetes API server
+
       - job_name: 'kubernetes-apiservers'
         kubernetes_sd_configs:
         - role: endpoints
@@ -476,6 +509,7 @@ data:
           regex: default;kubernetes;https
 
       # Kubernetes nodes
+
       - job_name: 'kubernetes-nodes'
         kubernetes_sd_configs:
         - role: node
@@ -488,6 +522,7 @@ data:
           regex: __meta_kubernetes_node_label_(.+)
 
       # Kubernetes pods
+
       - job_name: 'kubernetes-pods'
         kubernetes_sd_configs:
         - role: pod
@@ -506,6 +541,7 @@ data:
           target_label: __address__
 
       # Falco exporter
+
       - job_name: 'falco'
         static_configs:
         - targets: ['falco-exporter:9376']
@@ -515,7 +551,9 @@ data:
     - name: security
       interval: 30s
       rules:
+
       # High authentication failure rate
+
       - alert: HighAuthFailureRate
         expr: rate(apiserver_request_total{code=~"401|403"}[5m]) > 10
         for: 5m
@@ -526,6 +564,7 @@ data:
           description: "Authentication failures: {{ $value }} per second"
 
       # Excessive API requests
+
       - alert: ExcessiveAPIRequests
         expr: rate(apiserver_request_total[5m]) > 1000
         for: 10m
@@ -536,6 +575,7 @@ data:
           description: "API requests: {{ $value }} per second"
 
       # Privileged pod creation
+
       - alert: PrivilegedPodCreated
         expr: increase(kube_pod_container_status_running{container_security_context_privileged="true"}[5m]) > 0
         labels:
@@ -545,6 +585,7 @@ data:
           description: "Privileged pod detected in {{ $labels.namespace }}/{{ $labels.pod }}"
 
       # Falco critical alerts
+
       - alert: FalcoCriticalAlert
         expr: increase(falco_events{priority="Critical"}[5m]) > 0
         labels:
@@ -554,6 +595,7 @@ data:
           description: "Critical security event detected: {{ $labels.rule }}"
 
       # Unusual pod restart rate
+
       - alert: HighPodRestartRate
         expr: rate(kube_pod_container_status_restarts_total[15m]) > 5
         for: 5m
@@ -564,63 +606,89 @@ data:
           description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} restarting frequently"
 ```
 
+```
+
 ### Security-Relevant Metrics
 
 #### API Server Metrics
 
 ```promql
+
 # Total API requests
+
 sum(rate(apiserver_request_total[5m]))
 
 # API requests by code
+
 sum(rate(apiserver_request_total[5m])) by (code)
 
 # Authentication failures
+
 sum(rate(apiserver_request_total{code=~"401|403"}[5m]))
 
 # API request latency (99th percentile)
+
 histogram_quantile(0.99, sum(rate(apiserver_request_duration_seconds_bucket[5m])) by (le))
 
 # Requests by user
+
 sum(rate(apiserver_request_total[5m])) by (user)
 
 # Requests by resource type
+
 sum(rate(apiserver_request_total[5m])) by (resource)
+```
+
 ```
 
 #### Pod/Container Metrics
 
 ```promql
+
 # Privileged containers running
+
 count(kube_pod_container_status_running{container_security_context_privileged="true"})
 
 # Containers running as root
+
 count(kube_pod_container_status_running{container_security_context_run_as_user="0"})
 
 # Pod restart rate
+
 rate(kube_pod_container_status_restarts_total[5m])
 
 # CPU usage by pod
+
 sum(rate(container_cpu_usage_seconds_total[5m])) by (namespace, pod)
 
 # Memory usage by pod
+
 sum(container_memory_usage_bytes) by (namespace, pod)
+```
+
 ```
 
 #### Falco Metrics
 
 ```promql
+
 # Total Falco alerts
+
 sum(increase(falco_events[5m]))
 
 # Falco alerts by priority
+
 sum(increase(falco_events[5m])) by (priority)
 
 # Falco alerts by rule
+
 sum(increase(falco_events[5m])) by (rule)
 
 # Critical alerts rate
+
 rate(falco_events{priority="Critical"}[5m])
+```
+
 ```
 
 ## Security Dashboards
@@ -630,6 +698,7 @@ rate(falco_events{priority="Critical"}[5m])
 #### Security Overview Dashboard
 
 ```json
+
 {
   "dashboard": {
     "title": "Kubernetes Security Overview",
@@ -675,9 +744,12 @@ rate(falco_events{priority="Critical"}[5m])
 }
 ```
 
+```
+
 #### Audit Log Dashboard (Kibana)
 
 ```json
+
 {
   "title": "Kubernetes Audit Logs",
   "visualizations": [
@@ -708,11 +780,13 @@ rate(falco_events{priority="Critical"}[5m])
 }
 ```
 
+```
+
 ### Key Dashboard Panels
 
 | Panel | Metric/Query | Purpose |
-|-------|-------------|---------|
-| **Auth Failures** | `apiserver_request_total{code=~"401|403"}` | Detect brute force attacks |
+| ------- | ------------- | --------- |
+| **Auth Failures** | `apiserver_request_total{code=~"401"}` or `code=~"403"` | Detect brute force attacks |
 | **Falco Alerts** | `falco_events` by priority | Runtime security overview |
 | **API Request Rate** | `apiserver_request_total` | Detect DoS or abuse |
 | **Secret Access** | Audit logs where `resource=secrets` | Track sensitive data access |
@@ -730,11 +804,13 @@ Single alerts can be noisy or ambiguous. Correlation improves accuracy:
 **Example Scenario**: Credential Theft
 
 Single events (noisy):
+
 - ✗ Failed authentication (could be typo)
 - ✗ Secret accessed (legitimate usage)
 - ✗ New IP address (mobile user)
 
 Correlated events (high confidence):
+
 - ✓ Multiple failed auth + success from new IP + secret access + unusual time = **Credential compromise**
 
 ### Correlation Techniques
@@ -744,7 +820,9 @@ Correlated events (high confidence):
 Events occurring close in time are related:
 
 ```yaml
+
 # AlertManager correlation example
+
 route:
   group_by: ['namespace', 'pod']
   group_wait: 10s        # Wait 10s for related alerts
@@ -758,12 +836,16 @@ route:
     group_by: ['cluster', 'alertname']
 ```
 
+```
+
 #### 2. Entity-Based Correlation
 
 Events related to same entity (user, pod, IP):
 
 ```promql
+
 # Find pods with multiple security issues
+
 (
   count(falco_events{pod="nginx-123"}) > 0
   and
@@ -773,17 +855,23 @@ Events related to same entity (user, pod, IP):
 )
 ```
 
+```
+
 #### 3. Pattern-Based Correlation
 
 Specific sequences indicate attacks:
 
 ```
+
 Attack Pattern: Container Escape
+
 1. Shell spawned in container (Falco)
-2. Privileged process execution (Falco)
-3. Host filesystem mount (Falco)
-4. Node SSH access (Audit logs)
+1. Privileged process execution (Falco)
+1. Host filesystem mount (Falco)
+1. Node SSH access (Audit logs)
 ⚠️ High confidence container escape attempt
+
+```
 ```
 
 ### Implementing Correlation
@@ -791,12 +879,16 @@ Attack Pattern: Container Escape
 #### Using Prometheus Recording Rules
 
 ```yaml
+
 # prometheus-rules.yaml
+
 groups:
 - name: security_correlation
   interval: 30s
   rules:
+
   # Record high-risk pods
+
   - record: security:pod:risk_score
     expr: |
       (
@@ -808,6 +900,7 @@ groups:
       )
 
   # Alert on high risk score
+
   - alert: HighRiskPod
     expr: security:pod:risk_score > 30
     labels:
@@ -817,10 +910,14 @@ groups:
       description: "Pod {{ $labels.pod }} has risk score {{ $value }}"
 ```
 
+```
+
 #### Using External Correlation Tools
 
 ```python
+
 # Example: Python correlation script
+
 import json
 from datetime import datetime, timedelta
 
@@ -836,6 +933,7 @@ def correlate_events(falco_alerts, audit_logs, metrics):
             alert_time = datetime.fromisoformat(falco_alert['time'])
 
             # Look for related events within 5 minutes
+
             related_audit = [
                 log for log in audit_logs
                 if log['objectRef']['name'] == pod
@@ -860,11 +958,14 @@ def correlate_events(falco_alerts, audit_logs, metrics):
     return incidents
 ```
 
+```
+
 ## Incident Response Workflows
 
 ### Automated Response Workflow
 
 ```
+
 ┌─────────────────────────────────────────────────────────┐
 │              Security Event Detected                     │
 │         (Falco, Audit Logs, Metrics)                    │
@@ -926,12 +1027,16 @@ def correlate_events(falco_alerts, audit_logs, metrics):
                     │  • Update policies         │
                     │  • Improve detection       │
                     └────────────────────────────┘
+
+```
 ```
 
 ### Response Automation Example
 
 ```yaml
+
 # falco-response-engine.yaml
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -940,7 +1045,9 @@ metadata:
 data:
   rules.yaml: |
     rules:
+
       # Terminate pod on critical alert
+
       - name: terminate_pod
         condition:
           priority: Critical
@@ -952,6 +1059,7 @@ data:
           - type: alert_slack
 
       # Isolate pod on suspicious activity
+
       - name: isolate_pod
         condition:
           priority: Warning
@@ -962,6 +1070,7 @@ data:
           - type: alert_pagerduty
 
       # Just alert on info
+
       - name: log_only
         condition:
           priority: ["Info", "Notice"]
@@ -970,31 +1079,41 @@ data:
           - type: metrics
 ```
 
+```
+
 ## Compliance Reporting
 
 ### Security Compliance Metrics
 
 ```promql
+
 # Example compliance metrics
 
 # 1. All privileged pods (should be 0 or small)
+
 count(kube_pod_container_status_running{container_security_context_privileged="true"})
 
 # 2. Pods without resource limits
+
 count(kube_pod_container_info) -
 count(kube_pod_container_resource_limits)
 
 # 3. Audit log coverage (should be 100%)
+
 sum(rate(apiserver_audit_event_total[24h])) /
 sum(rate(apiserver_request_total[24h]))
 
 # 4. Security alert response time (should be < 15min)
+
 histogram_quantile(0.95,
   rate(alert_response_duration_seconds_bucket[24h])
 )
 
 # 5. Falco uptime (should be > 99%)
+
 avg_over_time(up{job="falco"}[30d])
+```
+
 ```
 
 ### Compliance Dashboard
@@ -1002,7 +1121,7 @@ avg_over_time(up{job="falco"}[30d])
 Key metrics for compliance reports:
 
 | Metric | Standard | Target | Query |
-|--------|----------|--------|-------|
+| -------- | ---------- | -------- | ------- |
 | **Audit Coverage** | SOC 2, PCI-DSS | 100% | API requests with audit events |
 | **Privileged Workloads** | CIS Benchmark | 0 | Count privileged pods |
 | **Alert Response Time** | SOC 2 | < 15 min | p95 alert response time |
@@ -1015,14 +1134,15 @@ Key metrics for compliance reports:
 For the KCSA exam, understand:
 
 1. **Log aggregation**: Why and how (Fluentd/Fluent Bit → Elasticsearch)
-2. **Metrics collection**: Prometheus scraping, exporters
-3. **Dashboard components**: What metrics to monitor
-4. **Alert correlation**: Why single alerts aren't enough
-5. **Common security queries**: API failures, Falco alerts, secret access
-6. **Integration patterns**: How components connect
-7. **Compliance metrics**: What to measure for compliance
+1. **Metrics collection**: Prometheus scraping, exporters
+1. **Dashboard components**: What metrics to monitor
+1. **Alert correlation**: Why single alerts aren't enough
+1. **Common security queries**: API failures, Falco alerts, secret access
+1. **Integration patterns**: How components connect
+1. **Compliance metrics**: What to measure for compliance
 
 **Practice**:
+
 - Build a simple monitoring stack
 - Create security dashboards
 - Write Prometheus alert rules
@@ -1034,14 +1154,15 @@ For the KCSA exam, understand:
 **Key Takeaways**:
 
 1. Security monitoring integrates multiple data sources
-2. Log aggregation centralizes audit logs, Falco alerts, and app logs
-3. Prometheus provides security-relevant metrics and alerting
-4. Dashboards visualize security posture at a glance
-5. Alert correlation reduces false positives and improves detection
-6. Automated response speeds up incident containment
-7. Compliance reporting demonstrates security controls
+1. Log aggregation centralizes audit logs, Falco alerts, and app logs
+1. Prometheus provides security-relevant metrics and alerting
+1. Dashboards visualize security posture at a glance
+1. Alert correlation reduces false positives and improves detection
+1. Automated response speeds up incident containment
+1. Compliance reporting demonstrates security controls
 
 **Best Practices**:
+
 - Deploy log aggregation early (before incidents)
 - Create dashboards for common security scenarios
 - Correlate alerts to improve confidence
@@ -1051,6 +1172,7 @@ For the KCSA exam, understand:
 - Test incident response procedures
 
 **Architecture Principles**:
+
 - Defense in depth: Multiple detection layers
 - Centralization: Single pane of glass
 - Retention: Keep logs long enough for forensics
@@ -1058,6 +1180,7 @@ For the KCSA exam, understand:
 - Performance: Monitoring shouldn't impact workloads
 
 **Next Steps**:
+
 - Complete [Lab 4: Log Aggregation](../../labs/06-monitoring-logging/lab-04-log-aggregation.md)
 - Complete [Lab 5: Security Monitoring Dashboard](../../labs/06-monitoring-logging/lab-05-security-monitoring.md)
 - Review all Domain 6 materials

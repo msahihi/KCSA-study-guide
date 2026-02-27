@@ -13,6 +13,7 @@ Services provide network connectivity to a set of pods. There are several Servic
 ### Service Types
 
 #### 1. ClusterIP (Default)
+
 **Description**: Exposes the service on an internal IP within the cluster.
 
 **Security Profile**: Most secure - only accessible within cluster.
@@ -20,6 +21,7 @@ Services provide network connectivity to a set of pods. There are several Servic
 **Use Case**: Backend services, databases, internal APIs.
 
 **Example**:
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -36,12 +38,16 @@ spec:
     protocol: TCP
 ```
 
+```
+
 **Security Best Practices**:
+
 - Use for all internal communication
 - Combine with NetworkPolicies for additional isolation
 - No external exposure risk
 
 #### 2. NodePort
+
 **Description**: Exposes the service on each node's IP at a static port (30000-32767).
 
 **Security Profile**: Medium risk - exposed on all nodes.
@@ -49,7 +55,9 @@ spec:
 **Use Case**: Development, testing, or when LoadBalancer isn't available.
 
 **Example**:
+
 ```yaml
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -66,19 +74,24 @@ spec:
     protocol: TCP
 ```
 
+```
+
 **Security Concerns**:
+
 - Opens port on all nodes (even if pod isn't running there)
 - Node IP addresses must be protected
 - Bypasses Ingress security controls
 - No built-in TLS termination
 
 **Security Best Practices**:
+
 - Restrict access with firewall rules
 - Use only for non-production environments
 - Prefer LoadBalancer or Ingress for production
 - Implement NetworkPolicies to limit pod access
 
 #### 3. LoadBalancer
+
 **Description**: Exposes the service externally using a cloud provider's load balancer.
 
 **Security Profile**: Medium-to-High risk - publicly exposed.
@@ -86,7 +99,9 @@ spec:
 **Use Case**: Production external services, especially in cloud environments.
 
 **Example**:
+
 ```yaml
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -105,7 +120,10 @@ spec:
     protocol: TCP
 ```
 
+```
+
 **Security Best Practices**:
+
 - Use annotations to configure cloud provider security features
 - Enable TLS at the load balancer level
 - Restrict source IP ranges when possible
@@ -116,46 +134,77 @@ spec:
 **Cloud Provider Security Annotations**:
 
 **AWS**:
+
 ```yaml
+
 metadata:
   annotations:
+
     # Use Network Load Balancer (more secure than Classic)
+
     service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+
     # Internal LB (not internet-facing)
+
     service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+
     # Restrict to specific CIDR
+
     service.beta.kubernetes.io/load-balancer-source-ranges: "10.0.0.0/8"
+
     # Enable access logs
+
     service.beta.kubernetes.io/aws-load-balancer-access-log-enabled: "true"
 ```
 
+```
+
 **GCP**:
+
 ```yaml
+
 metadata:
   annotations:
+
     # Internal LB
+
     cloud.google.com/load-balancer-type: "Internal"
+
     # Custom health check
+
     cloud.google.com/app-protocols: '{"https":"HTTPS"}'
 ```
 
+```
+
 **Azure**:
+
 ```yaml
+
 metadata:
   annotations:
+
     # Internal LB
+
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+
     # Restrict source IPs
+
     service.beta.kubernetes.io/load-balancer-source-ranges: "10.0.0.0/8"
 ```
 
+```
+
 #### 4. ExternalName
+
 **Description**: Maps a service to a DNS name.
 
 **Security Profile**: Low direct risk, but can be misused.
 
 **Example**:
+
 ```yaml
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -166,13 +215,17 @@ spec:
   externalName: api.external-service.com
 ```
 
+```
+
 **Security Concerns**:
+
 - Can bypass network policies
 - No control over external endpoint security
 - DNS spoofing risks
 - No traffic encryption guarantee
 
 **Security Best Practices**:
+
 - Validate external endpoints
 - Use only for trusted external services
 - Document all ExternalName services
@@ -185,6 +238,7 @@ spec:
 **Solution**: Configure source IP preservation:
 
 ```yaml
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -198,7 +252,10 @@ spec:
   - port: 80
 ```
 
+```
+
 **Trade-offs**:
+
 - `externalTrafficPolicy: Cluster` (default): Even load distribution, but loses source IP
 - `externalTrafficPolicy: Local`: Preserves source IP, but uneven load distribution
 
@@ -209,6 +266,7 @@ Ingress provides HTTP/HTTPS routing to services based on rules. It's an abstract
 ### Ingress Controllers
 
 Popular Ingress Controllers include:
+
 - **NGINX Ingress Controller**: Most widely used, feature-rich
 - **Traefik**: Easy to use, automatic service discovery
 - **HAProxy**: High performance, enterprise features
@@ -218,6 +276,7 @@ Popular Ingress Controllers include:
 ### Basic Ingress Resource
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -238,6 +297,8 @@ spec:
               number: 80
 ```
 
+```
+
 ### TLS Configuration
 
 TLS (Transport Layer Security) encrypts traffic between clients and your cluster.
@@ -245,30 +306,43 @@ TLS (Transport Layer Security) encrypts traffic between clients and your cluster
 #### Creating TLS Certificates
 
 **Option 1: Self-Signed Certificate (Development)**:
+
 ```bash
+
 # Generate private key
+
 openssl genrsa -out tls.key 2048
 
 # Generate certificate
+
 openssl req -new -x509 -key tls.key -out tls.crt -days 365 \
   -subj "/CN=example.com"
 
 # Create Kubernetes secret
+
 kubectl create secret tls example-tls \
   --cert=tls.crt \
   --key=tls.key \
   -n production
 ```
 
+```
+
 **Option 2: Let's Encrypt with cert-manager (Production)**:
 
 1. **Install cert-manager**:
+
 ```bash
+
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
 ```
 
-2. **Create ClusterIssuer**:
+```
+
+1. **Create ClusterIssuer**:
+
 ```yaml
+
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -285,8 +359,12 @@ spec:
           class: nginx
 ```
 
-3. **Use in Ingress**:
+```
+
+1. **Use in Ingress**:
+
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -313,10 +391,14 @@ spec:
               number: 80
 ```
 
+```
+
 #### TLS Best Practices
 
 **1. Manual TLS Secret Creation**:
+
 ```yaml
+
 apiVersion: v1
 kind: Secret
 metadata:
@@ -328,19 +410,29 @@ data:
   tls.key: <base64-encoded-key>
 ```
 
+```
+
 **2. TLS Ingress Configuration**:
+
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: tls-ingress
   namespace: production
   annotations:
+
     # Force HTTPS redirect
+
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
     # TLS protocol version
+
     nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+
     # Strong cipher suites
+
     nginx.ingress.kubernetes.io/ssl-ciphers: "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384"
 spec:
   ingressClassName: nginx
@@ -362,8 +454,12 @@ spec:
               number: 80
 ```
 
+```
+
 **3. Multiple TLS Certificates**:
+
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -401,6 +497,8 @@ spec:
               number: 80
 ```
 
+```
+
 ## Advanced Ingress Security
 
 ### 1. Basic Authentication
@@ -408,17 +506,24 @@ spec:
 Protect applications with username/password authentication:
 
 ```bash
+
 # Create auth file
+
 htpasswd -c auth admin
+
 # Enter password when prompted
 
 # Create secret
+
 kubectl create secret generic basic-auth \
   --from-file=auth \
   -n production
 ```
 
+```
+
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -443,11 +548,14 @@ spec:
               number: 80
 ```
 
+```
+
 ### 2. IP Whitelisting
 
 Restrict access to specific IP addresses or ranges:
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -470,22 +578,31 @@ spec:
               number: 80
 ```
 
+```
+
 ### 3. Rate Limiting
 
 Protect against DDoS and brute-force attacks:
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ratelimit-ingress
   namespace: production
   annotations:
+
     # Limit to 10 requests per second per IP
+
     nginx.ingress.kubernetes.io/limit-rps: "10"
+
     # Limit to 100 connections per IP
+
     nginx.ingress.kubernetes.io/limit-connections: "100"
+
     # Burst size
+
     nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
 spec:
   ingressClassName: nginx
@@ -502,11 +619,14 @@ spec:
               number: 80
 ```
 
+```
+
 ### 4. CORS Configuration
 
 Control cross-origin resource sharing:
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -532,12 +652,16 @@ spec:
               number: 80
 ```
 
+```
+
 ### 5. OAuth/OIDC Authentication
 
 Implement OAuth2 authentication using oauth2-proxy:
 
 **Deploy oauth2-proxy**:
+
 ```yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -594,8 +718,12 @@ spec:
     targetPort: 4180
 ```
 
+```
+
 **Configure Ingress with oauth2-proxy**:
+
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -619,20 +747,27 @@ spec:
               number: 80
 ```
 
+```
+
 ### 6. Request Size Limits
 
 Protect against large payload attacks:
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: size-limit-ingress
   namespace: production
   annotations:
+
     # Limit request body to 10MB
+
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
     # Client buffer size
+
     nginx.ingress.kubernetes.io/client-body-buffer-size: "1m"
 spec:
   ingressClassName: nginx
@@ -649,11 +784,14 @@ spec:
               number: 80
 ```
 
+```
+
 ### 7. Custom Error Pages
 
 Prevent information disclosure:
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -677,11 +815,14 @@ spec:
               number: 80
 ```
 
+```
+
 ### 8. Security Headers
 
 Add security headers to responses:
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -714,6 +855,8 @@ spec:
               number: 80
 ```
 
+```
+
 ## Backend Protocol Configuration
 
 Secure communication between Ingress and backend services:
@@ -721,6 +864,7 @@ Secure communication between Ingress and backend services:
 ### HTTPS Backend
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -728,11 +872,15 @@ metadata:
   namespace: production
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+
     # For self-signed certificates
+
     nginx.ingress.kubernetes.io/proxy-ssl-verify: "off"
+
     # For proper certificates
     # nginx.ingress.kubernetes.io/proxy-ssl-verify: "on"
     # nginx.ingress.kubernetes.io/proxy-ssl-secret: "production/backend-ca"
+
 spec:
   ingressClassName: nginx
   rules:
@@ -748,9 +896,12 @@ spec:
               number: 443
 ```
 
+```
+
 ### gRPC Backend
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -773,11 +924,14 @@ spec:
               number: 50051
 ```
 
+```
+
 ## Path-Based Security
 
 Apply different security policies to different paths:
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -793,7 +947,9 @@ spec:
   - host: example.com
     http:
       paths:
+
       # Public API - rate limited
+
       - path: /api/public
         pathType: Prefix
         backend:
@@ -801,7 +957,9 @@ spec:
             name: public-api
             port:
               number: 80
+
       # Admin API - IP restricted
+
       - path: /api/admin
         pathType: Prefix
         backend:
@@ -834,6 +992,8 @@ spec:
               number: 80
 ```
 
+```
+
 ## Service Mesh Integration
 
 Service meshes provide advanced traffic management and security:
@@ -841,7 +1001,9 @@ Service meshes provide advanced traffic management and security:
 ### Istio Example
 
 **Enable mutual TLS**:
+
 ```yaml
+
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
@@ -852,8 +1014,12 @@ spec:
     mode: STRICT
 ```
 
+```
+
 **Authorization Policy**:
+
 ```yaml
+
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
@@ -873,6 +1039,8 @@ spec:
         methods: ["GET", "POST"]
 ```
 
+```
+
 ## Monitoring and Logging
 
 ### Ingress Access Logs
@@ -880,6 +1048,7 @@ spec:
 Configure detailed access logging:
 
 ```yaml
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -893,9 +1062,12 @@ data:
     "http_user_agent": "$http_user_agent"}'
 ```
 
+```
+
 ### Monitoring Metrics
 
 Key metrics to monitor:
+
 - Request rate by status code
 - Request latency
 - Error rates (4xx, 5xx)
@@ -904,7 +1076,9 @@ Key metrics to monitor:
 - Authentication failures
 
 **Prometheus Integration**:
+
 ```yaml
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -921,27 +1095,34 @@ spec:
     port: 10254
 ```
 
+```
+
 ## Common Security Patterns
 
 ### 1. Complete Production Ingress
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: production-ingress
   namespace: production
   annotations:
+
     # TLS
+
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
 
     # Rate limiting
+
     nginx.ingress.kubernetes.io/limit-rps: "10"
     nginx.ingress.kubernetes.io/limit-connections: "100"
 
     # Security headers
+
     nginx.ingress.kubernetes.io/configuration-snippet: |
       more_set_headers "X-Frame-Options: DENY";
       more_set_headers "X-Content-Type-Options: nosniff";
@@ -949,9 +1130,11 @@ metadata:
       more_set_headers "Strict-Transport-Security: max-age=31536000";
 
     # Request limits
+
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
 
     # CORS
+
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.example.com"
 spec:
@@ -973,16 +1156,21 @@ spec:
               number: 80
 ```
 
+```
+
 ### 2. Internal Service (No External Access)
 
 ```yaml
+
 apiVersion: v1
 kind: Service
 metadata:
   name: internal-database
   namespace: production
   annotations:
+
     # Ensure no external exposure
+
     service.kubernetes.io/topology-aware-hints: "auto"
 spec:
   type: ClusterIP
@@ -994,12 +1182,16 @@ spec:
     targetPort: 5432
 ```
 
+```
+
 ### 3. Defense in Depth
 
 Combine multiple security layers:
 
 ```yaml
+
 # NetworkPolicy - Layer 1
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1020,7 +1212,9 @@ spec:
     - protocol: TCP
       port: 8080
 ---
+
 # Service - Layer 2
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -1034,7 +1228,9 @@ spec:
   - port: 80
     targetPort: 8080
 ---
+
 # Ingress - Layer 3
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -1062,27 +1258,29 @@ spec:
               number: 80
 ```
 
+```
+
 ## Best Practices
 
 1. **Always Use TLS**: Never expose services without TLS in production.
 
-2. **Automate Certificate Management**: Use cert-manager for automatic certificate renewal.
+1. **Automate Certificate Management**: Use cert-manager for automatic certificate renewal.
 
-3. **Implement Rate Limiting**: Protect against DDoS and abuse.
+1. **Implement Rate Limiting**: Protect against DDoS and abuse.
 
-4. **Add Security Headers**: Protect against common web vulnerabilities.
+1. **Add Security Headers**: Protect against common web vulnerabilities.
 
-5. **Use ClusterIP by Default**: Only expose services externally when necessary.
+1. **Use ClusterIP by Default**: Only expose services externally when necessary.
 
-6. **Restrict IP Ranges**: Use whitelisting for administrative interfaces.
+1. **Restrict IP Ranges**: Use whitelisting for administrative interfaces.
 
-7. **Enable Access Logging**: Monitor all incoming requests.
+1. **Enable Access Logging**: Monitor all incoming requests.
 
-8. **Implement Authentication**: Don't rely solely on network controls.
+1. **Implement Authentication**: Don't rely solely on network controls.
 
-9. **Regular Security Audits**: Review Ingress and Service configurations regularly.
+1. **Regular Security Audits**: Review Ingress and Service configurations regularly.
 
-10. **Use Service Mesh for Advanced Scenarios**: Consider Istio or Linkerd for complex security requirements.
+1. **Use Service Mesh for Advanced Scenarios**: Consider Istio or Linkerd for complex security requirements.
 
 ## Common Pitfalls
 
@@ -1103,8 +1301,12 @@ spec:
 **Problem**: Allowing old TLS versions or weak ciphers.
 
 **Solution**: Explicitly configure strong TLS:
+
 ```yaml
+
 nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+```
+
 ```
 
 ### 4. No Rate Limiting
@@ -1122,90 +1324,110 @@ nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
 ## Key Points to Remember
 
 1. Services provide network access to pods; Ingress provides HTTP(S) routing.
-2. ClusterIP is the most secure service type (internal only).
-3. Always use TLS for external services.
-4. Automate certificate management with cert-manager.
-5. Implement rate limiting on all public endpoints.
-6. Add security headers to protect against web vulnerabilities.
-7. Use IP whitelisting for administrative interfaces.
-8. Combine Ingress security with NetworkPolicies for defense in depth.
-9. Monitor and log all incoming traffic.
-10. Service meshes provide advanced security features for complex environments.
+1. ClusterIP is the most secure service type (internal only).
+1. Always use TLS for external services.
+1. Automate certificate management with cert-manager.
+1. Implement rate limiting on all public endpoints.
+1. Add security headers to protect against web vulnerabilities.
+1. Use IP whitelisting for administrative interfaces.
+1. Combine Ingress security with NetworkPolicies for defense in depth.
+1. Monitor and log all incoming traffic.
+1. Service meshes provide advanced security features for complex environments.
 
 ## Study Resources
 
 ### Official Documentation
+
 - [Kubernetes Services](https://kubernetes.io/docs/concepts/services-networking/service/)
 - [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 - [NGINX Ingress Controller](https://kubernetes.github.io/ingress-nginx/)
 - [cert-manager](https://cert-manager.io/)
 
 ### Tools
+
 - [cert-manager](https://cert-manager.io/)
 - [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/)
 - [NGINX Ingress Controller](https://kubernetes.github.io/ingress-nginx/)
 
 ### Additional Reading
+
 - [TLS Best Practices](https://wiki.mozilla.org/Security/Server_Side_TLS)
 - [OWASP Secure Headers Project](https://owasp.org/www-project-secure-headers/)
 
 ## Next Steps
 
 1. Complete the [Ingress Security Lab](../../labs/01-cluster-setup/lab-03-ingress-security.md)
-2. Practice configuring TLS certificates
-3. Experiment with different Ingress annotations
-4. Learn about [Pod Security Standards](./pod-security-standards.md) next
+1. Practice configuring TLS certificates
+1. Experiment with different Ingress annotations
+1. Learn about [Pod Security Standards](./pod-security-standards.md) next
 
 ## Quick Reference
 
 ### Common Commands
 
 ```bash
+
 # Services
+
 kubectl get services -n <namespace>
 kubectl describe service <name> -n <namespace>
 kubectl expose deployment <name> --port=80 --type=ClusterIP
 
 # Ingress
+
 kubectl get ingress -n <namespace>
 kubectl describe ingress <name> -n <namespace>
 
 # TLS Secrets
+
 kubectl create secret tls <name> --cert=cert.crt --key=cert.key -n <namespace>
 kubectl get secret <name> -n <namespace> -o yaml
 
 # Testing
+
 curl -v https://example.com
 curl -H "Host: example.com" http://<ingress-ip>
+```
+
 ```
 
 ### Common Annotations (NGINX Ingress)
 
 ```yaml
+
 # TLS
+
 nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
 
 # Rate Limiting
+
 nginx.ingress.kubernetes.io/limit-rps: "10"
 nginx.ingress.kubernetes.io/limit-connections: "100"
 
 # Authentication
+
 nginx.ingress.kubernetes.io/auth-type: basic
 nginx.ingress.kubernetes.io/auth-secret: auth-secret
 
 # IP Whitelisting
+
 nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8"
 
 # CORS
+
 nginx.ingress.kubernetes.io/enable-cors: "true"
 nginx.ingress.kubernetes.io/cors-allow-origin: "https://example.com"
 
 # Body Size
+
 nginx.ingress.kubernetes.io/proxy-body-size: "10m"
 
 # Backend Protocol
+
 nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+```
+
 ```
 
 ---

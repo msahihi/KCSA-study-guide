@@ -75,13 +75,13 @@ Explore kernel-level security mechanisms:
 By the end of this domain, you will be able to:
 
 1. Harden Linux hosts running Kubernetes nodes
-2. Configure and secure container runtimes
-3. Create and apply AppArmor profiles to containers
-4. Implement seccomp profiles for syscall filtering
-5. Understand kernel security mechanisms
-6. Apply CIS Benchmark recommendations
-7. Debug security profile issues
-8. Implement defense-in-depth at the system level
+1. Configure and secure container runtimes
+1. Create and apply AppArmor profiles to containers
+1. Implement seccomp profiles for syscall filtering
+1. Understand kernel security mechanisms
+1. Apply CIS Benchmark recommendations
+1. Debug security profile issues
+1. Implement defense-in-depth at the system level
 
 ## Key Concepts Summary
 
@@ -104,7 +104,7 @@ By the end of this domain, you will be able to:
 ### Security Controls by Layer
 
 | Layer | Security Controls | Tools |
-|-------|-------------------|-------|
+| ------- | ------------------- | ------- |
 | **Host OS** | Updates, patches, minimal services | apt, yum, systemctl |
 | **Kernel** | Namespaces, cgroups, capabilities | sysctl, /proc |
 | **Security Modules** | AppArmor, Seccomp, SELinux | apparmor, seccomp profiles |
@@ -116,11 +116,11 @@ By the end of this domain, you will be able to:
 Understanding attack vectors helps you prioritize hardening:
 
 1. **Container Escape**: Breaking out of container isolation
-2. **Privilege Escalation**: Gaining root on the host
-3. **Malicious System Calls**: Using syscalls to attack the kernel
-4. **Resource Exhaustion**: DoS attacks via uncontrolled resource usage
-5. **Kernel Exploits**: Leveraging unpatched kernel vulnerabilities
-6. **Runtime Socket Access**: Abusing runtime API for malicious purposes
+1. **Privilege Escalation**: Gaining root on the host
+1. **Malicious System Calls**: Using syscalls to attack the kernel
+1. **Resource Exhaustion**: DoS attacks via uncontrolled resource usage
+1. **Kernel Exploits**: Leveraging unpatched kernel vulnerabilities
+1. **Runtime Socket Access**: Abusing runtime API for malicious purposes
 
 ## CIS Benchmark Alignment
 
@@ -168,19 +168,19 @@ Complete these labs in order to build practical skills:
    - Apply CIS Benchmark recommendations
    - Verify hardening effectiveness
 
-2. **[Lab 2: AppArmor Profiles](../../labs/03-system-hardening/lab-02-apparmor-profiles.md)**
+1. **[Lab 2: AppArmor Profiles](../../labs/03-system-hardening/lab-02-apparmor-profiles.md)**
    - Load and apply AppArmor profiles
    - Create custom profiles for containers
    - Test profile enforcement
    - Debug profile issues
 
-3. **[Lab 3: Seccomp Profiles](../../labs/03-system-hardening/lab-03-seccomp-profiles.md)**
+1. **[Lab 3: Seccomp Profiles](../../labs/03-system-hardening/lab-03-seccomp-profiles.md)**
    - Apply default seccomp profiles
    - Create custom seccomp filters
    - Test syscall blocking
    - Handle profile errors
 
-4. **[Lab 4: Runtime Security](../../labs/03-system-hardening/lab-04-runtime-security.md)**
+1. **[Lab 4: Runtime Security](../../labs/03-system-hardening/lab-04-runtime-security.md)**
    - Secure containerd configuration
    - Test container isolation
    - Monitor runtime events
@@ -191,55 +191,68 @@ Complete these labs in order to build practical skills:
 ### Essential Commands
 
 ```bash
+
 # Host security
+
 sudo systemctl list-units --type=service --state=running
 sudo ss -tulpn | grep LISTEN
 sudo find / -perm -4000 -type f 2>/dev/null
 
 # AppArmor
+
 sudo aa-status
 sudo apparmor_parser -r /etc/apparmor.d/profile
 sudo aa-enforce /etc/apparmor.d/profile
 
 # Seccomp
+
 docker run --security-opt seccomp=profile.json image
 grep Seccomp /proc/PID/status
 
 # Kernel security
+
 cat /proc/sys/kernel/randomize_va_space
 sudo sysctl -a | grep kernel
 cat /proc/PID/status | grep Cap
 
 # Runtime
+
 sudo systemctl status containerd
 crictl info
 sudo crictl ps
 ```
 
+```
+
 ### AppArmor Profile Example
 
 ```
-#include <tunables/global>
+
+# include <tunables/global>
 
 profile k8s-nginx flags=(attach_disconnected,mediate_deleted) {
+
   #include <abstractions/base>
 
   network inet tcp,
   network inet udp,
 
-  deny /bin/** wl,
+  deny /bin/**wl,
   deny /root/** wl,
   deny /etc/shadow r,
 
   /usr/sbin/nginx mr,
-  /var/log/nginx/** w,
+  /var/log/nginx/**w,
   /etc/nginx/** r,
 }
+
+```
 ```
 
 ### Seccomp Profile Example
 
 ```json
+
 {
   "defaultAction": "SCMP_ACT_ERRNO",
   "architectures": ["SCMP_ARCH_X86_64"],
@@ -252,9 +265,12 @@ profile k8s-nginx flags=(attach_disconnected,mediate_deleted) {
 }
 ```
 
+```
+
 ### Pod with Security Profiles
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -276,16 +292,18 @@ spec:
       readOnlyRootFilesystem: true
 ```
 
+```
+
 ## Common Pitfalls and Tips
 
 ### Pitfalls to Avoid
 
 1. **Over-restricting profiles**: Test thoroughly before enforcing
-2. **Ignoring host updates**: Keep kernel and OS patched
-3. **Forgetting profile loading**: Profiles must be loaded on all nodes
-4. **Wrong profile syntax**: Profile errors can prevent pod startup
-5. **Not testing in dev first**: Always test profiles in non-prod
-6. **Leaving debug services enabled**: Disable SSH password auth, etc.
+1. **Ignoring host updates**: Keep kernel and OS patched
+1. **Forgetting profile loading**: Profiles must be loaded on all nodes
+1. **Wrong profile syntax**: Profile errors can prevent pod startup
+1. **Not testing in dev first**: Always test profiles in non-prod
+1. **Leaving debug services enabled**: Disable SSH password auth, etc.
 
 ### Exam Tips
 
@@ -299,12 +317,12 @@ spec:
 ### Best Practices
 
 1. **Defense-in-depth**: Apply security at every layer
-2. **Least privilege**: Start with deny-all, allow only what's needed
-3. **Test profiles**: Use complain/audit mode before enforce mode
-4. **Automate hardening**: Use configuration management tools
-5. **Monitor and audit**: Log security events for detection
-6. **Regular updates**: Keep host OS and kernel patched
-7. **Minimal host OS**: Remove unnecessary packages and services
+1. **Least privilege**: Start with deny-all, allow only what's needed
+1. **Test profiles**: Use complain/audit mode before enforce mode
+1. **Automate hardening**: Use configuration management tools
+1. **Monitor and audit**: Log security events for detection
+1. **Regular updates**: Keep host OS and kernel patched
+1. **Minimal host OS**: Remove unnecessary packages and services
 
 ## Real-World Scenarios
 
@@ -313,32 +331,35 @@ spec:
 **Problem**: A container vulnerability allows arbitrary code execution.
 
 **Solution**: Multiple layers of defense:
+
 1. Run containers with read-only root filesystem
-2. Apply seccomp profile to block dangerous syscalls
-3. Use AppArmor to restrict file access
-4. Drop all capabilities
-5. Run as non-root user
+1. Apply seccomp profile to block dangerous syscalls
+1. Use AppArmor to restrict file access
+1. Drop all capabilities
+1. Run as non-root user
 
 ### Scenario 2: Compliance Requirements
 
 **Problem**: Must comply with CIS Kubernetes Benchmark.
 
 **Solution**:
+
 1. Use kube-bench to audit cluster
-2. Apply host hardening (Section 4)
-3. Configure kubelet securely
-4. Enable AppArmor/Seccomp profiles
-5. Regular compliance scanning
+1. Apply host hardening (Section 4)
+1. Configure kubelet securely
+1. Enable AppArmor/Seccomp profiles
+1. Regular compliance scanning
 
 ### Scenario 3: Restricting Network Access
 
 **Problem**: Container should only access specific endpoints.
 
 **Solution**:
+
 1. Network Policies (Layer 3/4)
-2. AppArmor network rules (Layer 7)
-3. Service mesh policies (application layer)
-4. Host firewall rules (iptables/nftables)
+1. AppArmor network rules (Layer 7)
+1. Service mesh policies (application layer)
+1. Host firewall rules (iptables/nftables)
 
 ## Study Checklist
 
@@ -383,9 +404,9 @@ Before moving to the next domain, ensure you can:
 After completing this domain:
 
 1. Complete all Domain 3 labs
-2. Review the security profiles section in the cheatsheet
-3. Move to [Domain 4: Minimize Microservice Vulnerabilities](../04-minimize-vulnerabilities/README.md)
-4. Practice creating security profiles for sample applications
+1. Review the security profiles section in the cheatsheet
+1. Move to [Domain 4: Minimize Microservice Vulnerabilities](../04-minimize-vulnerabilities/README.md)
+1. Practice creating security profiles for sample applications
 
 ---
 

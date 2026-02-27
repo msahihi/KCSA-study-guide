@@ -5,6 +5,7 @@
 **Security Contexts** define privilege and access control settings for pods and containers. They are fundamental to implementing defense-in-depth security strategies by controlling what processes running in containers can do at the Linux OS level.
 
 **What Security Contexts Do**:
+
 - Control user and group IDs for processes
 - Manage Linux capabilities
 - Set filesystem permissions and access modes
@@ -38,11 +39,14 @@ spec:
     command: ["sh", "-c", "sleep 3600"]
 ```
 
+```
+
 ### Container-Level Security Context
 
 Applied to specific container (overrides pod-level):
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -59,6 +63,8 @@ spec:
       allowPrivilegeEscalation: false
 ```
 
+```
+
 **Priority**: Container-level settings override pod-level settings.
 
 ## Running as Non-Root User
@@ -66,6 +72,7 @@ spec:
 ### Why Non-Root Matters
 
 Running containers as root (UID 0) is a security risk:
+
 - Root inside container = potential root on host (if container escapes)
 - Broader permissions to modify files
 - Can install packages and modify system
@@ -74,6 +81,7 @@ Running containers as root (UID 0) is a security risk:
 ### Set User and Group IDs
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -88,7 +96,10 @@ spec:
     image: nginx:1.27
 ```
 
+```
+
 **Fields Explained**:
+
 - **runAsUser**: Specifies the user ID (UID) for container processes
 - **runAsGroup**: Specifies the primary group ID (GID)
 - **runAsNonRoot**: If true, kubelet validates container image doesn't run as UID 0
@@ -96,21 +107,28 @@ spec:
 ### Verify Running User
 
 ```bash
+
 # Create a test pod
+
 kubectl run user-test --image=busybox:1.36 --rm -it -- sh
 
 # Check current user (default, often root)
+
 / # id
 uid=0(root) gid=0(root) groups=10(wheel)
 
 # Exit and create with non-root security context
+
 kubectl run user-test --image=busybox:1.36 --rm -it \
   --overrides='{"spec":{"securityContext":{"runAsUser":1000,"runAsGroup":3000}}}' \
   -- sh
 
 # Check user now
+
 / $ id
 uid=1000 gid=3000 groups=3000
+```
+
 ```
 
 ### Setting in Dockerfile
@@ -118,18 +136,24 @@ uid=1000 gid=3000 groups=3000
 Configure non-root in container image:
 
 ```dockerfile
+
 FROM nginx:1.27
 
 # Create non-root user
+
 RUN useradd -u 1000 -U -s /bin/bash appuser
 
 # Set ownership
+
 RUN chown -R appuser:appuser /usr/share/nginx/html
 
 # Switch to non-root user
+
 USER appuser
 
 EXPOSE 8080
+```
+
 ```
 
 **Best Practice**: Set `USER` in Dockerfile AND enforce with `runAsNonRoot: true` in pod spec.
@@ -141,6 +165,7 @@ EXPOSE 8080
 Prevent container from writing to root filesystem:
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -167,22 +192,27 @@ spec:
     emptyDir: {}
 ```
 
+```
+
 **Why This Matters**:
+
 - Prevents malware persistence
 - Stops attackers from modifying binaries
 - Reduces attack surface
 - Enforces immutable infrastructure
 
 **Implementation Pattern**:
+
 1. Set `readOnlyRootFilesystem: true`
-2. Mount emptyDir volumes for directories that need writes
-3. Common writable paths: `/tmp`, `/var/cache`, `/var/run`, `/var/log`
+1. Mount emptyDir volumes for directories that need writes
+1. Common writable paths: `/tmp`, `/var/cache`, `/var/run`, `/var/log`
 
 ### fsGroup for Shared Volumes
 
 Set group ownership for mounted volumes:
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -204,7 +234,10 @@ spec:
       claimName: my-pvc
 ```
 
+```
+
 **How fsGroup Works**:
+
 - When pod starts, Kubernetes changes volume ownership to `fsGroup` GID
 - Processes in pod run with `fsGroup` as supplementary group
 - Enables multiple containers to share volumes
@@ -212,10 +245,15 @@ spec:
 **Verify**:
 
 ```bash
+
 kubectl exec fsgroup-demo -- ls -ld /data
+
 # Output: drwxrwsr-x 2 root 2000 4096 Feb 27 10:00 /data
 #                           ^^^^
 #                          fsGroup GID
+
+```
+
 ```
 
 ### Supplementary Groups
@@ -223,6 +261,7 @@ kubectl exec fsgroup-demo -- ls -ld /data
 Add additional group IDs to container process:
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -237,11 +276,18 @@ spec:
     command: ["sh", "-c", "sleep 3600"]
 ```
 
+```
+
 **Verify**:
 
 ```bash
+
 kubectl exec supplemental-groups-demo -- id
+
 # Output: uid=0(root) gid=0(root) groups=0(root),2000,4000,5000
+
+```
+
 ```
 
 ## Linux Capabilities
@@ -253,7 +299,7 @@ Linux capabilities divide root privileges into distinct units. Instead of giving
 **Common Capabilities**:
 
 | Capability | Description | Risk Level |
-|------------|-------------|------------|
+| ------------ | ------------- | ------------ |
 | `CAP_NET_ADMIN` | Network administration | Medium |
 | `CAP_NET_BIND_SERVICE` | Bind ports < 1024 | Low |
 | `CAP_SYS_ADMIN` | System administration | **Critical** |
@@ -268,7 +314,9 @@ Linux capabilities divide root privileges into distinct units. Instead of giving
 ### Default Container Capabilities
 
 By default, containers get these capabilities:
+
 ```
+
 CAP_CHOWN
 CAP_DAC_OVERRIDE
 CAP_FOWNER
@@ -283,11 +331,14 @@ CAP_SYS_CHROOT
 CAP_MKNOD
 CAP_AUDIT_WRITE
 CAP_SETFCAP
+
+```
 ```
 
 ### Dropping All Capabilities
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -302,11 +353,14 @@ spec:
         - ALL    # Drop all capabilities
 ```
 
+```
+
 **Best Practice**: Drop all, then add only what's needed.
 
 ### Adding Required Capabilities
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -323,6 +377,8 @@ spec:
         - NET_BIND_SERVICE         # Add only needed capability
 ```
 
+```
+
 **Use Case**: Nginx needs to bind to port 80 (< 1024), requires `NET_BIND_SERVICE`.
 
 ### Dangerous Capabilities to Avoid
@@ -330,7 +386,9 @@ spec:
 Never grant these in production:
 
 ```yaml
+
 # DANGEROUS - Don't use!
+
 securityContext:
   capabilities:
     add:
@@ -340,16 +398,25 @@ securityContext:
     - DAC_READ_SEARCH  # Bypass file read permissions
 ```
 
+```
+
 ### Checking Container Capabilities
 
 ```bash
+
 # Check capabilities in running container
+
 kubectl exec my-pod -- grep Cap /proc/1/status
 
 # Decode capability mask
+
 kubectl exec my-pod -- cat /proc/1/status | grep CapEff
+
 # Use capsh to decode:
 # capsh --decode=00000000a80425fb
+
+```
+
 ```
 
 ## Privilege Escalation
@@ -357,6 +424,7 @@ kubectl exec my-pod -- cat /proc/1/status | grep CapEff
 ### Preventing Privilege Escalation
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -369,12 +437,16 @@ spec:
       allowPrivilegeEscalation: false    # Prevent setuid binaries
 ```
 
+```
+
 **What This Prevents**:
+
 - Processes cannot gain more privileges than parent
 - Setuid/setgid binaries don't work
 - Prevents exploitation of vulnerable setuid programs
 
 **Default Behavior**: Depends on other settings
+
 - If `privileged: true` → `allowPrivilegeEscalation: true` (automatic)
 - If `CAP_SYS_ADMIN` added → often allows escalation
 - If `runAsNonRoot: true` → escalation unlikely but not prevented
@@ -384,7 +456,9 @@ spec:
 ### Privileged Containers (Avoid!)
 
 ```yaml
+
 # DANGEROUS - Avoid in production!
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -397,7 +471,10 @@ spec:
       privileged: true    # All capabilities, no restrictions
 ```
 
+```
+
 **Privileged Containers**:
+
 - Get all Linux capabilities
 - Can access host devices
 - Essentially run as root on host
@@ -408,6 +485,7 @@ spec:
 ### SELinux Options
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -424,11 +502,14 @@ spec:
     image: nginx:1.27
 ```
 
+```
+
 **Note**: Requires SELinux-enabled nodes (common in RHEL, Fedora).
 
 ### AppArmor Profiles
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -441,7 +522,10 @@ spec:
     image: nginx:1.27
 ```
 
+```
+
 **AppArmor Profile Types**:
+
 - `runtime/default`: Default container profile
 - `localhost/<profile-name>`: Custom profile on node
 - `unconfined`: No AppArmor enforcement
@@ -451,6 +535,7 @@ spec:
 Seccomp (Secure Computing Mode) restricts system calls:
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -464,7 +549,10 @@ spec:
     image: nginx:1.27
 ```
 
+```
+
 **Seccomp Profile Types**:
+
 - `RuntimeDefault`: Default profile (recommended)
 - `Localhost`: Custom profile from node
 - `Unconfined`: No seccomp restrictions (avoid!)
@@ -472,6 +560,7 @@ spec:
 **Custom Seccomp Profile**:
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -486,11 +575,14 @@ spec:
     image: nginx:1.27
 ```
 
+```
+
 ## Complete Security Context Example
 
 Combining all best practices:
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -532,11 +624,14 @@ spec:
     emptyDir: {}
 ```
 
+```
+
 ## Common Patterns
 
 ### Pattern 1: Web Server (Nginx)
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -572,9 +667,12 @@ spec:
     emptyDir: {}
 ```
 
+```
+
 ### Pattern 2: Database (PostgreSQL)
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -607,9 +705,12 @@ spec:
       claimName: postgres-pvc
 ```
 
+```
+
 ### Pattern 3: Batch Job
 
 ```yaml
+
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -635,9 +736,12 @@ spec:
       restartPolicy: Never
 ```
 
+```
+
 ### Pattern 4: Init Container with Different Context
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -678,6 +782,8 @@ spec:
     emptyDir: {}
 ```
 
+```
+
 ## Troubleshooting Security Contexts
 
 ### Common Issues
@@ -685,12 +791,16 @@ spec:
 #### 1. Permission Denied Errors
 
 ```
+
 Error: failed to create containerd task: failed to create shim task:
 OCI runtime create failed: container_linux.go:380: starting container
 process caused: exec: "nginx": permission denied
+
+```
 ```
 
 **Causes**:
+
 - Running as non-root but binary not executable by user
 - `readOnlyRootFilesystem: true` but app writes to root filesystem
 - Missing required capability
@@ -698,24 +808,34 @@ process caused: exec: "nginx": permission denied
 **Solutions**:
 
 ```bash
+
 # Check file permissions in image
+
 docker run --rm -it nginx:1.27 ls -la /usr/sbin/nginx
 
 # Check what user/group container runs as
+
 kubectl get pod my-pod -o jsonpath='{.spec.securityContext}'
 
 # Add writable volumes if using readOnlyRootFilesystem
+
+```
+
 ```
 
 #### 2. Container Crashes on Startup
 
 ```
+
 Error: mkdir: cannot create directory '/tmp/app': Read-only file system
+
+```
 ```
 
 **Solution**: Add emptyDir volumes for writable paths:
 
 ```yaml
+
 securityContext:
   readOnlyRootFilesystem: true
 volumeMounts:
@@ -726,73 +846,104 @@ volumes:
   emptyDir: {}
 ```
 
+```
+
 #### 3. Port Binding Fails
 
 ```
+
 Error: bind: permission denied (port 80)
+
+```
 ```
 
 **Causes**:
+
 - Non-root user trying to bind privileged port (< 1024)
 - Missing `NET_BIND_SERVICE` capability
 
 **Solutions**:
 
 ```yaml
+
 # Option 1: Add capability
+
 securityContext:
   capabilities:
     add: [NET_BIND_SERVICE]
 
 # Option 2: Use non-privileged port
+
 ports:
 - containerPort: 8080    # Port > 1024
+```
+
 ```
 
 #### 4. runAsNonRoot Validation Fails
 
 ```
+
 Error: container has runAsNonRoot and image will run as root
+
+```
 ```
 
 **Solution**: Override user in pod spec:
 
 ```yaml
+
 securityContext:
   runAsUser: 1000        # Explicit non-root user
   runAsNonRoot: true
 ```
 
+```
+
 Or fix Dockerfile:
 
 ```dockerfile
+
 USER 1000
+```
+
 ```
 
 ### Debugging Commands
 
 ```bash
+
 # Check current user in container
+
 kubectl exec my-pod -- id
 
 # Check capabilities
+
 kubectl exec my-pod -- grep Cap /proc/1/status
 
 # Check filesystem permissions
+
 kubectl exec my-pod -- ls -la /
 
 # Check if filesystem is read-only
+
 kubectl exec my-pod -- touch /test-write
+
 # If error "Read-only file system" → readOnlyRootFilesystem is working
 
 # View pod security context
+
 kubectl get pod my-pod -o jsonpath='{.spec.securityContext}' | jq
 
 # View container security context
+
 kubectl get pod my-pod -o jsonpath='{.spec.containers[0].securityContext}' | jq
 
 # Check which user process runs as
+
 kubectl exec my-pod -- ps aux
+```
+
 ```
 
 ## Security Context Best Practices
@@ -800,47 +951,67 @@ kubectl exec my-pod -- ps aux
 ### 1. Always Run as Non-Root
 
 ```yaml
+
 securityContext:
   runAsUser: 1000
   runAsGroup: 1000
   runAsNonRoot: true    # Enforce
 ```
 
+```
+
 ### 2. Use Read-Only Root Filesystem
 
 ```yaml
+
 securityContext:
   readOnlyRootFilesystem: true
+
 # Add emptyDir for writable paths
+
+```
+
 ```
 
 ### 3. Drop All Capabilities
 
 ```yaml
+
 securityContext:
   capabilities:
     drop: [ALL]
+
     # Add only specific ones if needed
+
+```
+
 ```
 
 ### 4. Prevent Privilege Escalation
 
 ```yaml
+
 securityContext:
   allowPrivilegeEscalation: false
+```
+
 ```
 
 ### 5. Use Seccomp Profiles
 
 ```yaml
+
 securityContext:
   seccompProfile:
     type: RuntimeDefault
 ```
 
+```
+
 ### 6. Apply Pod-Level Defaults
 
 ```yaml
+
 spec:
   securityContext:       # Pod-level defaults
     runAsNonRoot: true
@@ -853,9 +1024,12 @@ spec:
         drop: [ALL]
 ```
 
+```
+
 ### 7. Document Security Requirements
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -865,7 +1039,11 @@ metadata:
     security.kubernetes.io/rationale: "Runs as non-root for security"
     security.kubernetes.io/capabilities: "NET_BIND_SERVICE required for port 80"
 spec:
+
   # ... security context configuration
+
+```
+
 ```
 
 ## Security Context Priority
@@ -873,6 +1051,7 @@ spec:
 When both pod and container security contexts are set:
 
 ```yaml
+
 spec:
   securityContext:                  # Pod-level
     runAsUser: 1000
@@ -881,24 +1060,31 @@ spec:
   - name: container1
     securityContext:                # Container-level overrides
       runAsUser: 3000               # This takes precedence
+
     # runAsUser: 3000, fsGroup: 2000 (inherited)
+
   - name: container2
+
     # No container-level context
     # runAsUser: 1000, fsGroup: 2000 (inherited from pod)
+
+```
+
 ```
 
 **Precedence Rules**:
+
 1. Container-level settings override pod-level
-2. Pod-level applies to all containers unless overridden
-3. Some fields only exist at pod-level (fsGroup)
-4. Some fields only exist at container-level (capabilities)
+1. Pod-level applies to all containers unless overridden
+1. Some fields only exist at pod-level (fsGroup)
+1. Some fields only exist at container-level (capabilities)
 
 ## Security Context Fields Reference
 
 ### Pod-Level Fields
 
 | Field | Type | Description |
-|-------|------|-------------|
+| ------- | ------ | ------------- |
 | `runAsUser` | integer | User ID for all containers |
 | `runAsGroup` | integer | Primary group ID |
 | `runAsNonRoot` | boolean | Enforce non-root requirement |
@@ -913,7 +1099,7 @@ spec:
 ### Container-Level Fields
 
 | Field | Type | Description |
-|-------|------|-------------|
+| ------- | ------ | ------------- |
 | `runAsUser` | integer | User ID (overrides pod) |
 | `runAsGroup` | integer | Group ID (overrides pod) |
 | `runAsNonRoot` | boolean | Enforce non-root |
@@ -929,6 +1115,7 @@ spec:
 ### Minimal Secure Configuration
 
 ```yaml
+
 securityContext:
   runAsNonRoot: true
   runAsUser: 1000
@@ -940,10 +1127,12 @@ securityContext:
     type: RuntimeDefault
 ```
 
+```
+
 ### Common Capability Requirements
 
 | Application | Required Capabilities |
-|-------------|----------------------|
+| ------------- | ---------------------- |
 | Nginx (port 80) | `NET_BIND_SERVICE` |
 | PostgreSQL | `CHOWN`, `SETUID`, `SETGID`, `DAC_OVERRIDE` |
 | Redis | `SETGID`, `SETUID` |
@@ -961,13 +1150,13 @@ securityContext:
 ## Exam Tips
 
 1. **Know both levels**: Pod-level and container-level security contexts
-2. **Container overrides pod**: Container settings take precedence
-3. **Common fields**: runAsUser, runAsNonRoot, capabilities, readOnlyRootFilesystem
-4. **Drop ALL first**: Best practice for capabilities
-5. **Non-root required**: Always set runAsNonRoot: true
-6. **No privilege escalation**: Set allowPrivilegeEscalation: false
-7. **Read-only FS**: Use readOnlyRootFilesystem with emptyDir volumes
-8. **fsGroup for volumes**: Set fsGroup for shared volume access
+1. **Container overrides pod**: Container settings take precedence
+1. **Common fields**: runAsUser, runAsNonRoot, capabilities, readOnlyRootFilesystem
+1. **Drop ALL first**: Best practice for capabilities
+1. **Non-root required**: Always set runAsNonRoot: true
+1. **No privilege escalation**: Set allowPrivilegeEscalation: false
+1. **Read-only FS**: Use readOnlyRootFilesystem with emptyDir volumes
+1. **fsGroup for volumes**: Set fsGroup for shared volume access
 
 ## Next Steps
 

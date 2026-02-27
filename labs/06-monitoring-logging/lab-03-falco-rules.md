@@ -21,11 +21,15 @@
 ### Step 1: Create Custom Rules ConfigMap
 
 ```bash
+
 # Create custom rules file
+
 cat <<'EOF' > custom-rules.yaml
 customRules:
   custom-rules.yaml: |-
+
     # Define reusable macros
+
     - macro: spawned_process
       condition: evt.type = execve and evt.dir=<
 
@@ -33,10 +37,12 @@ customRules:
       condition: container.id != host
 
     # Define reusable lists
+
     - list: sensitive_binaries
       items: [ssh, sshd, nc, ncat, netcat]
 
     # Simple custom rule
+
     - rule: Suspicious Binary Executed
       desc: Detect execution of suspicious binaries in containers
       condition: >
@@ -52,41 +58,57 @@ customRules:
 EOF
 
 # Upgrade Falco with custom rules
+
 helm upgrade falco falcosecurity/falco \
   --namespace falco \
   --reuse-values \
   -f custom-rules.yaml
 
 # Wait for pods to restart
+
 kubectl rollout status daemonset/falco -n falco
+```
+
 ```
 
 ### Step 2: Verify Custom Rule Loaded
 
 ```bash
+
 # Check if custom rule is loaded
+
 FALCO_POD=$(kubectl get pods -n falco -l app.kubernetes.io/name=falco -o jsonpath='{.items[0].metadata.name}')
 
 kubectl exec -n falco $FALCO_POD -- falco --list | grep "Suspicious Binary"
 ```
 
+```
+
 ### Step 3: Test Custom Rule
 
 ```bash
+
 # Create test pod
+
 kubectl run test-custom --image=alpine:3.19 --command -- sleep 3600
 
 # Wait for pod
+
 kubectl wait --for=condition=Ready pod/test-custom --timeout=60s
 
 # Trigger the rule (install and run nc)
+
 kubectl exec test-custom -- sh -c "apk add --no-cache netcat-openbsd && nc -l 9999 &"
 
 # Check Falco logs
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep "Suspicious Binary"
 ```
 
+```
+
 **Verification**:
+
 - [ ] Custom rule loaded successfully
 - [ ] Rule triggers on netcat execution
 - [ ] Alert contains expected fields
@@ -96,10 +118,13 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep "Suspicio
 ### Step 4: Package Manager Detection Rule
 
 ```bash
+
 cat <<'EOF' > advanced-rules.yaml
 customRules:
   custom-rules.yaml: |-
+
     # Macros
+
     - macro: spawned_process
       condition: evt.type = execve and evt.dir=<
 
@@ -107,6 +132,7 @@ customRules:
       condition: container.id != host
 
     # Lists
+
     - list: package_managers
       items: [apt, apt-get, yum, dnf, pip, pip3, npm, gem, apk]
 
@@ -114,6 +140,7 @@ customRules:
       items: [kube-system, kube-public, development]
 
     # Rule 1: Package manager in production
+
     - rule: Package Manager in Production Container
       desc: Package manager executed in non-dev container
       condition: >
@@ -128,6 +155,7 @@ customRules:
       tags: [container, software, production]
 
     # Rule 2: Crypto mining detection
+
     - list: crypto_miners
       items: [xmrig, minerd, ethminer, cpuminer]
 
@@ -145,6 +173,7 @@ customRules:
       tags: [malware, crypto]
 
     # Rule 3: SSH in container
+
     - rule: SSH Server in Container
       desc: SSH server process started in container
       condition: >
@@ -159,6 +188,7 @@ customRules:
       tags: [container, ssh]
 
     # Rule 4: File download and execute
+
     - macro: remote_download_tools
       condition: proc.name in (wget, curl, fetch)
 
@@ -176,6 +206,7 @@ customRules:
       tags: [malware, execution]
 
     # Rule 5: Sensitive mount
+
     - rule: Container with Sensitive Mount
       desc: Container mounting sensitive host paths
       condition: >
@@ -192,13 +223,17 @@ customRules:
 EOF
 
 # Apply advanced rules
+
 helm upgrade falco falcosecurity/falco \
   --namespace falco \
   --reuse-values \
   -f advanced-rules.yaml
 
 # Wait for rollout
+
 kubectl rollout status daemonset/falco -n falco
+```
+
 ```
 
 ### Step 5: Test Advanced Rules
@@ -206,27 +241,38 @@ kubectl rollout status daemonset/falco -n falco
 **Test 1: Package Manager Detection**
 
 ```bash
+
 # Should trigger in default namespace (not in allowed list)
+
 kubectl run test-pkg --image=ubuntu:22.04 --command -- sleep 3600
 kubectl wait --for=condition=Ready pod/test-pkg --timeout=60s
 
 kubectl exec test-pkg -- apt-get update
 
 # Check logs
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep "Package Manager"
+```
+
 ```
 
 **Test 2: Crypto Mining Detection**
 
 ```bash
+
 # Simulate crypto miner
+
 kubectl exec test-pkg -- sh -c "echo '#!/bin/sh' > /tmp/xmrig && chmod +x /tmp/xmrig && /tmp/xmrig || true"
 
 # Check logs
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep "Crypto"
 ```
 
+```
+
 **Verification**:
+
 - [ ] Package manager rule triggers
 - [ ] Crypto mining rule works
 - [ ] All advanced rules loaded
@@ -236,6 +282,7 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20 | grep "Crypto"
 ### Step 6: Add Exceptions
 
 ```bash
+
 cat <<'EOF' > tuned-rules.yaml
 customRules:
   custom-rules.yaml: |-
@@ -249,6 +296,7 @@ customRules:
       items: [apt, apt-get, yum, dnf, pip, npm]
 
     # Tuned rule with exceptions
+
     - rule: Package Manager in Container
       desc: Package manager executed (with exceptions)
       condition: >
@@ -264,7 +312,9 @@ customRules:
          namespace=%k8s.ns.name image=%container.image.repository)
       priority: WARNING
       tags: [container, software]
+
       # Using exceptions (alternative syntax)
+
       exceptions:
         - name: allowed_ci_builds
           fields: [k8s.ns.name, k8s.pod.label.app]
@@ -274,6 +324,7 @@ customRules:
             - [ci-system, build-agent]
 
     # Rate-limited rule (reduced noise)
+
     - rule: Outbound Connection
       desc: Container making outbound connection
       condition: >
@@ -282,30 +333,41 @@ customRules:
         fd.typechar=4 and fd.sip != "0.0.0.0"
       output: "Outbound connection (dst=%fd.sip:%fd.dport container=%container.name)"
       priority: INFO
+
       # This would be noisy, so use sparingly or add filters
+
 EOF
 
 helm upgrade falco falcosecurity/falco -n falco --reuse-values -f tuned-rules.yaml
 kubectl rollout status daemonset/falco -n falco
 ```
 
+```
+
 ### Step 7: Test Exceptions
 
 ```bash
+
 # This should NOT trigger (in development namespace)
+
 kubectl create namespace development
 kubectl run test-dev --image=ubuntu:22.04 -n development --command -- sleep 3600
 kubectl wait --for=condition=Ready pod/test-dev -n development --timeout=60s
 kubectl exec -n development test-dev -- apt-get update
 
 # This SHOULD trigger (in default namespace)
+
 kubectl exec test-pkg -- apt-get update
 
 # Check logs
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30 | grep "Package Manager"
 ```
 
+```
+
 **Verification**:
+
 - [ ] Exception for development namespace works
 - [ ] Non-excepted namespaces still trigger
 - [ ] Rules are properly tuned
@@ -315,6 +377,7 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=30 | grep "Package 
 ### Step 8: Implement Rule Priorities
 
 ```bash
+
 cat <<'EOF' > priority-rules.yaml
 customRules:
   custom-rules.yaml: |-
@@ -325,6 +388,7 @@ customRules:
       condition: container.id != host
 
     # CRITICAL priority - immediate response needed
+
     - rule: Container Escape Attempt
       desc: Potential container escape detected
       condition: >
@@ -338,6 +402,7 @@ customRules:
       tags: [container_escape, critical]
 
     # ERROR priority - security violation
+
     - rule: Write to System Binary Directory
       desc: Attempt to write to system binary directory
       condition: >
@@ -349,6 +414,7 @@ customRules:
       tags: [filesystem, binary]
 
     # WARNING priority - suspicious activity
+
     - rule: Shell Spawned by Non-Shell Process
       desc: Shell spawned by unexpected parent
       condition: >
@@ -361,6 +427,7 @@ customRules:
       tags: [shell, suspicious]
 
     # NOTICE priority - notable but not necessarily bad
+
     - rule: Container Started with Unusual User
       desc: Container running as unexpected UID
       condition: >
@@ -372,6 +439,7 @@ customRules:
       tags: [container, user]
 
     # INFO priority - informational
+
     - rule: New Container Started
       desc: A new container was started
       condition: >
@@ -386,16 +454,22 @@ helm upgrade falco falcosecurity/falco -n falco --reuse-values -f priority-rules
 kubectl rollout status daemonset/falco -n falco
 ```
 
+```
+
 ### Step 9: Test Priority Levels
 
 ```bash
+
 # Test CRITICAL: Container escape attempt
+
 kubectl exec test-pkg -- sh -c "ls /var/run/docker.sock || true"
 
 # Test WARNING: Shell spawn
+
 kubectl run test-shell --image=alpine:3.19 --command -- sh -c "sleep 10 && /bin/sh"
 
 # Filter logs by priority
+
 echo "=== CRITICAL alerts ==="
 kubectl logs -n falco -l app.kubernetes.io/name=falco | jq 'select(.priority=="Critical")'
 
@@ -403,7 +477,10 @@ echo "=== WARNING alerts ==="
 kubectl logs -n falco -l app.kubernetes.io/name=falco | jq 'select(.priority=="Warning")' | tail -5
 ```
 
+```
+
 **Verification**:
+
 - [ ] Different priorities work correctly
 - [ ] Can filter alerts by priority
 - [ ] Priority reflects severity accurately
@@ -413,6 +490,7 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | jq 'select(.priority=="W
 ### Step 10: Multi-Stage Attack Detection
 
 ```bash
+
 cat <<'EOF' > complex-rules.yaml
 customRules:
   custom-rules.yaml: |-
@@ -423,6 +501,7 @@ customRules:
       condition: container.id != host
 
     # Stage 1: Reconnaissance
+
     - rule: Network Scanning Activity
       desc: Potential network scanning detected
       condition: >
@@ -435,6 +514,7 @@ customRules:
       tags: [network, recon]
 
     # Stage 2: Exploitation
+
     - rule: Reverse Shell Indicators
       desc: Reverse shell patterns detected
       condition: >
@@ -447,6 +527,7 @@ customRules:
       tags: [shell, exploitation]
 
     # Stage 3: Persistence
+
     - rule: Cron Job Creation
       desc: Cron job created in container
       condition: >
@@ -459,6 +540,7 @@ customRules:
       tags: [persistence, cron]
 
     # Stage 4: Privilege Escalation
+
     - rule: SetUID Binary Creation
       desc: SetUID binary created
       condition: >
@@ -474,7 +556,10 @@ helm upgrade falco falcosecurity/falco -n falco --reuse-values -f complex-rules.
 kubectl rollout status daemonset/falco -n falco
 ```
 
+```
+
 **Verification**:
+
 - [ ] Complex rules loaded
 - [ ] Can detect multi-stage attacks
 - [ ] Rules cover attack lifecycle
@@ -484,44 +569,62 @@ kubectl rollout status daemonset/falco -n falco
 ### Issue 1: Rule Not Triggering
 
 ```bash
+
 # Verify rule is loaded
+
 kubectl exec -n falco $FALCO_POD -- falco --list | grep "<rule-name>"
 
 # Check rule syntax
+
 kubectl exec -n falco $FALCO_POD -- falco --validate /etc/falco/falco_rules.yaml
 
 # Check Falco logs for errors
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i error
 
 # Test with simple condition
 # Simplify the rule condition to see if basic detection works
+
+```
+
 ```
 
 ### Issue 2: Too Many False Positives
 
 ```bash
+
 # Solutions:
 # 1. Add namespace exceptions
 # 2. Add pod label exceptions
 # 3. Increase specificity of condition
 # 4. Adjust priority to INFO or NOTICE
 # 5. Use exceptions block
+
+```
+
 ```
 
 ### Issue 3: Custom Rules Not Loading
 
 ```bash
+
 # Check ConfigMap
+
 kubectl get configmap -n falco
 
 # Verify Helm values
+
 helm get values falco -n falco
 
 # Check pod configuration
+
 kubectl describe pod -n falco -l app.kubernetes.io/name=falco | grep -A 10 "Mounts"
 
 # Force pod restart
+
 kubectl rollout restart daemonset/falco -n falco
+```
+
 ```
 
 ## Verification Checklist
@@ -537,23 +640,28 @@ kubectl rollout restart daemonset/falco -n falco
 ## Cleanup
 
 ```bash
+
 # Remove test pods
+
 kubectl delete pod test-custom test-pkg test-shell --ignore-not-found
 kubectl delete pod test-dev -n development --ignore-not-found
 kubectl delete namespace development --ignore-not-found
 ```
 
+```
+
 ## Challenge Exercises
 
 1. **Custom Detection**: Create rules to detect:
+
    - Container accessing cloud metadata API (169.254.169.254)
    - Sudo usage in containers
    - File download from internet
    - Database credential files being read
 
-2. **Rule Optimization**: Take a noisy rule and add 5 different exceptions to reduce false positives
+1. **Rule Optimization**: Take a noisy rule and add 5 different exceptions to reduce false positives
 
-3. **Attack Simulation**: Simulate a complete attack chain and verify all stages are detected by your rules
+1. **Attack Simulation**: Simulate a complete attack chain and verify all stages are detected by your rules
 
 ## Key Takeaways
 

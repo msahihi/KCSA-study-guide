@@ -22,31 +22,43 @@ Implement comprehensive container image security including vulnerability scannin
 ### 1.1 Install Trivy
 
 ```bash
+
 # Linux
+
 wget https://github.com/aquasecurity/trivy/releases/download/v0.48.0/trivy_0.48.0_Linux-64bit.tar.gz
 tar zxvf trivy_0.48.0_Linux-64bit.tar.gz
 sudo mv trivy /usr/local/bin/
 
 # macOS
+
 brew install trivy
 
 # Verify
+
 trivy version
+```
+
 ```
 
 ### 1.2 Install Cosign
 
 ```bash
+
 # Linux
+
 wget https://github.com/sigstore/cosign/releases/download/v2.2.2/cosign-linux-amd64
 chmod +x cosign-linux-amd64
 sudo mv cosign-linux-amd64 /usr/local/bin/cosign
 
 # macOS
+
 brew install cosign
 
 # Verify
+
 cosign version
+```
+
 ```
 
 ## Step 2: Vulnerability Scanning with Trivy
@@ -54,33 +66,46 @@ cosign version
 ### 2.1 Scan Public Images
 
 ```bash
+
 # Scan nginx image
+
 trivy image nginx:1.27
 
 # Scan with specific severity
+
 trivy image --severity HIGH,CRITICAL nginx:1.27
 
 # Scan and export to JSON
+
 trivy image --format json --output nginx-scan.json nginx:1.27
 
 # View summary
+
 trivy image --severity HIGH,CRITICAL --format table nginx:1.27
+```
+
 ```
 
 ### 2.2 Compare Image Versions
 
 ```bash
+
 # Scan older version
+
 trivy image --severity CRITICAL nginx:1.20
 
 # Scan current version
+
 trivy image --severity CRITICAL nginx:1.27
 
 # Compare vulnerability counts
+
 echo "Old version:"
 trivy image --severity CRITICAL nginx:1.20 | grep Total
 echo "New version:"
 trivy image --severity CRITICAL nginx:1.27 | grep Total
+```
+
 ```
 
 ### 2.3 Scan Images in CI/CD
@@ -88,7 +113,9 @@ trivy image --severity CRITICAL nginx:1.27 | grep Total
 Create `.gitlab-ci.yml` or GitHub Actions workflow:
 
 ```yaml
+
 # GitHub Actions example
+
 name: Image Security Scan
 
 on:
@@ -120,6 +147,8 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 ```
 
+```
+
 ## Step 3: Build Secure Container Images
 
 ### 3.1 Insecure Dockerfile (Anti-pattern)
@@ -127,13 +156,17 @@ jobs:
 Create `Dockerfile.insecure`:
 
 ```dockerfile
+
 # BAD: Using large base image
+
 FROM ubuntu:22.04
 
 # BAD: Running as root
+
 USER root
 
 # BAD: Installing unnecessary packages
+
 RUN apt-get update && apt-get install -y \
     curl \
     wget \
@@ -142,14 +175,19 @@ RUN apt-get update && apt-get install -y \
     python3-pip
 
 # BAD: No version pinning
+
 RUN pip3 install flask
 
 # BAD: Copying everything
+
 COPY . /app/
 
 # BAD: No healthcheck
+
 EXPOSE 8080
 CMD ["python3", "/app/app.py"]
+```
+
 ```
 
 ### 3.2 Secure Dockerfile (Best Practices)
@@ -157,19 +195,24 @@ CMD ["python3", "/app/app.py"]
 Create `Dockerfile.secure`:
 
 ```dockerfile
+
 # Stage 1: Builder
+
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
 # Install dependencies with pinned versions
+
 COPY requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
 # Stage 2: Final image
+
 FROM gcr.io/distroless/python3-debian11
 
 # Copy only necessary files
+
 COPY --from=builder /root/.local /root/.local
 COPY app.py /app/
 COPY static/ /app/static/
@@ -177,19 +220,25 @@ COPY static/ /app/static/
 WORKDIR /app
 
 # Set PATH for pip packages
+
 ENV PATH=/root/.local/bin:$PATH
 
 # Run as non-root (distroless uses nonroot user)
+
 USER nonroot:nonroot
 
 EXPOSE 8080
 
 # Use exec form
+
 ENTRYPOINT ["python3", "app.py"]
 
 # Add health check
+
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"
+```
+
 ```
 
 ### 3.3 Create Application Files
@@ -197,6 +246,7 @@ HEALTHCHECK --interval=30s --timeout=3s \
 Create `app.py`:
 
 ```python
+
 from flask import Flask, jsonify
 import os
 
@@ -214,25 +264,35 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
 ```
 
+```
+
 Create `requirements.txt`:
 
 ```
+
 flask==3.0.0
+
+```
 ```
 
 ### 3.4 Build and Compare
 
 ```bash
+
 # Build insecure image
+
 docker build -f Dockerfile.insecure -t myapp:insecure .
 
 # Build secure image
+
 docker build -f Dockerfile.secure -t myapp:secure .
 
 # Compare sizes
+
 docker images | grep myapp
 
 # Scan both images
+
 echo "=== Insecure Image ==="
 trivy image --severity HIGH,CRITICAL myapp:insecure | grep Total
 
@@ -240,49 +300,70 @@ echo "=== Secure Image ==="
 trivy image --severity HIGH,CRITICAL myapp:secure | grep Total
 ```
 
+```
+
 ## Step 4: Image Signing with Cosign
 
 ### 4.1 Generate Key Pair
 
 ```bash
+
 # Generate signing keys
+
 cosign generate-key-pair
 
 # Enter password when prompted
 # Creates: cosign.key (private) and cosign.pub (public)
 
 # Store keys securely
+
 chmod 600 cosign.key
+```
+
 ```
 
 ### 4.2 Sign Image
 
 ```bash
+
 # Tag image for local registry (using Kind registry)
+
 docker tag myapp:secure localhost:5000/myapp:v1.0.0
 
 # Push to registry (assuming local registry at localhost:5000)
+
 docker push localhost:5000/myapp:v1.0.0
 
 # Sign the image
+
 cosign sign --key cosign.key localhost:5000/myapp:v1.0.0
 
 # Enter key password when prompted
+
+```
+
 ```
 
 ### 4.3 Verify Signature
 
 ```bash
+
 # Verify with public key
+
 cosign verify --key cosign.pub localhost:5000/myapp:v1.0.0
 
 # Output shows verification success
+
+```
+
 ```
 
 ### 4.4 Sign with Annotations
 
 ```bash
+
 # Sign with metadata
+
 cosign sign --key cosign.key \
   -a "git-sha=$(git rev-parse HEAD)" \
   -a "build-date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
@@ -290,26 +371,34 @@ cosign sign --key cosign.key \
   localhost:5000/myapp:v1.0.0
 
 # Verify with annotations
+
 cosign verify --key cosign.pub \
   -a "builder=ci-pipeline" \
   localhost:5000/myapp:v1.0.0
 ```
 
+```
+
 ### 4.5 Store Keys in Kubernetes
 
 ```bash
+
 kubectl create namespace image-security
 
 # Create secret with signing keys
+
 kubectl create secret generic cosign-keys \
   --from-file=cosign.key \
   --from-file=cosign.pub \
   -n image-security
 
 # Create public key only secret (for verification)
+
 kubectl create secret generic cosign-pub \
   --from-file=cosign.pub \
   -n image-security
+```
+
 ```
 
 ## Step 5: Image Policy Enforcement
@@ -317,12 +406,17 @@ kubectl create secret generic cosign-pub \
 ### 5.1 Install Policy Controller (Sigstore)
 
 ```bash
+
 # Install Policy Controller
+
 kubectl apply -f https://github.com/sigstore/policy-controller/releases/download/v0.8.0/policy-controller.yaml
 
 # Verify installation
+
 kubectl get pods -n cosign-system
 kubectl wait --for=condition=ready pod -l app=policy-controller -n cosign-system --timeout=120s
+```
+
 ```
 
 ### 5.2 Create ClusterImagePolicy
@@ -330,6 +424,7 @@ kubectl wait --for=condition=ready pod -l app=policy-controller -n cosign-system
 Create `image-policy.yaml`:
 
 ```yaml
+
 apiVersion: policy.sigstore.dev/v1beta1
 kind: ClusterImagePolicy
 metadata:
@@ -345,24 +440,34 @@ spec:
         -----END PUBLIC KEY-----
 ```
 
+```
+
 Get your public key:
 
 ```bash
+
 cat cosign.pub
+```
+
 ```
 
 Apply policy:
 
 ```bash
+
 kubectl apply -f image-policy.yaml
+```
+
 ```
 
 ### 5.3 Test Policy Enforcement
 
 ```bash
+
 kubectl create namespace test-policy
 
 # Try to deploy unsigned image (should fail)
+
 kubectl run unsigned-test \
   --image=nginx:1.27 \
   -n test-policy
@@ -370,12 +475,16 @@ kubectl run unsigned-test \
 # Expected: Error - image signature verification failed
 
 # Deploy signed image (should succeed)
+
 kubectl run signed-test \
   --image=localhost:5000/myapp:v1.0.0 \
   -n test-policy
 
 # Should succeed
+
 kubectl get pods -n test-policy
+```
+
 ```
 
 ## Step 6: OPA Gatekeeper Image Policies
@@ -385,6 +494,7 @@ kubectl get pods -n test-policy
 Create `allowed-registries-template.yaml`:
 
 ```yaml
+
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -415,9 +525,12 @@ spec:
         }
 ```
 
+```
+
 Create constraint:
 
 ```yaml
+
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sAllowedRegistries
 metadata:
@@ -436,17 +549,25 @@ spec:
       - "registry.k8s.io/"
 ```
 
+```
+
 Apply:
 
 ```bash
+
 kubectl apply -f allowed-registries-template.yaml
 kubectl apply -f allowed-registries-constraint.yaml
 
 # Test with disallowed registry
+
 kubectl run bad-registry \
   --image=badregistry.io/nginx:latest \
   -n test-policy
+
 # Expected: Error - untrusted registry
+
+```
+
 ```
 
 ### 6.2 Block Latest Tag
@@ -454,6 +575,7 @@ kubectl run bad-registry \
 Create `deny-latest-tag-template.yaml`:
 
 ```yaml
+
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -481,10 +603,14 @@ spec:
         }
 ```
 
+```
+
 ```bash
+
 kubectl apply -f deny-latest-tag-template.yaml
 
 # Create constraint
+
 kubectl create -f - <<EOF
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sDenyLatestTag
@@ -500,8 +626,13 @@ spec:
 EOF
 
 # Test
+
 kubectl run latest-test --image=nginx:latest -n test-policy
+
 # Expected: Error - :latest tag not allowed
+
+```
+
 ```
 
 ## Step 7: Integrate with CI/CD
@@ -511,7 +642,9 @@ kubectl run latest-test --image=nginx:latest -n test-policy
 Create `build-and-scan.sh`:
 
 ```bash
+
 #!/bin/bash
+
 set -e
 
 IMAGE_NAME="myapp"
@@ -537,20 +670,29 @@ cosign verify --key cosign.pub ${FULL_IMAGE}
 echo "Image security pipeline completed successfully!"
 ```
 
+```
+
 ### 7.2 Create SBOM (Software Bill of Materials)
 
 ```bash
+
 # Generate SBOM with Trivy
+
 trivy image --format cyclonedx --output sbom.json myapp:secure
 
 # View SBOM
+
 cat sbom.json | jq .
 
 # Attach SBOM to image
+
 cosign attach sbom --sbom sbom.json localhost:5000/myapp:v1.0.0
 
 # Verify SBOM
+
 cosign verify-attestation --key cosign.pub localhost:5000/myapp:v1.0.0
+```
+
 ```
 
 ## Step 8: Private Registry with Harbor
@@ -558,7 +700,9 @@ cosign verify-attestation --key cosign.pub localhost:5000/myapp:v1.0.0
 ### 8.1 Install Harbor
 
 ```bash
+
 # Install Harbor
+
 helm repo add harbor https://helm.goharbor.io
 helm install harbor harbor/harbor \
   --namespace harbor \
@@ -569,15 +713,20 @@ helm install harbor harbor/harbor \
   --set harborAdminPassword=Harbor12345
 
 # Wait for Harbor to be ready
+
 kubectl wait --for=condition=ready pod -l app=harbor -n harbor --timeout=300s
 
 # Get Harbor URL
+
 kubectl get svc -n harbor
+```
+
 ```
 
 ### 8.2 Configure Image Scanning in Harbor
 
 ```bash
+
 # Access Harbor UI
 # NodePort URL: http://<node-ip>:<node-port>
 # Login: admin / Harbor12345
@@ -587,64 +736,89 @@ kubectl get svc -n harbor
 # 2. Enable Trivy scanner
 # 3. Set scan on push to true
 # 4. Configure scan schedule
+
+```
+
 ```
 
 ### 8.3 Push Image to Harbor
 
 ```bash
+
 # Login to Harbor
+
 docker login <harbor-url> -u admin -p Harbor12345
 
 # Tag and push
+
 docker tag myapp:secure <harbor-url>/library/myapp:v1.0.0
 docker push <harbor-url>/library/myapp:v1.0.0
 
 # Check scan results in Harbor UI
+
+```
+
 ```
 
 ## Challenge Exercises
 
 1. Implement image size limits in admission policy
-2. Create policy requiring SHA256 image references
-3. Build multi-architecture images
-4. Set up automated vulnerability notifications
-5. Implement image garbage collection
+1. Create policy requiring SHA256 image references
+1. Build multi-architecture images
+1. Set up automated vulnerability notifications
+1. Implement image garbage collection
 
 ## Troubleshooting
 
 ### Trivy Database Issues
 
 ```bash
+
 # Update Trivy database
+
 trivy image --download-db-only
 
 # Clear cache
+
 trivy image --clear-cache
+```
+
 ```
 
 ### Cosign Verification Failures
 
 ```bash
+
 # Check signature exists
+
 cosign triangulate localhost:5000/myapp:v1.0.0
 
 # Verify with verbose output
+
 cosign verify --key cosign.pub localhost:5000/myapp:v1.0.0 -v
+```
+
 ```
 
 ### Policy Controller Issues
 
 ```bash
+
 # Check logs
+
 kubectl logs -n cosign-system -l app=policy-controller
 
 # Verify webhook configuration
+
 kubectl get validatingwebhookconfigurations | grep policy
+```
+
 ```
 
 ## Lab Summary
 
 You learned:
+
 - Scanning images for vulnerabilities with Trivy
 - Building secure container images
 - Signing images with Cosign
@@ -655,6 +829,7 @@ You learned:
 - Creating and attaching SBOMs
 
 **Key Takeaways:**
+
 - Always scan images before deployment
 - Use minimal base images (distroless, alpine)
 - Sign production images
@@ -666,6 +841,7 @@ You learned:
 ## Cleanup
 
 ```bash
+
 kubectl delete namespace test-policy
 kubectl delete namespace image-security
 kubectl delete clusterimagepolicy signed-images-only
@@ -673,6 +849,8 @@ kubectl delete constrainttemplate k8sallowedregistries k8sdenylatesttag
 helm uninstall harbor -n harbor
 kubectl delete namespace harbor
 kubectl delete namespace cosign-system
+```
+
 ```
 
 ## Additional Resources

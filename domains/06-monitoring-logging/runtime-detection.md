@@ -62,25 +62,30 @@ Falco is a CNCF graduated project and the de facto standard for Kubernetes runti
 ### How Falco Works
 
 1. **Capture**: Kernel module or eBPF probe captures all system calls
-2. **Enrich**: Libraries add context (container, pod, namespace, Kubernetes metadata)
-3. **Evaluate**: Rules engine checks events against rules
-4. **Alert**: Matching events trigger outputs (logs, webhooks, alerts)
+1. **Enrich**: Libraries add context (container, pod, namespace, Kubernetes metadata)
+1. **Evaluate**: Rules engine checks events against rules
+1. **Alert**: Matching events trigger outputs (logs, webhooks, alerts)
 
 ### Falco Drivers
 
 Falco uses one of two drivers to capture system calls:
 
 | Driver | Type | Pros | Cons | When to Use |
-|--------|------|------|------|-------------|
+| -------- | ------ | ------ | ------ | ------------- |
 | **Kernel Module** | Loadable kernel module | Fast, stable, complete | Requires kernel headers | Default choice |
 | **eBPF Probe** | Extended BPF program | No kernel module needed | Requires newer kernel (4.14+) | Restricted environments |
 
 ```bash
+
 # Check which driver is loaded
+
 falco --list-events
 
 # Or check from pod
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i "driver"
+```
+
 ```
 
 ## Falco Rules Language
@@ -90,6 +95,7 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i "driver"
 A Falco rule consists of several components:
 
 ```yaml
+
 - rule: Shell in Container
   desc: A shell was spawned in a container
   condition: >
@@ -107,7 +113,10 @@ A Falco rule consists of several components:
   tags: [container, shell, mitre_execution]
 ```
 
+```
+
 **Components**:
+
 - **rule**: Unique rule name
 - **desc**: Human-readable description
 - **condition**: Boolean expression that triggers the rule
@@ -124,7 +133,9 @@ Conditions are boolean expressions using fields and operators:
 #### Field Types
 
 ```yaml
+
 # Process fields
+
 proc.name           # Process name
 proc.cmdline        # Full command line
 proc.pname          # Parent process name
@@ -132,21 +143,25 @@ proc.pid            # Process ID
 proc.ppid           # Parent process ID
 
 # User fields
+
 user.name           # Username
 user.uid            # User ID
 user.loginname      # Login name
 
 # Container fields
+
 container.id        # Container ID
 container.name      # Container name
 container.image     # Container image
 
 # Kubernetes fields
+
 k8s.ns.name         # Namespace
 k8s.pod.name        # Pod name
 k8s.deployment.name # Deployment name
 
 # File/Network fields
+
 fd.name             # File descriptor name (file or socket)
 fd.directory        # Directory of file
 fd.sip              # Source IP (network)
@@ -155,15 +170,20 @@ fd.sport            # Source port
 fd.dport            # Destination port
 
 # Event fields
+
 evt.type            # System call type (open, execve, etc.)
 evt.dir             # Direction (< for enter, > for exit)
 evt.time            # Timestamp
 ```
 
+```
+
 #### Operators
 
 ```yaml
+
 # Comparison
+
 =, !=               # Equals, not equals
 <, >, <=, >=        # Less than, greater than
 in, not in          # List membership
@@ -173,31 +193,42 @@ endswith            # String ends with
 glob                # Glob pattern matching
 
 # Logical
+
 and, or, not        # Boolean logic
 
 # Parentheses
+
 ()                  # Grouping
+```
+
 ```
 
 #### Example Conditions
 
 ```yaml
+
 # Shell in container
+
 spawned_process and container and proc.name in (bash, sh)
 
 # Reading sensitive file
+
 open_read and fd.name in (/etc/shadow, /etc/sudoers)
 
 # Outbound network connection
+
 outbound and not fd.sip in (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
 
 # Container running as root
+
 container and user.uid=0
 
 # Privileged container
+
 container and container.privileged=true
 
 # Complex: suspicious exec in production
+
 spawned_process and
 container and
 k8s.ns.name startswith "prod-" and
@@ -205,12 +236,16 @@ proc.name in (bash, sh, nc, ncat) and
 not k8s.pod.label.app="debug-tools"
 ```
 
+```
+
 ### Macros
 
 Macros are reusable condition snippets that make rules cleaner:
 
 ```yaml
+
 # Define macros
+
 - macro: spawned_process
   condition: evt.type = execve and evt.dir=<
 
@@ -227,6 +262,7 @@ Macros are reusable condition snippets that make rules cleaner:
   condition: evt.type=connect and evt.dir=< and fd.typechar=4
 
 # Use macros in rules
+
 - rule: Write to Sensitive File
   condition: >
     open_write and
@@ -236,7 +272,10 @@ Macros are reusable condition snippets that make rules cleaner:
   priority: ERROR
 ```
 
+```
+
 **Benefits of macros**:
+
 - Reduce repetition
 - Improve readability
 - Centralize common logic
@@ -247,7 +286,9 @@ Macros are reusable condition snippets that make rules cleaner:
 Lists define reusable collections of values:
 
 ```yaml
+
 # Define lists
+
 - list: shell_binaries
   items: [bash, sh, zsh, ksh, csh, tcsh]
 
@@ -264,6 +305,7 @@ Lists define reusable collections of values:
   items: [192.0.2.1, 198.51.100.1, 203.0.113.1]
 
 # Use lists in rules
+
 - rule: Shell in Container
   condition: >
     spawned_process and
@@ -279,7 +321,10 @@ Lists define reusable collections of values:
   priority: CRITICAL
 ```
 
+```
+
 **Benefits of lists**:
+
 - Easy to update without changing rules
 - Can append to lists from multiple files
 - Improve maintainability
@@ -289,17 +334,21 @@ Lists define reusable collections of values:
 You can override or append to default Falco rules:
 
 ```yaml
+
 # Append items to existing list
+
 - list: shell_binaries
   append: true
   items: [fish, elvish]
 
 # Append to macro condition
+
 - macro: sensitive_files
   append: true
   condition: or fd.name in (/app/secrets/api-key.txt)
 
 # Override existing rule
+
 - rule: Shell in Container
   condition: >
     spawned_process and
@@ -309,6 +358,7 @@ You can override or append to default Falco rules:
   append: false  # Replace entirely
 
 # Add exception to existing rule
+
 - rule: Shell in Container
   exceptions:
     - name: allow_debug_pods
@@ -317,12 +367,16 @@ You can override or append to default Falco rules:
       values: [["debug-tools"]]
 ```
 
+```
+
 ## Common Falco Rules
 
 ### Container Security
 
 ```yaml
+
 # Detect shell in container
+
 - rule: Shell Spawned in Container
   desc: A shell was spawned in a container
   condition: >
@@ -336,6 +390,7 @@ You can override or append to default Falco rules:
   priority: WARNING
 
 # Detect privileged container
+
 - rule: Launch Privileged Container
   desc: Detect the initial process started in a privileged container
   condition: >
@@ -350,6 +405,7 @@ You can override or append to default Falco rules:
   priority: WARNING
 
 # Detect sensitive mount
+
 - rule: Sensitive Mount by Container
   desc: Container mounting sensitive filesystem paths
   condition: >
@@ -363,10 +419,14 @@ You can override or append to default Falco rules:
   priority: WARNING
 ```
 
+```
+
 ### File System Activity
 
 ```yaml
+
 # Detect sensitive file read
+
 - rule: Read Sensitive File
   desc: Detect reads to sensitive files
   condition: >
@@ -380,6 +440,7 @@ You can override or append to default Falco rules:
   priority: WARNING
 
 # Detect file created in container
+
 - rule: Write Below Binary Dir
   desc: Detect write/create operations below binary directories
   condition: >
@@ -392,6 +453,7 @@ You can override or append to default Falco rules:
   priority: ERROR
 
 # Detect modification to system files
+
 - rule: Modify System Configuration
   desc: Detect modifications to critical system configuration files
   condition: >
@@ -404,10 +466,14 @@ You can override or append to default Falco rules:
   priority: ERROR
 ```
 
+```
+
 ### Network Activity
 
 ```yaml
+
 # Detect outbound connection to suspicious IP
+
 - rule: Outbound Connection to Suspicious IP
   desc: Detect outbound connections to known malicious IPs
   condition: >
@@ -420,6 +486,7 @@ You can override or append to default Falco rules:
   priority: CRITICAL
 
 # Detect unexpected network tool
+
 - rule: Network Tool Launched in Container
   desc: Network tools like nc, nmap shouldn't run in containers
   condition: >
@@ -432,6 +499,7 @@ You can override or append to default Falco rules:
   priority: WARNING
 
 # Detect reverse shell
+
 - rule: Reverse Shell
   desc: Detect reverse shell connections
   condition: >
@@ -446,10 +514,14 @@ You can override or append to default Falco rules:
   priority: CRITICAL
 ```
 
+```
+
 ### Process Execution
 
 ```yaml
+
 # Detect unexpected process execution
+
 - rule: Unexpected Process in Container
   desc: Process not in allowed list was executed
   condition: >
@@ -462,6 +534,7 @@ You can override or append to default Falco rules:
   priority: NOTICE
 
 # Detect process with suspicious arguments
+
 - rule: Suspicious Process Arguments
   desc: Detect processes with potentially malicious arguments
   condition: >
@@ -476,6 +549,7 @@ You can override or append to default Falco rules:
   priority: WARNING
 
 # Detect debugger attached
+
 - rule: Debugger Attached to Process
   desc: Detect debugger (ptrace) attached to a process
   condition: >
@@ -488,10 +562,14 @@ You can override or append to default Falco rules:
   priority: WARNING
 ```
 
+```
+
 ### Crypto Mining Detection
 
 ```yaml
+
 # Detect known crypto mining processes
+
 - rule: Detect Crypto Mining
   desc: Detect cryptocurrency mining processes
   condition: >
@@ -506,6 +584,7 @@ You can override or append to default Falco rules:
   priority: CRITICAL
 
 # Detect crypto mining network connections
+
 - rule: Crypto Mining Connection
   desc: Outbound connection to known mining pool
   condition: >
@@ -519,6 +598,8 @@ You can override or append to default Falco rules:
   priority: CRITICAL
 ```
 
+```
+
 ## Installing Falco
 
 ### Installation Methods
@@ -526,25 +607,33 @@ You can override or append to default Falco rules:
 #### 1. Helm (Recommended)
 
 ```bash
+
 # Add Falco Helm repository
+
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
 
 # Install Falco
+
 helm install falco falcosecurity/falco \
   --namespace falco \
   --create-namespace \
   --set tty=true
 
 # Verify installation
+
 kubectl get pods -n falco
 kubectl logs -n falco -l app.kubernetes.io/name=falco
+```
+
 ```
 
 #### 2. DaemonSet (Manual)
 
 ```yaml
+
 # falco-daemonset.yaml
+
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -606,12 +695,18 @@ spec:
           path: /etc
 ```
 
+```
+
 ### Configuration
 
 ```yaml
+
 # values.yaml for Helm
+
 falco:
+
   # Rules files to load
+
   rules_file:
     - /etc/falco/falco_rules.yaml
     - /etc/falco/falco_rules.local.yaml
@@ -619,15 +714,18 @@ falco:
     - /etc/falco/rules.d
 
   # Output settings
+
   json_output: true
   json_include_output_property: true
 
   # Logging
+
   log_stderr: true
   log_syslog: false
   log_level: info
 
   # Performance
+
   syscall_event_drops:
     threshold: 0.1
     actions:
@@ -635,6 +733,7 @@ falco:
       - alert
 
 # Custom rules
+
 customRules:
   custom-rules.yaml: |-
     - rule: My Custom Rule
@@ -644,10 +743,13 @@ customRules:
       priority: WARNING
 
 # Output destinations
+
 falcosidekick:
   enabled: true
   webui:
     enabled: true
+```
+
 ```
 
 ## Falco Outputs
@@ -657,12 +759,16 @@ falcosidekick:
 #### 1. Text Output (Default)
 
 ```
+
 15:04:05.123456789: Warning Shell spawned in container (user=root container=nginx-pod proc=bash parent=containerd-shim cmdline=bash)
+
+```
 ```
 
 #### 2. JSON Output
 
 ```json
+
 {
   "output": "Shell spawned in container (user=root container=nginx-pod proc=bash)",
   "priority": "Warning",
@@ -678,33 +784,47 @@ falcosidekick:
 }
 ```
 
+```
+
 ### Output Destinations
 
 #### 1. Standard Output (Default)
 
 ```yaml
+
 # Falco config
+
 log_stderr: true
 json_output: true
 ```
 
+```
+
 View with kubectl:
+
 ```bash
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco -f
+```
+
 ```
 
 #### 2. File Output
 
 ```yaml
+
 file_output:
   enabled: true
   keep_alive: false
   filename: /var/log/falco/events.log
 ```
 
+```
+
 #### 3. Webhook Output
 
 ```yaml
+
 http_output:
   enabled: true
   url: "http://alertmanager:9093/api/v1/alerts"
@@ -712,11 +832,16 @@ http_output:
   ca_cert: "/etc/ssl/ca.crt"
 ```
 
+```
+
 #### 4. Syslog Output
 
 ```yaml
+
 syslog_output:
   enabled: true
+```
+
 ```
 
 #### 5. Falcosidekick (Output Router)
@@ -724,7 +849,9 @@ syslog_output:
 Falcosidekick routes Falco alerts to multiple destinations:
 
 ```yaml
+
 # Helm values for Falcosidekick
+
 falcosidekick:
   enabled: true
   config:
@@ -743,7 +870,10 @@ falcosidekick:
       hostport: "http://loki:3100"
 ```
 
+```
+
 **Supported outputs**:
+
 - Slack, MS Teams, Discord
 - AlertManager, Prometheus
 - Elasticsearch, Loki
@@ -757,11 +887,11 @@ falcosidekick:
 ### Process for Creating Rules
 
 1. **Identify the threat**: What are you trying to detect?
-2. **Understand the behavior**: How does it manifest in system calls?
-3. **Write the condition**: Translate behavior to Falco syntax
-4. **Test the rule**: Trigger the behavior and verify detection
-5. **Tune for accuracy**: Reduce false positives
-6. **Document**: Add clear descriptions
+1. **Understand the behavior**: How does it manifest in system calls?
+1. **Write the condition**: Translate behavior to Falco syntax
+1. **Test the rule**: Trigger the behavior and verify detection
+1. **Tune for accuracy**: Reduce false positives
+1. **Document**: Add clear descriptions
 
 ### Example: Detect SSH in Container
 
@@ -770,7 +900,9 @@ falcosidekick:
 **Behavior**: sshd process starts
 
 ```yaml
+
 # Step 1: Basic detection
+
 - rule: SSH Server in Container
   desc: Detect SSH server process in container
   condition: >
@@ -781,6 +913,7 @@ falcosidekick:
   priority: WARNING
 
 # Step 2: Add exceptions for legitimate uses
+
 - list: ssh_allowed_containers
   items: [bastion-host, jump-server]
 
@@ -796,11 +929,14 @@ falcosidekick:
   tags: [container, ssh, pci_dss_10.2.5]
 ```
 
+```
+
 ### Example: Detect Package Manager Execution
 
 **Threat**: Package managers used in production containers (supply chain attack indicator)
 
 ```yaml
+
 - list: package_managers
   items: [apt, apt-get, yum, dnf, rpm, dpkg, pip, pip3, npm, gem]
 
@@ -819,11 +955,14 @@ falcosidekick:
   tags: [container, software, mitre_persistence]
 ```
 
+```
+
 ### Example: Detect Binary Download and Execute
 
 **Threat**: Downloading and executing binaries (common attack pattern)
 
 ```yaml
+
 - rule: Download and Execute
   desc: Detect downloading file to /tmp and executing it
   condition: >
@@ -839,6 +978,8 @@ falcosidekick:
   tags: [container, mitre_execution]
 ```
 
+```
+
 ## Response Automation
 
 ### Alert Response Patterns
@@ -846,15 +987,20 @@ falcosidekick:
 #### 1. Log and Alert (Passive)
 
 ```yaml
+
 # Just log the event
+
 - rule: Suspicious Activity
   output: "Alert logged to Elasticsearch and Slack"
   priority: WARNING
 ```
 
+```
+
 #### 2. Log, Alert, and Investigate (Active Monitoring)
 
 ```bash
+
 # On alert, gather additional context
 #!/bin/bash
 # triggered by Falco alert
@@ -863,18 +1009,24 @@ CONTAINER_ID=$1
 POD_NAME=$2
 
 # Capture pod state
+
 kubectl describe pod $POD_NAME > /var/log/incidents/$POD_NAME.txt
 
 # Capture logs
+
 kubectl logs $POD_NAME > /var/log/incidents/$POD_NAME-logs.txt
 
 # Network connections
+
 kubectl exec $POD_NAME -- netstat -antp > /var/log/incidents/$POD_NAME-network.txt
+```
+
 ```
 
 #### 3. Automated Response (Active Defense)
 
 ```bash
+
 #!/bin/bash
 # Kill pod on critical alert
 
@@ -883,16 +1035,22 @@ NAMESPACE=$2
 POD_NAME=$3
 
 if [ "$PRIORITY" == "CRITICAL" ]; then
+
   # Capture forensics first
+
   kubectl logs -n $NAMESPACE $POD_NAME > /var/log/forensics/$POD_NAME.log
   kubectl describe pod -n $NAMESPACE $POD_NAME > /var/log/forensics/$POD_NAME.yaml
 
   # Terminate pod
+
   kubectl delete pod -n $NAMESPACE $POD_NAME
 
   # Alert security team
+
   curl -X POST https://slack.com/webhook -d "{'text':'Pod $POD_NAME terminated due to critical alert'}"
 fi
+```
+
 ```
 
 ### Integration with Kubernetes
@@ -900,7 +1058,9 @@ fi
 #### Kubernetes Response Controller
 
 ```yaml
+
 # Example: Kubernetes controller that watches Falco events
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -916,7 +1076,9 @@ spec:
         - name: FALCO_WEBHOOK_URL
           value: "http://falcosidekick:2801"
 ---
+
 # ServiceAccount with permission to delete pods
+
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -948,6 +1110,8 @@ subjects:
   namespace: falco
 ```
 
+```
+
 ## Performance Tuning
 
 ### Falco Performance Considerations
@@ -955,7 +1119,7 @@ subjects:
 Falco can impact system performance if misconfigured:
 
 | Factor | Impact | Optimization |
-|--------|--------|--------------|
+| -------- | -------- | -------------- |
 | **Rule count** | More rules = more processing | Disable unused rules |
 | **Event rate** | High syscall rate = high CPU | Use event type hints |
 | **Output volume** | Excessive alerts = I/O load | Tune to reduce false positives |
@@ -966,29 +1130,40 @@ Falco can impact system performance if misconfigured:
 #### 1. Disable Unused Rules
 
 ```yaml
+
 # In custom rules file
+
 - rule: Unused Default Rule
   enabled: false
+```
+
 ```
 
 #### 2. Use Event Type Hints
 
 ```yaml
+
 # Without hint - checks all syscall types
+
 - rule: Slow Rule
   condition: container and proc.name = bash
 
 # With hint - only checks execve syscalls
+
 - rule: Fast Rule
   condition: container and proc.name = bash
   warn_evttypes:
     - execve
 ```
 
+```
+
 #### 3. Tune Output Rate
 
 ```yaml
+
 # Rate limit specific rules
+
 - rule: Noisy Rule
   condition: ...
   output: ...
@@ -996,10 +1171,13 @@ Falco can impact system performance if misconfigured:
   skip_if_unknown_filter: true
 
   # Rate limiting
+
   rate_limiter:
     enabled: true
     seconds: 60
     max_burst: 10
+```
+
 ```
 
 #### 4. Use Appropriate Priority
@@ -1007,28 +1185,39 @@ Falco can impact system performance if misconfigured:
 Only alert on what matters:
 
 ```yaml
+
 # Too noisy - fires on every file read
+
 - rule: Bad Rule
   condition: open_read
   priority: WARNING
 
 # Better - only sensitive files
+
 - rule: Good Rule
   condition: open_read and fd.name in (sensitive_files)
   priority: WARNING
 ```
 
+```
+
 ### Monitoring Falco Performance
 
 ```bash
+
 # Check Falco metrics
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep -i "drops"
 
 # Check CPU/memory usage
+
 kubectl top pods -n falco
 
 # Falco internal metrics (if enabled)
+
 curl http://falco-pod:8765/metrics
+```
+
 ```
 
 ## Troubleshooting
@@ -1038,50 +1227,75 @@ curl http://falco-pod:8765/metrics
 #### Falco Not Starting
 
 ```bash
+
 # Check pod status
+
 kubectl get pods -n falco
 
 # Check logs
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco
 
 # Common causes:
 # - Kernel headers not available
 # - Driver failed to load
 # - Configuration errors
+
+```
+
 ```
 
 **Solutions**:
+
 ```bash
+
 # Check if driver loaded
+
 kubectl exec -n falco <pod> -- falco --list
 
 # Try eBPF instead of kernel module
+
 helm upgrade falco falcosecurity/falco -n falco --set driver.kind=ebpf
+```
+
 ```
 
 #### No Events Detected
 
 ```bash
+
 # Verify Falco is receiving events
+
 kubectl exec -n falco <pod> -- falco --list
 
 # Check if rules are loaded
+
 kubectl exec -n falco <pod> -- cat /etc/falco/falco_rules.yaml
 ```
 
+```
+
 **Test with known-bad action**:
+
 ```bash
+
 # Should trigger "Shell in Container" rule
+
 kubectl exec <some-pod> -- bash -c "echo test"
 
 # Check Falco logs
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "Shell"
+```
+
 ```
 
 #### High False Positive Rate
 
 ```yaml
+
 # Add exceptions
+
 - rule: Shell in Container
   exceptions:
     - name: known_debug_pods
@@ -1090,6 +1304,7 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "Shell"
       values: [["debug-pod-.*"]]
 
 # Or modify condition
+
 - rule: Shell in Container
   condition: >
     spawned_process and
@@ -1100,19 +1315,22 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | grep "Shell"
   append: false
 ```
 
+```
+
 ## Exam Tips
 
 For the KCSA exam, know:
 
 1. **Falco architecture**: Drivers, libraries, rules engine
-2. **Rule syntax**: Conditions, macros, lists, outputs
-3. **Common rules**: Shell in container, sensitive file access, privilege escalation
-4. **Installation**: Helm, DaemonSet requirements (privileged, host mounts)
-5. **Output formats**: Text, JSON
-6. **Rule components**: condition, output, priority, tags
-7. **Performance**: Event type hints, rule tuning
+1. **Rule syntax**: Conditions, macros, lists, outputs
+1. **Common rules**: Shell in container, sensitive file access, privilege escalation
+1. **Installation**: Helm, DaemonSet requirements (privileged, host mounts)
+1. **Output formats**: Text, JSON
+1. **Rule components**: condition, output, priority, tags
+1. **Performance**: Event type hints, rule tuning
 
 **Practice**:
+
 - Read and interpret Falco rules
 - Identify what events trigger rules
 - Write simple custom rules
@@ -1124,15 +1342,16 @@ For the KCSA exam, know:
 **Key Takeaways**:
 
 1. Falco is the standard for Kubernetes runtime security
-2. Falco uses kernel modules or eBPF to capture system calls
-3. Rules consist of conditions, outputs, and priorities
-4. Macros and lists make rules reusable and maintainable
-5. Custom rules detect application-specific threats
-6. Response can be automated for critical alerts
-7. Tune rules to balance detection and false positives
-8. Falcosidekick routes alerts to multiple destinations
+1. Falco uses kernel modules or eBPF to capture system calls
+1. Rules consist of conditions, outputs, and priorities
+1. Macros and lists make rules reusable and maintainable
+1. Custom rules detect application-specific threats
+1. Response can be automated for critical alerts
+1. Tune rules to balance detection and false positives
+1. Falcosidekick routes alerts to multiple destinations
 
 **Best Practices**:
+
 - Start with default rules, add custom rules as needed
 - Use macros and lists for maintainability
 - Tune aggressively to prevent alert fatigue
@@ -1142,6 +1361,7 @@ For the KCSA exam, know:
 - Monitor Falco performance
 
 **Next Steps**:
+
 - Complete [Lab 2: Falco Deployment](../../labs/06-monitoring-logging/lab-02-falco-deployment.md)
 - Continue to [Lab 3: Custom Falco Rules](../../labs/06-monitoring-logging/lab-03-falco-rules.md)
 - Continue to [Security Monitoring](security-monitoring.md)

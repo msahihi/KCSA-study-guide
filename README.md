@@ -9,6 +9,7 @@
 The **Kubernetes and Cloud Native Security Associate (KCSA)** certification demonstrates foundational knowledge and skills in securing Kubernetes clusters and cloud-native applications. This certification is designed for individuals who want to establish their expertise in Kubernetes security practices and cloud-native security fundamentals.
 
 **Who Should Take This Exam**:
+
 - DevOps engineers transitioning to security-focused roles
 - Security professionals learning Kubernetes security
 - Platform engineers responsible for cluster security
@@ -73,6 +74,7 @@ This comprehensive study guide provides structured learning materials, hands-on 
 ## Exam Information
 
 **Exam Details**:
+
 - **Duration**: 90 minutes
 - **Questions**: 60 multiple-choice questions
 - **Passing Score**: 75% (45 correct answers)
@@ -81,6 +83,7 @@ This comprehensive study guide provides structured learning materials, hands-on 
 - **Validity**: 2 years
 
 **Exam Environment Versions**:
+
 - Kubernetes: v1.30.x
 - kubectl: v1.30.x
 - containerd: v1.7.x
@@ -110,6 +113,7 @@ Before starting this study guide, you should have:
 - **A computer with at least 8GB RAM** for running local Kubernetes clusters
 
 **Optional but Helpful**:
+
 - Completed basic Kubernetes tutorials (kubernetes.io/docs/tutorials/)
 - Understanding of cloud computing concepts
 - Experience with Git and version control
@@ -122,20 +126,20 @@ Before starting this study guide, you should have:
    - Install Kind v0.22.x
    - Verify installation with test cluster
 
-2. **Study by Domain**
+1. **Study by Domain**
    - Read domain theory in [domains/](domains/)
    - Complete corresponding labs in [labs/](labs/)
    - Review key concepts in [KCSA_CHEATSHEET.md](KCSA_CHEATSHEET.md)
    - Repeat for each domain in order
 
-3. **Practice and Assess**
+1. **Practice and Assess**
    - Take mock exam set 1
    - Review missed questions and study gaps
    - Retake weak domain labs
    - Take mock exam set 2
    - Review final weak areas
 
-4. **Final Preparation**
+1. **Final Preparation**
    - Review entire cheatsheet
    - Complete all challenge exercises
    - Take final mock exam
@@ -144,6 +148,7 @@ Before starting this study guide, you should have:
 ### Recommended Study Approach
 
 **Week 1-2: Foundation (Domains 1-2)**
+
 - Study Cluster Setup concepts
 - Complete all Domain 1 labs
 - Study Cluster Hardening concepts
@@ -151,6 +156,7 @@ Before starting this study guide, you should have:
 - Focus on RBAC, Network Policies, Security Contexts
 
 **Week 3-4: System Security (Domain 3)**
+
 - Study System Hardening concepts
 - Complete all Domain 3 labs
 - Practice AppArmor and Seccomp profiles
@@ -158,6 +164,7 @@ Before starting this study guide, you should have:
 - Review CIS benchmarks
 
 **Week 5-6: Application Security (Domains 4-5)**
+
 - Study Minimize Vulnerabilities concepts
 - Complete all Domain 4 labs
 - Study Supply Chain Security concepts
@@ -165,6 +172,7 @@ Before starting this study guide, you should have:
 - Practice with Trivy, OPA, and image signing
 
 **Week 7: Monitoring & Practice (Domain 6 + Mock Exams)**
+
 - Study Monitoring and Logging concepts
 - Complete all Domain 6 labs
 - Take Mock Exam Set 1
@@ -172,6 +180,7 @@ Before starting this study guide, you should have:
 - Take Mock Exam Set 2
 
 **Week 8: Final Review**
+
 - Review entire KCSA_CHEATSHEET.md
 - Retake challenging labs
 - Take Mock Exam Set 3
@@ -187,36 +196,50 @@ Download and install from [docker.com](https://www.docker.com/products/docker-de
 ### Install kubectl
 
 ```bash
+
 # macOS (using Homebrew)
+
 brew install kubectl@1.30
 
 # Linux
+
 curl -LO "https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl"
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 # Verify installation
+
 kubectl version --client
+```
+
 ```
 
 ### Install Kind
 
 ```bash
+
 # macOS
+
 brew install kind
 
 # Linux
+
 curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64
 chmod +x ./kind
 sudo mv ./kind /usr/local/bin/kind
 
 # Verify installation
+
 kind version
+```
+
 ```
 
 ### Create Your First Lab Cluster
 
 ```bash
+
 # Create a Kind cluster for labs
+
 cat <<EOF | kind create cluster --name kcsa-lab --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -228,24 +251,35 @@ nodes:
 EOF
 
 # Verify cluster is running
+
 kubectl cluster-info --context kind-kcsa-lab
 kubectl get nodes
 
 # You're ready to start the labs!
+
+```
+
 ```
 
 ### Optional: Install Additional Tools
 
 ```bash
+
 # Trivy (vulnerability scanner)
+
 brew install aquasecurity/trivy/trivy  # macOS
+
 # or download from https://github.com/aquasecurity/trivy/releases
 
 # kube-bench (CIS benchmark checker)
+
 kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job.yaml
 
 # kubesec (security risk analysis)
+
 docker pull kubesec/kubesec:latest
+```
+
 ```
 
 ## Study Tips

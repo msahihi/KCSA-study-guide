@@ -9,6 +9,7 @@
 ## Domain 1: Overview of Cloud Native Security (6 questions)
 
 ### Question 1
+
 Your organization is migrating to a microservices architecture. Which security principle is MOST critical when designing service-to-service communication?
 
 A. All services should trust each other within the cluster  
@@ -25,12 +26,14 @@ D. Rely solely on NetworkPolicy for service security
 Mutual TLS provides both encryption and mutual authentication for service-to-service communication, implementing zero trust principles.
 
 Why B is correct:
+
 - Encrypts traffic between services
 - Provides mutual authentication (both sides verify identity)
 - Prevents man-in-the-middle attacks
 - Foundation of service mesh security (Istio, Linkerd)
 
 Why others are wrong:
+
 - A: Services should never implicitly trust each other (zero trust)
 - C: Unencrypted HTTP is insecure for sensitive communications
 - D: NetworkPolicy alone doesn't provide encryption or authentication
@@ -41,6 +44,7 @@ Why others are wrong:
 ---
 
 ### Question 2
+
 In the defense-in-depth security model, which layer provides the LAST line of defense if all other layers are compromised?
 
 A. Application logging and monitoring  
@@ -57,12 +61,14 @@ D. Image scanning
 Runtime security detection is the last line of defense that can detect and alert on malicious behavior even when preventive controls have failed.
 
 Why B is correct:
+
 - Monitors actual runtime behavior
 - Detects anomalies and attacks in progress
 - Provides visibility when preventive controls fail
 - Can trigger automated responses
 
 Why others are wrong:
+
 - A: Logging is important but detection is more active
 - C: Network segmentation is a preventive control, not last line
 - D: Image scanning is preventive (before deployment)
@@ -73,6 +79,7 @@ Why others are wrong:
 ---
 
 ### Question 3
+
 You're implementing security for a multi-tenant Kubernetes cluster. What is the STRONGEST isolation boundary?
 
 A. Separate namespaces per tenant  
@@ -89,12 +96,14 @@ D. RBAC restrictions per tenant
 Separate clusters provide the strongest isolation as tenants don't share any cluster infrastructure (control plane, nodes, network).
 
 Why C is correct:
+
 - Complete infrastructure isolation
 - No shared control plane
 - No risk of cluster-level privilege escalation affecting other tenants
 - Eliminates noisy neighbor issues
 
 Why others are wrong:
+
 - A: Namespaces provide soft isolation but share cluster resources
 - B: NetworkPolicy is network-only, doesn't isolate compute/control plane
 - D: RBAC is essential but doesn't provide compute isolation
@@ -105,6 +114,7 @@ Why others are wrong:
 ---
 
 ### Question 4
+
 Which statement BEST describes the shared responsibility model in Kubernetes security on a managed service (EKS, GKE, AKS)?
 
 A. Cloud provider is responsible for all security  
@@ -121,12 +131,14 @@ D. Security is automatically handled by Kubernetes
 In managed Kubernetes, the provider secures the control plane (API server, etcd, etc.), while customers secure their workloads, data, and access policies.
 
 Why B is correct:
+
 - Clear division of responsibility
 - Provider manages control plane security and patches
 - Customer handles workload security, RBAC, network policies, etc.
 - Standard model for managed Kubernetes services
 
 Why others are wrong:
+
 - A: Customer has significant security responsibilities
 - C: Provider has control plane responsibilities
 - D: Security requires active configuration, not automatic
@@ -137,6 +149,7 @@ Why others are wrong:
 ---
 
 ### Question 5
+
 Your security team implements a "shift-left" approach. At which stage should vulnerability scanning occur?
 
 A. Only in production after deployment  
@@ -153,12 +166,14 @@ D. Only when a vulnerability is publicly disclosed
 Shift-left means moving security earlier in the development lifecycle. Scanning in CI/CD catches vulnerabilities before they reach production.
 
 Why B is correct:
+
 - Catches issues early (cheaper to fix)
 - Prevents vulnerable images from reaching registry
 - Automates security in development pipeline
 - Fails builds with critical vulnerabilities
 
 Why others are wrong:
+
 - A: Production-only scanning is too late
 - C: Quarterly audits are too infrequent
 - D: Reactive scanning misses many vulnerabilities
@@ -169,6 +184,7 @@ Why others are wrong:
 ---
 
 ### Question 6
+
 Which cloud native security principle emphasizes assuming breach and limiting blast radius?
 
 A. Defense in depth  
@@ -185,12 +201,14 @@ D. All of the above
 All three principles contribute to assuming breach and limiting blast radius: defense in depth provides multiple layers, least privilege limits access, and zero trust verifies everything.
 
 Why D is correct:
+
 - Defense in depth: Multiple security layers contain breaches
 - Least privilege: Limits what compromised accounts can do
 - Zero trust: Continuous verification limits lateral movement
 - All work together to minimize impact
 
 Why others are wrong:
+
 - A, B, C: Each is correct but not complete; all three together are most effective
 
 **Reference**: Cloud Native Security Principles
@@ -201,6 +219,7 @@ Why others are wrong:
 ## Domain 2: Kubernetes Cluster Component Security (12 questions)
 
 ### Question 7
+
 You discover that anonymous requests are enabled on your API server. What is the security risk?
 
 A. Better performance with more requests  
@@ -217,12 +236,14 @@ D. etcd encryption will be disabled
 Anonymous authentication allows unauthenticated requests to reach the API server. Even if RBAC limits permissions, this increases attack surface.
 
 Why B is correct:
+
 - Allows requests without credentials
 - Anonymous users get system:anonymous identity
 - Can be used for reconnaissance
 - Should be disabled unless specifically needed
 
 Why others are wrong:
+
 - A: Anonymous auth is a security risk, not performance benefit
 - C: Anonymous auth doesn't prevent pod startup
 - D: Anonymous auth doesn't affect etcd encryption
@@ -233,6 +254,7 @@ Why others are wrong:
 ---
 
 ### Question 8
+
 What is the PRIMARY purpose of the --enable-admission-plugins flag on the API server?
 
 A. To enable features in Kubernetes  
@@ -249,12 +271,14 @@ D. To set up RBAC
 The --enable-admission-plugins flag activates specific admission controllers that can validate or mutate API requests before persistence.
 
 Why B is correct:
+
 - Enables specific admission controllers (NodeRestriction, PodSecurity, etc.)
 - Essential for enforcing security policies
 - Part of API server security configuration
 - Must be explicitly enabled for security features
 
 Why others are wrong:
+
 - A: Feature gates enable features, not admission plugins
 - C: Audit logging uses different flags
 - D: RBAC is enabled via --authorization-mode
@@ -265,6 +289,7 @@ Why others are wrong:
 ---
 
 ### Question 9
+
 Which etcd configuration provides the STRONGEST security?
 
 A. etcd on the same nodes as API server, no encryption  
@@ -281,12 +306,14 @@ D. etcd accessible from all cluster nodes
 Dedicated etcd nodes with certificate authentication and encryption at rest provides defense in depth for the cluster's most critical datastore.
 
 Why B is correct:
+
 - Dedicated nodes reduce attack surface
 - Client certificates provide mutual authentication
 - Encryption at rest protects stored data
 - Best practice for production clusters
 
 Why others are wrong:
+
 - A: No encryption or isolation
 - C: Password auth is weaker than certificates
 - D: Broad accessibility increases risk
@@ -297,6 +324,7 @@ Why others are wrong:
 ---
 
 ### Question 10
+
 Your API server logs show "TooManyRequests" errors. Which configuration should you adjust?
 
 A. --max-requests-inflight and --max-mutating-requests-inflight  
@@ -313,12 +341,14 @@ D. --tls-cert-file
 These flags control the maximum number of concurrent requests to the API server. TooManyRequests indicates these limits are being reached.
 
 Why A is correct:
+
 - Controls API server request concurrency
 - Prevents overload
 - Can be tuned based on cluster size
 - Directly related to TooManyRequests errors
 
 Why others are wrong:
+
 - B: Authorization mode doesn't affect request limits
 - C: etcd servers configuration doesn't control request limits
 - D: TLS cert doesn't affect request limits
@@ -329,6 +359,7 @@ Why others are wrong:
 ---
 
 ### Question 11
+
 What is the security benefit of enabling the NodeRestriction admission plugin?
 
 A. Limits nodes to only modify their own Node object and pods bound to them  
@@ -345,12 +376,14 @@ D. Encrypts node-to-node traffic
 NodeRestriction limits what nodes (kubelets) can modify via the API, preventing compromised nodes from affecting other nodes or pods.
 
 Why A is correct:
+
 - Limits kubelet API permissions
 - Prevents compromised node from modifying other nodes
 - Restricts to own Node object and bound pods
 - Essential for node security
 
 Why others are wrong:
+
 - B: Doesn't prevent pod creation
 - C: Doesn't disable communication
 - D: Doesn't handle encryption (that's CNI/service mesh)
@@ -361,6 +394,7 @@ Why others are wrong:
 ---
 
 ### Question 12
+
 Which component should you configure to automatically rotate certificates before expiration?
 
 A. Manual certificate renewal scripts  
@@ -377,6 +411,7 @@ D. API server flags
 cert-manager automates certificate lifecycle management, and kubelet has built-in certificate rotation capability.
 
 Why B is correct:
+
 - Automates certificate rotation
 - Prevents certificate expiration outages
 - cert-manager for workload certificates
@@ -384,6 +419,7 @@ Why B is correct:
 - Industry best practice
 
 Why others are wrong:
+
 - A: Manual scripts are error-prone and don't scale
 - C: ConfigMaps don't provide rotation functionality
 - D: API server flags don't rotate certificates
@@ -394,6 +430,7 @@ Why others are wrong:
 ---
 
 ### Question 13
+
 You need to audit all requests that modify secrets. What audit log level should you use?
 
 A. None  
@@ -410,12 +447,14 @@ D. RequestResponse
 RequestResponse level logs request body and response body, providing complete audit trail for secret modifications.
 
 Why D is correct:
+
 - Logs full request and response
 - Provides complete audit trail
 - Required for compliance in many frameworks
 - Can see what was changed
 
 Why others are wrong:
+
 - A: None means no logging
 - B: Metadata logs only metadata, not secret content
 - C: Request logs request but not response
@@ -428,6 +467,7 @@ Why others are wrong:
 ---
 
 ### Question 14
+
 What is the purpose of the --service-account-key-file flag on the API server?
 
 A. To specify the key used to sign ServiceAccount tokens  
@@ -444,12 +484,14 @@ D. To encrypt etcd
 This flag specifies the private key file used to sign ServiceAccount tokens. The corresponding public key is used by other components to verify tokens.
 
 Why A is correct:
+
 - Signs ServiceAccount tokens (JWTs)
 - Part of ServiceAccount token authentication
 - Critical for pod authentication to API server
 - Public key used for verification
 
 Why others are wrong:
+
 - B: RBAC is configured via --authorization-mode
 - C: TLS uses different cert files
 - D: etcd encryption uses EncryptionConfiguration
@@ -460,6 +502,7 @@ Why others are wrong:
 ---
 
 ### Question 15
+
 Which component should be configured with --protect-kernel-defaults=true to prevent kubelet from modifying kernel settings?
 
 A. API server  
@@ -476,12 +519,14 @@ D. etcd
 The --protect-kernel-defaults flag on kubelet prevents it from modifying kernel parameters, ensuring system hardening is maintained.
 
 Why B is correct:
+
 - Kubelet flag for kernel protection
 - Prevents kubelet from changing sysctl settings
 - Ensures security hardening isn't undone
 - CIS Benchmark recommendation
 
 Why others are wrong:
+
 - A: API server doesn't have this flag
 - C: kube-proxy doesn't manage kernel defaults
 - D: etcd doesn't manage kernel defaults
@@ -492,6 +537,7 @@ Why others are wrong:
 ---
 
 ### Question 16
+
 What is the impact of enabling --encryption-provider-config on the API server?
 
 A. Encrypts all network traffic  
@@ -508,12 +554,14 @@ D. Encrypts pod logs
 The EncryptionConfiguration file specified by this flag defines how to encrypt resources (like Secrets) at rest in etcd.
 
 Why B is correct:
+
 - Configures encryption for data stored in etcd
 - Specifies which resources to encrypt (Secrets, ConfigMaps, etc.)
 - Defines encryption providers (aescbc, aesgcm, etc.)
 - Protects data at rest
 
 Why others are wrong:
+
 - A: Network traffic encryption uses TLS certificates
 - C: TLS is configured with cert/key files
 - D: Pod logs are not encrypted by this
@@ -524,6 +572,7 @@ Why others are wrong:
 ---
 
 ### Question 17
+
 Which API server flag should you set to disable profiling endpoints for security?
 
 A. --profiling=false  
@@ -540,12 +589,14 @@ D. --no-profiling
 The --profiling=false flag disables profiling endpoints on the API server, reducing attack surface.
 
 Why A is correct:
+
 - Disables /debug/pprof endpoints
 - Reduces information disclosure risk
 - CIS Benchmark recommendation
 - Should be disabled in production
 
 Why others are wrong:
+
 - B, C, D: Not valid API server flags
 
 **Reference**: Kubernetes API Server Security Configuration
@@ -554,6 +605,7 @@ Why others are wrong:
 ---
 
 ### Question 18
+
 What is the PRIMARY security benefit of using a separate etcd cluster instead of running etcd on master nodes?
 
 A. Better performance  
@@ -570,12 +622,14 @@ D. Lower cost
 Separate etcd cluster provides isolation, so compromise of a master node doesn't immediately expose etcd data.
 
 Why B is correct:
+
 - Physical/logical isolation from control plane
 - Reduces blast radius of master node compromise
 - Easier to implement network restrictions
 - Best practice for production clusters
 
 Why others are wrong:
+
 - A: Performance is a benefit but not the primary security benefit
 - C: Backups can be done in either configuration
 - D: Cost is not a security benefit
@@ -588,6 +642,7 @@ Why others are wrong:
 ## Domain 3: Kubernetes Security Fundamentals (9 questions)
 
 ### Question 19
+
 A container needs to modify network interfaces. What is the MOST secure way to grant this capability?
 
 A. Run the container as privileged: true  
@@ -604,12 +659,14 @@ D. Disable Security Context entirely
 Adding only the required capability (NET_ADMIN) follows the principle of least privilege, avoiding the broad permissions of privileged mode.
 
 Why B is correct:
+
 - Grants only the needed capability
 - Doesn't grant full privileged access
 - Maintains container isolation
 - Follows least privilege principle
 
 Why others are wrong:
+
 - A: Privileged mode grants far more permissions than needed
 - C: Running as root doesn't grant kernel capabilities
 - D: Disabling Security Context removes all protections
@@ -620,6 +677,7 @@ Why others are wrong:
 ---
 
 ### Question 20
+
 You set runAsUser: 1000 at pod level and runAsUser: 2000 at container level. Which user ID will the container run as?
 
 A. 0 (root)  
@@ -636,12 +694,14 @@ D. The container will fail to start
 Container-level Security Context overrides pod-level Security Context for that specific container.
 
 Why C is correct:
+
 - Container settings take precedence over pod settings
 - Allows different containers in a pod to have different security contexts
 - Standard Kubernetes behavior
 - Enables fine-grained control
 
 Why others are wrong:
+
 - A: Not default when runAsUser is specified
 - B: Pod-level is overridden by container-level
 - D: No conflict; container-level simply takes precedence
@@ -652,6 +712,7 @@ Why others are wrong:
 ---
 
 ### Question 21
+
 Which combination of Security Context settings provides the STRONGEST container security?
 
 A. runAsNonRoot: true, readOnlyRootFilesystem: true, allowPrivilegeEscalation: false, drop all capabilities  
@@ -668,6 +729,7 @@ D. No Security Context (use defaults)
 This combination implements defense in depth: non-root user, immutable filesystem, no privilege escalation, and minimal capabilities.
 
 Why A is correct:
+
 - Multiple security layers
 - Enforces non-root execution
 - Prevents filesystem modifications
@@ -675,6 +737,7 @@ Why A is correct:
 - Removes unnecessary capabilities
 
 Why others are wrong:
+
 - B: Privileged is the least secure option
 - C: Running as root is insecure
 - D: Defaults don't enforce security
@@ -685,6 +748,7 @@ Why others are wrong:
 ---
 
 ### Question 22
+
 What happens when you set fsGroup: 2000 in Security Context?
 
 A. The container runs as user 2000  
@@ -701,12 +765,14 @@ D. Network policies use group 2000
 fsGroup sets the group ownership of mounted volumes, allowing non-root containers to access volume files.
 
 Why B is correct:
+
 - Sets supplementary group for volume access
 - Changes ownership of volume files to specified GID
 - Enables non-root containers to access shared volumes
 - Applies to all containers in the pod
 
 Why others are wrong:
+
 - A: runAsUser sets the user, not fsGroup
 - C: fsGroup doesn't affect namespaces
 - D: NetworkPolicy doesn't use fsGroup
@@ -717,6 +783,7 @@ Why others are wrong:
 ---
 
 ### Question 23
+
 You need to create a NetworkPolicy that allows ingress from pods with label app=frontend in namespace prod to pods with label app=backend. What should the policy include?
 
 A. podSelector: app=backend; from.podSelector: app=frontend; from.namespaceSelector: name=prod  
@@ -733,12 +800,14 @@ D. podSelector: app=frontend
 The NetworkPolicy needs to select the backend pods and allow ingress from frontend pods in the prod namespace.
 
 Why A is correct:
+
 - podSelector targets backend pods (where policy applies)
 - from.podSelector specifies frontend pods (source)
 - from.namespaceSelector limits to prod namespace
 - Both selectors are required for cross-namespace selection
 
 Why others are wrong:
+
 - B: Would allow from any pod (no ingress rules)
 - C: Would allow all pods from prod namespace
 - D: Targets wrong pods (frontend instead of backend)
@@ -749,6 +818,7 @@ Why others are wrong:
 ---
 
 ### Question 24
+
 What is the effect of creating a NetworkPolicy with empty ingress: [] field?
 
 A. Allow all ingress traffic  
@@ -765,12 +835,14 @@ D. Allow only traffic from the same namespace
 An empty ingress array explicitly denies all ingress traffic to selected pods.
 
 Why B is correct:
+
 - Empty ingress array = no allowed sources
 - Explicitly denies all ingress
 - Useful for creating isolated pods
 - Different from omitting ingress field
 
 Why others are wrong:
+
 - A: Empty array denies, not allows
 - C: Empty array has explicit effect (deny all)
 - D: Doesn't allow any traffic, not even same namespace
@@ -781,6 +853,7 @@ Why others are wrong:
 ---
 
 ### Question 25
+
 Which RBAC verb allows reading secrets but not creating or modifying them?
 
 A. get, list, watch  
@@ -797,12 +870,14 @@ D. delete
 The get, list, and watch verbs provide read-only access to resources.
 
 Why A is correct:
+
 - get: Read individual secrets
 - list: List all secrets
 - watch: Watch for secret changes
 - Read-only operations only
 
 Why others are wrong:
+
 - B: These are write operations
 - C: Wildcard grants all permissions including write
 - D: Delete is a destructive operation
@@ -813,6 +888,7 @@ Why others are wrong:
 ---
 
 ### Question 26
+
 You want to grant a user access to create pods but only in the development namespace. What should you create?
 
 A. ClusterRole with pod create permissions + ClusterRoleBinding  
@@ -829,12 +905,14 @@ D. Role in default namespace with pod create permissions
 A ClusterRole with RoleBinding limits the ClusterRole's permissions to a specific namespace, allowing reuse of the role definition.
 
 Why C is correct:
+
 - ClusterRole can be reused across namespaces
 - RoleBinding in development limits scope to that namespace
 - Common pattern for reusable permissions
 - Follows best practices
 
 Why others are wrong:
+
 - A: ClusterRoleBinding grants access to all namespaces
 - B: Works but less reusable (Role is namespace-specific)
 - D: Wrong namespace
@@ -845,6 +923,7 @@ Why others are wrong:
 ---
 
 ### Question 27
+
 What is the security risk of granting the verb "escalate" in a Role or ClusterRole?
 
 A. No risk, it's required for all users  
@@ -861,12 +940,14 @@ D. Only affects pod Security Context
 The "escalate" verb allows binding roles with more permissions than the user has, which can lead to privilege escalation.
 
 Why B is correct:
+
 - Dangerous permission that breaks privilege boundaries
 - Allows creating RoleBindings with higher privileges
 - Can lead to privilege escalation attacks
 - Should be tightly controlled
 
 Why others are wrong:
+
 - A: Very high risk; not required for normal users
 - C: This is a security risk, not benefit
 - D: Not related to pod Security Context
@@ -879,6 +960,7 @@ Why others are wrong:
 ## Domain 4: Kubernetes Threat Model (12 questions)
 
 ### Question 28
+
 An attacker gains access to a pod with hostNetwork: true. What is the PRIMARY security risk?
 
 A. Pod can't connect to services  
@@ -895,12 +977,14 @@ D. Pod can't use DNS
 hostNetwork: true puts the pod in the host's network namespace, allowing access to all host network interfaces and traffic.
 
 Why B is correct:
+
 - Pod sees all host network traffic
 - Can bind to any host port
 - Bypasses NetworkPolicy
 - Can perform network-based attacks on other nodes
 
 Why others are wrong:
+
 - A: Pod can still connect to services
 - C: Network mode doesn't significantly affect memory
 - D: DNS still works
@@ -911,6 +995,7 @@ Why others are wrong:
 ---
 
 ### Question 29
+
 Which hostPath mount is MOST dangerous from a security perspective?
 
 A. /var/log  
@@ -927,12 +1012,14 @@ D. /usr/share/docs
 Mounting the Docker socket gives the container full control over the Docker daemon, allowing container escape and host compromise.
 
 Why B is correct:
+
 - Full control over container runtime
 - Can create privileged containers
 - Can mount entire host filesystem
 - Direct path to host root access
 
 Why others are wrong:
+
 - A: Log files are less sensitive
 - C: /tmp is low risk
 - D: Documentation directory is read-only and low risk
@@ -943,6 +1030,7 @@ Why others are wrong:
 ---
 
 ### Question 30
+
 What is the security implication of hostPID: true?
 
 A. Improved pod isolation  
@@ -959,12 +1047,14 @@ D. Required for running databases
 hostPID: true puts the pod in the host's PID namespace, allowing it to see and potentially signal all host processes.
 
 Why B is correct:
+
 - Pod can see all host processes (ps aux shows host processes)
 - Can send signals to host processes
 - Information disclosure
 - Can interfere with host operations
 
 Why others are wrong:
+
 - A: hostPID reduces isolation
 - C: Not a performance feature
 - D: Databases don't require hostPID
@@ -975,6 +1065,7 @@ Why others are wrong:
 ---
 
 ### Question 31
+
 A Falco alert shows: "Terminal shell in container". What type of attack might this indicate?
 
 A. Network attack  
@@ -991,12 +1082,14 @@ D. DNS query
 Running a shell in a container is unusual for production workloads and often indicates an attacker has gained access.
 
 Why B is correct:
+
 - Shells shouldn't run in production containers
 - Common indicator of compromise
 - May indicate container breakout attempt
 - Requires investigation
 
 Why others are wrong:
+
 - A: Not specifically a network attack
 - C: Production containers shouldn't spawn shells
 - D: Not related to DNS
@@ -1007,6 +1100,7 @@ Why others are wrong:
 ---
 
 ### Question 32
+
 Which Falco rule type would detect a process writing to /etc/passwd?
 
 A. Network rule  
@@ -1023,12 +1117,14 @@ D. API audit rule
 Falco file system rules monitor file access. Writing to /etc/passwd is a classic privilege escalation indicator.
 
 Why B is correct:
+
 - Monitors file system operations
 - Detects writes to sensitive files
 - /etc/passwd is a critical system file
 - Common attack technique
 
 Why others are wrong:
+
 - A: Not network-related
 - C: While processes are involved, this is file system monitoring
 - D: API audit rules monitor Kubernetes API, not file system
@@ -1039,6 +1135,7 @@ Why others are wrong:
 ---
 
 ### Question 33
+
 An image scan reveals a critical vulnerability in a base OS package. The application doesn't use the vulnerable package. What should you do?
 
 A. Ignore it since the application doesn't use it  
@@ -1055,12 +1152,14 @@ D. Add a NetworkPolicy
 Even unused packages can be exploited. Remove unnecessary packages or use minimal base images (distroless, Alpine).
 
 Why B is correct:
+
 - Reduces attack surface
 - Unused packages can still be exploited
 - Follows minimal base image principle
 - Compliance requirements often mandate patching all vulnerabilities
 
 Why others are wrong:
+
 - A: Unused packages are still a risk
 - C: Prevention is better than detection
 - D: NetworkPolicy doesn't fix vulnerabilities
@@ -1071,6 +1170,7 @@ Why others are wrong:
 ---
 
 ### Question 34
+
 What is the primary security benefit of using distroless container images?
 
 A. Larger image size  
@@ -1087,12 +1187,14 @@ D. Better performance
 Distroless images contain only the application and runtime dependencies, removing shells, package managers, and other unnecessary tools.
 
 Why B is correct:
+
 - No shell (prevents interactive access)
 - No package managers (prevents installing tools)
 - Minimal attack surface
 - Reduces vulnerabilities
 
 Why others are wrong:
+
 - A: Distroless images are smaller, not larger
 - C: Harder to debug (no shell), but more secure
 - D: Security benefit, not performance
@@ -1103,6 +1205,7 @@ Why others are wrong:
 ---
 
 ### Question 35
+
 Which admission controller webhook type can modify pod specs to add security defaults?
 
 A. Validating webhook  
@@ -1119,12 +1222,14 @@ D. Authorization webhook
 Mutating webhooks can modify (mutate) admission requests, allowing automatic addition of security configurations.
 
 Why B is correct:
+
 - Can change pod specifications
 - Runs before validation
 - Can add Security Context, labels, annotations
 - Useful for enforcing security defaults
 
 Why others are wrong:
+
 - A: Validating webhooks accept or reject, don't modify
 - C: Audit webhooks log, don't modify
 - D: Authorization webhooks handle access control, don't modify resources
@@ -1135,6 +1240,7 @@ Why others are wrong:
 ---
 
 ### Question 36
+
 What is container escape?
 
 A. Normal container termination  
@@ -1151,12 +1257,14 @@ D. Exporting container images
 Container escape is when an attacker breaks out of container isolation to gain access to the host system.
 
 Why B is correct:
+
 - Exploits container runtime or kernel vulnerabilities
 - Gains access to host system from container
 - Critical security event
 - Can lead to full cluster compromise
 
 Why others are wrong:
+
 - A: Normal termination is not an escape
 - C: Migration is normal operations
 - D: Image export is normal operations
@@ -1167,6 +1275,7 @@ Why others are wrong:
 ---
 
 ### Question 37
+
 Which technique helps prevent supply chain attacks in container images?
 
 A. Using larger images  
@@ -1183,12 +1292,14 @@ D. Disabling authentication
 Image signing provides cryptographic proof of image authenticity and integrity, preventing tampered or unauthorized images.
 
 Why B is correct:
+
 - Verifies image hasn't been tampered with
 - Confirms image source
 - Detects malicious modifications
 - Part of supply chain security
 
 Why others are wrong:
+
 - A: Image size doesn't affect supply chain security
 - C: Running as root is insecure
 - D: Disabling authentication worsens security
@@ -1199,6 +1310,7 @@ Why others are wrong:
 ---
 
 ### Question 38
+
 What is the security risk of using ServiceAccount tokens with no expiration?
 
 A. No risk, tokens should never expire  
@@ -1215,12 +1327,14 @@ D. Improved performance
 Long-lived or non-expiring tokens pose security risks if compromised, as they remain valid indefinitely.
 
 Why B is correct:
+
 - Longer exposure window if compromised
 - Can't revoke without rotating keys
 - Violates principle of least privilege (time-bound access)
 - Bound tokens with expiration are recommended
 
 Why others are wrong:
+
 - A: Expiration improves security
 - C: Non-expiring tokens are less secure
 - D: Not related to performance
@@ -1231,6 +1345,7 @@ Why others are wrong:
 ---
 
 ### Question 39
+
 Which tool would you use to detect if a pod is running a cryptocurrency miner?
 
 A. kubectl  
@@ -1247,12 +1362,14 @@ D. RBAC
 Falco can detect anomalous behavior including high CPU usage patterns and suspicious processes characteristic of cryptocurrency mining.
 
 Why B is correct:
+
 - Runtime detection of suspicious processes
 - Can monitor CPU usage patterns
 - Detects known mining software
 - Real-time alerting
 
 Why others are wrong:
+
 - A: kubectl shows state but doesn't detect malicious behavior
 - C: NetworkPolicy doesn't detect mining
 - D: RBAC is for access control, not detection
@@ -1265,6 +1382,7 @@ Why others are wrong:
 ## Domain 5: Platform Security (12 questions)
 
 ### Question 40
+
 You run "trivy image nginx:latest" and find 50 vulnerabilities. What additional Trivy command provides more detailed information?
 
 A. trivy image --severity HIGH,CRITICAL nginx:latest  
@@ -1281,12 +1399,14 @@ D. trivy repo nginx:latest
 Filtering by severity focuses on the most important vulnerabilities (HIGH and CRITICAL) that require immediate attention.
 
 Why A is correct:
+
 - Filters to show only high-priority vulnerabilities
 - Reduces noise from low-severity issues
 - Helps prioritize remediation efforts
 - Common best practice
 
 Why others are wrong:
+
 - B: trivy config is for Kubernetes manifest scanning
 - C: trivy fs is for filesystem scanning, not container images
 - D: trivy repo is for git repository scanning
@@ -1297,6 +1417,7 @@ Why others are wrong:
 ---
 
 ### Question 41
+
 Which Trivy scan type checks Kubernetes YAML manifests for security misconfigurations?
 
 A. trivy image  
@@ -1313,12 +1434,14 @@ D. trivy server
 trivy config scans configuration files including Kubernetes manifests for security issues and misconfigurations.
 
 Why B is correct:
+
 - Scans YAML/JSON manifests
 - Detects misconfigurations (privileged: true, missing Security Context, etc.)
 - Checks against security best practices
 - Part of shift-left security
 
 Why others are wrong:
+
 - A: trivy image scans container images, not configs
 - C: trivy repo scans git repositories
 - D: trivy server runs Trivy in server mode
@@ -1329,6 +1452,7 @@ Why others are wrong:
 ---
 
 ### Question 42
+
 What does the AppArmor annotation "container.apparmor.security.beta.kubernetes.io/<container-name>: runtime/default" do?
 
 A. Disables AppArmor  
@@ -1345,12 +1469,14 @@ D. Has no effect
 This annotation applies the runtime's default AppArmor profile to the specified container, providing baseline security restrictions.
 
 Why B is correct:
+
 - Applies default AppArmor profile
 - Provides baseline security restrictions
 - Easy to apply without custom profiles
 - Recommended for enhanced security
 
 Why others are wrong:
+
 - A: "runtime/default" enables AppArmor, not disables
 - C: Custom profiles use "localhost/<profile-name>"
 - D: This annotation has a definite effect
@@ -1361,6 +1487,7 @@ Why others are wrong:
 ---
 
 ### Question 43
+
 Which seccomp profile type should you use in production for enhanced security?
 
 A. Unconfined  
@@ -1377,17 +1504,20 @@ D. None
 RuntimeDefault applies the container runtime's default seccomp profile, which blocks dangerous system calls. Custom profiles (C) can be used for specific needs.
 
 Why B is correct:
+
 - Blocks ~40+ dangerous system calls
 - Maintained by container runtime
 - Good balance of security and compatibility
 - Recommended default
 
 Why C is also acceptable:
+
 - Custom profiles for specific security requirements
 - Fine-tuned for application needs
 - Maximum security when properly configured
 
 Why others are wrong:
+
 - A: Unconfined disables seccomp (insecure)
 - D: None means no protection
 
@@ -1397,6 +1527,7 @@ Why others are wrong:
 ---
 
 ### Question 44
+
 Which Pod Security Standard allows hostPath volumes?
 
 A. Restricted  
@@ -1413,12 +1544,14 @@ D. None
 Only the Privileged standard allows hostPath volumes. Baseline and Restricted standards prohibit them due to security risks.
 
 Why C is correct:
+
 - Privileged standard is unrestricted
 - Allows all potentially dangerous configurations
 - hostPath can be used for host access/escape
 - Baseline and Restricted prohibit hostPath
 
 Why others are wrong:
+
 - A: Restricted prohibits hostPath
 - B: Baseline prohibits hostPath
 - D: Privileged standard does allow it
@@ -1429,6 +1562,7 @@ Why others are wrong:
 ---
 
 ### Question 45
+
 You want to enforce that all pods in a namespace run with readOnlyRootFilesystem: true. What's the BEST approach?
 
 A. Manually configure each pod  
@@ -1445,12 +1579,14 @@ D. Configure it in the namespace
 OPA Gatekeeper or Kyverno can enforce custom policies like requiring readOnlyRootFilesystem. PSA Restricted doesn't enforce this field specifically.
 
 Why C is correct:
+
 - Policy-as-code enforcement
 - Automatically validates all pods
 - Can enforce specific Security Context fields
 - Flexible and declarative
 
 Why others are wrong:
+
 - A: Manual configuration doesn't scale and can be bypassed
 - B: PSA Restricted doesn't require readOnlyRootFilesystem
 - D: Can't configure Security Context at namespace level directly
@@ -1461,6 +1597,7 @@ Why others are wrong:
 ---
 
 ### Question 46
+
 What is the purpose of generating an SBOM with Syft?
 
 A. To list all software components in an image for vulnerability tracking  
@@ -1477,12 +1614,14 @@ D. To configure networking
 SBOM (Software Bill of Materials) lists all software components and dependencies in an image, essential for vulnerability management.
 
 Why A is correct:
+
 - Comprehensive inventory of components
 - Enables vulnerability tracking
 - Required for supply chain security
 - Helps identify affected systems when new CVEs are disclosed
 
 Why others are wrong:
+
 - B: Syft doesn't encrypt images
 - C: Runtime threat scanning is Falco's domain
 - D: SBOM doesn't configure networking
@@ -1493,6 +1632,7 @@ Why others are wrong:
 ---
 
 ### Question 47
+
 Which admission controller is REQUIRED for Pod Security Admission to work?
 
 A. PodSecurity admission controller  
@@ -1509,12 +1649,14 @@ D. ResourceQuota
 The PodSecurity admission controller must be enabled for Pod Security Admission to enforce policies.
 
 Why A is correct:
+
 - Implements Pod Security Standards enforcement
 - Built-in admission controller (since K8s 1.23)
 - Reads namespace labels and enforces policies
 - Replaces PodSecurityPolicy
 
 Why others are wrong:
+
 - B: NodeRestriction is for node authorization, not PSA
 - C: LimitRanger is for resource limits, not PSA
 - D: ResourceQuota is for quota enforcement, not PSA
@@ -1525,6 +1667,7 @@ Why others are wrong:
 ---
 
 ### Question 48
+
 You need to enforce that all images must be signed with Cosign. Which tool can enforce this at admission time?
 
 A. Trivy  
@@ -1541,12 +1684,14 @@ D. kube-bench
 Policy enforcement at admission time requires an admission controller webhook like Sigstore Policy Controller, Kyverno, or OPA Gatekeeper.
 
 Why C is correct:
+
 - Validates signatures during admission
 - Rejects unsigned images
 - Enforces supply chain security policies
 - Integrates with Cosign/Sigstore
 
 Why others are wrong:
+
 - A: Trivy scans for vulnerabilities, doesn't verify signatures at admission
 - B: Falco is for runtime detection, not admission control
 - D: kube-bench checks compliance, doesn't enforce admission policies
@@ -1557,6 +1702,7 @@ Why others are wrong:
 ---
 
 ### Question 49
+
 What is the security benefit of using a read-only root filesystem?
 
 A. Better performance  
@@ -1573,12 +1719,14 @@ D. Improves startup time
 Read-only root filesystem prevents attackers from modifying files, installing malware, or persisting changes in the container.
 
 Why B is correct:
+
 - Immutable filesystem prevents modifications
 - Limits malware persistence
 - Forces use of volumes for legitimate writes
 - Defense in depth
 
 Why others are wrong:
+
 - A: Not primarily a performance feature
 - C: Doesn't affect image size
 - D: Doesn't affect startup time
@@ -1589,6 +1737,7 @@ Why others are wrong:
 ---
 
 ### Question 50
+
 Which capability should you DROP to prevent a container from modifying file permissions?
 
 A. CHOWN  
@@ -1605,12 +1754,14 @@ D. All of the above
 All three capabilities affect file permissions and ownership. Dropping all provides the strongest protection.
 
 Why D is correct:
+
 - CHOWN: Controls file ownership changes
 - FOWNER: Bypasses permission checks for file ownership operations
 - DAC_OVERRIDE: Bypasses read/write/execute permission checks
 - Dropping all prevents file permission manipulation
 
 Why others are wrong:
+
 - A, B, C: Each is correct but incomplete; dropping all is strongest
 
 **Reference**: Linux Capabilities and File Permissions
@@ -1619,6 +1770,7 @@ Why others are wrong:
 ---
 
 ### Question 51
+
 What is the primary difference between image scanning with Trivy vs runtime detection with Falco?
 
 A. No difference  
@@ -1635,12 +1787,14 @@ D. They do the same thing
 Trivy performs static analysis of images for vulnerabilities, while Falco monitors runtime behavior for threats.
 
 Why B is correct:
+
 - Trivy: Static analysis, finds CVEs in packages
 - Falco: Dynamic monitoring, detects malicious behavior
 - Complementary tools (both should be used)
 - Different stages of security (build-time vs runtime)
 
 Why others are wrong:
+
 - A: Significant difference in purpose and operation
 - C: Reversed - Trivy is for images, Falco for runtime
 - D: Different tools with different purposes
@@ -1653,6 +1807,7 @@ Why others are wrong:
 ## Domain 6: Compliance and Security Frameworks (9 questions)
 
 ### Question 52
+
 Which kube-bench test checks if the API server has anonymous authentication disabled?
 
 A. Control plane component tests  
@@ -1669,12 +1824,14 @@ D. Network tests
 kube-bench control plane component tests check API server configuration including authentication settings.
 
 Why A is correct:
+
 - Control plane tests cover API server configuration
 - Checks flags like --anonymous-auth
 - Part of CIS Benchmark section 1
 - Critical for cluster security
 
 Why others are wrong:
+
 - B: Worker node tests focus on kubelet and node configuration
 - C: Policy tests are for pod security and RBAC
 - D: Network tests are for network policies
@@ -1685,6 +1842,7 @@ Why others are wrong:
 ---
 
 ### Question 53
+
 According to CIS Kubernetes Benchmark, what is the recommended setting for --anonymous-auth on the API server?
 
 A. true  
@@ -1701,12 +1859,14 @@ D. Remove the flag entirely
 CIS Benchmark recommends disabling anonymous authentication (--anonymous-auth=false) to ensure all API requests are authenticated.
 
 Why B is correct:
+
 - Requires authentication for all requests
 - Prevents unauthenticated access
 - CIS Benchmark recommendation
 - Best practice for production
 
 Why others are wrong:
+
 - A: Enabling anonymous auth is insecure
 - C: Setting matters significantly for security
 - D: Flag should be explicitly set to false
@@ -1717,6 +1877,7 @@ Why others are wrong:
 ---
 
 ### Question 54
+
 Which compliance framework specifically addresses financial data security and would apply to Kubernetes clusters processing payment card data?
 
 A. HIPAA  
@@ -1733,12 +1894,14 @@ D. GDPR
 PCI-DSS (Payment Card Industry Data Security Standard) is specifically for protecting payment card data.
 
 Why B is correct:
+
 - Specific to payment card data
 - Requires encryption, access control, monitoring
 - Applies to clusters processing credit card information
 - Strict technical requirements
 
 Why others are wrong:
+
 - A: HIPAA is for healthcare data
 - C: SOC 2 is general security compliance
 - D: GDPR is for personal data privacy (EU)
@@ -1749,6 +1912,7 @@ Why others are wrong:
 ---
 
 ### Question 55
+
 Your cluster must comply with HIPAA for healthcare data. Which security control is MOST critical?
 
 A. Using colorful dashboards  
@@ -1765,12 +1929,14 @@ D. Disabling audit logs
 HIPAA requires protecting PHI with encryption and access controls. Encryption both at rest and in transit is mandatory.
 
 Why B is correct:
+
 - HIPAA mandates PHI encryption
 - Protects sensitive health information
 - Required for compliance
 - Applies to data in etcd and network traffic
 
 Why others are wrong:
+
 - A: Dashboards are not a compliance requirement
 - C: Running as root violates security best practices
 - D: Audit logs are required for HIPAA compliance
@@ -1781,6 +1947,7 @@ Why others are wrong:
 ---
 
 ### Question 56
+
 Which NIST Cybersecurity Framework function focuses on detecting security events?
 
 A. Identify  
@@ -1797,12 +1964,14 @@ D. Respond
 The NIST CSF has five functions: Identify, Protect, Detect, Respond, and Recover. Detect focuses on finding security events.
 
 Why C is correct:
+
 - Detect function finds security incidents
 - Includes monitoring, logging, anomaly detection
 - Tools like Falco support this function
 - Critical for incident response
 
 Why others are wrong:
+
 - A: Identify focuses on asset and risk management
 - B: Protect focuses on safeguards and controls
 - D: Respond focuses on incident response actions
@@ -1813,6 +1982,7 @@ Why others are wrong:
 ---
 
 ### Question 57
+
 A SOC 2 audit requires demonstrating security controls over time. Which Kubernetes feature is MOST helpful?
 
 A. Persistent audit logging  
@@ -1829,12 +1999,14 @@ D. Running all pods as privileged
 SOC 2 Type II requires demonstrating consistent security controls over time. Audit logs provide this evidence.
 
 Why A is correct:
+
 - Provides evidence of security controls
 - Shows who did what and when
 - Required for compliance audits
 - Demonstrates control effectiveness over time
 
 Why others are wrong:
+
 - B: Latest tag is poor practice and doesn't demonstrate controls
 - C: Disabling RBAC violates security requirements
 - D: Privileged pods violate security principles
@@ -1845,6 +2017,7 @@ Why others are wrong:
 ---
 
 ### Question 58
+
 Which tool implements Policy-as-Code for Kubernetes using Rego language?
 
 A. Falco  
@@ -1861,12 +2034,14 @@ D. kube-bench
 OPA (and its Kubernetes-specific implementation Gatekeeper) uses the Rego language to define policies as code.
 
 Why B is correct:
+
 - OPA uses Rego policy language
 - Gatekeeper is OPA for Kubernetes
 - Enables Policy-as-Code
 - Flexible policy enforcement
 
 Why others are wrong:
+
 - A: Falco uses YAML rules, not Rego
 - C: Trivy is a scanner, not policy engine
 - D: kube-bench checks compliance, doesn't enforce policies
@@ -1877,6 +2052,7 @@ Why others are wrong:
 ---
 
 ### Question 59
+
 What is a ConstraintTemplate in OPA Gatekeeper?
 
 A. A namespace configuration  
@@ -1893,12 +2069,14 @@ D. A network policy
 ConstraintTemplate defines reusable policy logic in Rego. Constraints instantiate templates to enforce specific rules.
 
 Why B is correct:
+
 - Defines the policy logic (Rego code)
 - Reusable across multiple Constraints
 - Template + Constraint = policy enforcement
 - Separation of policy definition from enforcement
 
 Why others are wrong:
+
 - A: Not related to namespace configuration
 - C: Not related to pod templates
 - D: Not related to NetworkPolicy
@@ -1909,6 +2087,7 @@ Why others are wrong:
 ---
 
 ### Question 60
+
 Your organization needs to ensure all container images come from approved registries. Which policy enforcement approach is MOST effective?
 
 A. Manual review before deployment  
@@ -1925,12 +2104,14 @@ D. Monthly audits
 Automated policy enforcement with OPA Gatekeeper or Kyverno ensures every pod is checked at admission time, blocking non-compliant deployments.
 
 Why B is correct:
+
 - Automated enforcement (no human error)
 - Validates at admission time (prevents violations)
 - Scales to all deployments
 - Provides audit trail
 
 Why others are wrong:
+
 - A: Manual review doesn't scale and can be bypassed
 - C: Documentation alone isn't enforcement
 - D: Monthly audits are reactive and too infrequent
@@ -1943,7 +2124,7 @@ Why others are wrong:
 ## Answer Key
 
 | Question | Domain | Correct Answer |
-|----------|--------|----------------|
+| ---------- | -------- | ---------------- |
 | 1 | 1 | B |
 | 2 | 1 | B |
 | 3 | 1 | C |
@@ -2010,16 +2191,19 @@ Why others are wrong:
 ## Scoring Guide
 
 **Calculate your score:**
+
 - Total correct answers: _____ / 60
 - Percentage: (Correct / 60) × 100 = _____%
 
 **Result:**
+
 - **85-100%** (51-60 correct): Excellent! You're well-prepared for the KCSA exam.
 - **75-84%** (45-50 correct): Good! You pass. Review weak areas and take another practice test.
 - **60-74%** (36-44 correct): Fair. More study needed. Focus on domains with lower scores.
 - **Below 60%** (0-35 correct): Additional preparation required. Review fundamentals thoroughly.
 
 **Domain Breakdown:**
+
 - Domain 1 (Questions 1-6): _____ / 6
 - Domain 2 (Questions 7-18): _____ / 12
 - Domain 3 (Questions 19-27): _____ / 9
@@ -2028,12 +2212,11 @@ Why others are wrong:
 - Domain 6 (Questions 52-60): _____ / 9
 
 **Next Steps:**
+
 1. Review detailed explanations for all incorrect answers
-2. Identify your weakest domain(s)
-3. Study the relevant domain materials
-4. Take Mock Exam Set 3 after 3-5 days
-5. Complete hands-on labs for weak areas
+1. Identify your weakest domain(s)
+1. Study the relevant domain materials
+1. Take Mock Exam Set 3 after 3-5 days
+1. Complete hands-on labs for weak areas
 
 ---
-
-

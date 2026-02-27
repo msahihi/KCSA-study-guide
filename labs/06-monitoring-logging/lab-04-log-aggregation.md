@@ -25,14 +25,19 @@
 kubectl create namespace logging
 ```
 
+```
+
 ### Step 2: Deploy Elasticsearch
 
 ```bash
+
 # Add Elastic Helm repository
+
 helm repo add elastic https://helm.elastic.co
 helm repo update
 
 # Create values file for Elasticsearch
+
 cat <<EOF > elasticsearch-values.yaml
 replicas: 1  # Single node for lab (use 3+ in production)
 minimumMasterNodes: 1
@@ -58,12 +63,16 @@ esConfig:
 EOF
 
 # Install Elasticsearch
+
 helm install elasticsearch elastic/elasticsearch \
   -n logging \
   -f elasticsearch-values.yaml
 
 # Watch deployment
+
 kubectl get pods -n logging -w
+```
+
 ```
 
 **Wait**: Elasticsearch takes 2-5 minutes to start.
@@ -71,13 +80,17 @@ kubectl get pods -n logging -w
 ### Step 3: Verify Elasticsearch
 
 ```bash
+
 # Check pod is running
+
 kubectl get pods -n logging
 
 # Port-forward to access Elasticsearch
+
 kubectl port-forward -n logging svc/elasticsearch-master 9200:9200 &
 
 # Test Elasticsearch (in new terminal or after backgrounding)
+
 curl http://localhost:9200
 
 # Expected response:
@@ -88,13 +101,18 @@ curl http://localhost:9200
 # }
 
 # Check cluster health
+
 curl http://localhost:9200/_cluster/health?pretty
 
 # Stop port-forward
 # kill %1
+
+```
+
 ```
 
 **Verification**:
+
 - [ ] Elasticsearch pod is running
 - [ ] Can access Elasticsearch API
 - [ ] Cluster status is green or yellow
@@ -104,6 +122,7 @@ curl http://localhost:9200/_cluster/health?pretty
 ### Step 4: Install Kibana
 
 ```bash
+
 cat <<EOF > kibana-values.yaml
 resources:
   requests:
@@ -121,24 +140,34 @@ elasticsearchHosts: "http://elasticsearch-master:9200"
 EOF
 
 # Install Kibana
+
 helm install kibana elastic/kibana \
   -n logging \
   -f kibana-values.yaml
 
 # Watch deployment
+
 kubectl get pods -n logging -l app=kibana -w
+```
+
 ```
 
 ### Step 5: Access Kibana
 
 ```bash
+
 # Port-forward Kibana
+
 kubectl port-forward -n logging svc/kibana-kibana 5601:5601
 
 # Access in browser: http://localhost:5601
+
+```
+
 ```
 
 **Verification**:
+
 - [ ] Kibana pod is running
 - [ ] Can access Kibana UI
 - [ ] Kibana connects to Elasticsearch
@@ -148,6 +177,7 @@ kubectl port-forward -n logging svc/kibana-kibana 5601:5601
 ### Step 6: Configure Fluent Bit
 
 ```bash
+
 cat <<'EOF' > fluent-bit-values.yaml
 daemonSetVolumes:
   - name: varlog
@@ -251,44 +281,60 @@ config:
 EOF
 
 # Install Fluent Bit
+
 helm install fluent-bit fluent/fluent-bit \
   -n logging \
   -f fluent-bit-values.yaml
 
 # Or add repo first if needed:
+
 helm repo add fluent https://fluent.github.io/helm-charts
 helm repo update
 helm install fluent-bit fluent/fluent-bit -n logging -f fluent-bit-values.yaml
 ```
 
+```
+
 ### Step 7: Verify Log Collection
 
 ```bash
+
 # Check Fluent Bit pods (should be one per node)
+
 kubectl get pods -n logging -l app.kubernetes.io/name=fluent-bit
 
 # Check logs
+
 kubectl logs -n logging -l app.kubernetes.io/name=fluent-bit --tail=50
 
 # Verify Fluent Bit is sending to Elasticsearch
+
 kubectl logs -n logging -l app.kubernetes.io/name=fluent-bit | grep "connected to"
+```
+
 ```
 
 ### Step 8: Configure Falco to Send to Fluent Bit
 
 ```bash
+
 # Update Falco to output JSON to stdout (already configured in Lab 2)
 # Fluent Bit will automatically collect from container logs
 
 # Generate some Falco events
+
 kubectl exec test-pod -- bash -c "echo test" 2>/dev/null || \
   kubectl run test-pod --image=nginx:1.27 && sleep 5 && kubectl exec test-pod -- bash -c "echo test"
 
 # Check if Falco logs are being collected
+
 kubectl logs -n logging -l app.kubernetes.io/name=fluent-bit | grep -i falco
 ```
 
+```
+
 **Verification**:
+
 - [ ] Fluent Bit pods running on all nodes
 - [ ] Fluent Bit connected to Elasticsearch
 - [ ] Logs being shipped successfully
@@ -298,44 +344,55 @@ kubectl logs -n logging -l app.kubernetes.io/name=fluent-bit | grep -i falco
 ### Step 9: Create Index Patterns in Kibana
 
 ```bash
+
 # Port-forward if not already running
+
 kubectl port-forward -n logging svc/kibana-kibana 5601:5601 &
+```
+
 ```
 
 **In Kibana UI** (http://localhost:5601):
 
 1. Go to **Management → Stack Management → Index Patterns**
-2. Click **Create index pattern**
-3. Enter pattern: `kubernetes-*`
-4. Click **Next step**
-5. Select **@timestamp** as time field
-6. Click **Create index pattern**
-7. Repeat for `audit-*` index pattern
+1. Click **Create index pattern**
+1. Enter pattern: `kubernetes-*`
+1. Click **Next step**
+1. Select **@timestamp** as time field
+1. Click **Create index pattern**
+1. Repeat for `audit-*` index pattern
 
 ### Step 10: Explore Logs in Kibana
 
 **In Kibana UI**:
 
 1. Go to **Discover**
-2. Select **kubernetes-*** index pattern
-3. Set time range to **Last 15 minutes**
-4. You should see container logs
+1. Select **kubernetes-*** index pattern
+1. Set time range to **Last 15 minutes**
+1. You should see container logs
 
 **Search Examples**:
 
 ```
+
 # Find Falco alerts
+
 kubernetes.namespace_name: "falco" AND log: "priority"
 
 # Find all logs from specific pod
+
 kubernetes.pod_name: "test-pod"
 
 # Find error logs
+
 log: "error" OR log: "Error" OR log: "ERROR"
 
 # Find audit logs (switch to audit-* index)
+
 Select audit-* index pattern
 objectRef.resource: "secrets"
+
+```
 ```
 
 ### Step 11: Create Saved Searches
@@ -343,43 +400,44 @@ objectRef.resource: "secrets"
 **Create Security Events Search**:
 
 1. In Discover, search: `kubernetes.namespace_name: "falco"`
-2. Click **Save** in top right
-3. Name: "Falco Security Alerts"
-4. Click **Save**
+1. Click **Save** in top right
+1. Name: "Falco Security Alerts"
+1. Click **Save**
 
 **Create Audit Events Search**:
 
 1. Switch to `audit-*` index
-2. Search: `verb: "create" OR verb: "delete"`
-3. Save as: "Audit Changes"
+1. Search: `verb: "create" OR verb: "delete"`
+1. Save as: "Audit Changes"
 
 ### Step 12: Create Visualizations
 
 **Visualization 1: Falco Alerts by Priority**
 
 1. Go to **Visualize → Create visualization**
-2. Select **Pie chart**
-3. Choose **kubernetes-*** index
-4. Add filter: `kubernetes.namespace_name: "falco" AND priority: *`
-5. Metrics: Count
-6. Buckets: Split slices
+1. Select **Pie chart**
+1. Choose **kubernetes-*** index
+1. Add filter: `kubernetes.namespace_name: "falco" AND priority: *`
+1. Metrics: Count
+1. Buckets: Split slices
    - Aggregation: Terms
    - Field: `priority.keyword`
-7. Click **Update**
-8. Save as: "Falco Alerts by Priority"
+1. Click **Update**
+1. Save as: "Falco Alerts by Priority"
 
 **Visualization 2: API Audit Events Over Time**
 
 1. Create visualization → Line chart
-2. Choose **audit-*** index
-3. Metrics: Count
-4. Buckets: X-axis
+1. Choose **audit-*** index
+1. Metrics: Count
+1. Buckets: X-axis
    - Aggregation: Date Histogram
    - Field: @timestamp
    - Interval: Auto
-5. Save as: "API Activity Timeline"
+1. Save as: "API Activity Timeline"
 
 **Verification**:
+
 - [ ] Can see logs in Kibana
 - [ ] Index patterns created
 - [ ] Can search and filter logs
@@ -392,35 +450,46 @@ objectRef.resource: "secrets"
 **In Kibana Discover**:
 
 ```
+
 # Secret access in audit logs (audit-* index)
+
 objectRef.resource: "secrets" AND verb: "get"
 
 # Failed authentication (audit-* index)
+
 responseStatus.code: >= 400 AND objectRef.resource: "tokenreviews"
 
 # Privileged pod creation (audit-* index)
+
 verb: "create" AND objectRef.resource: "pods" AND requestObject.spec.containers.securityContext.privileged: true
 
 # Critical Falco alerts (kubernetes-* index)
+
 kubernetes.namespace_name: "falco" AND priority: "Critical"
 
 # Pod exec events (audit-* index)
+
 objectRef.subresource: "exec"
+```
+
 ```
 
 ### Step 14: Create Dashboard
 
 1. Go to **Dashboard → Create dashboard**
-2. Click **Add** and select your visualizations:
+1. Click **Add** and select your visualizations:
+
    - Falco Alerts by Priority
    - API Activity Timeline
-3. Add search panels:
+1. Add search panels:
+
    - Falco Security Alerts
    - Audit Changes
-4. Arrange panels
-5. Save dashboard as: "Security Monitoring Dashboard"
+1. Arrange panels
+1. Save dashboard as: "Security Monitoring Dashboard"
 
 **Verification**:
+
 - [ ] Dashboard created
 - [ ] Shows real-time data
 - [ ] Visualizations update automatically
@@ -432,19 +501,22 @@ objectRef.subresource: "exec"
 **In Kibana UI**:
 
 1. Go to **Management → Stack Management → Index Lifecycle Policies**
-2. Click **Create policy**
-3. Name: "logs-lifecycle"
-4. Configure phases:
+1. Click **Create policy**
+1. Name: "logs-lifecycle"
+1. Configure phases:
+
    - Hot phase: Rollover after 1 day or 5GB
    - Delete phase: Delete after 30 days
-5. Click **Save policy**
+1. Click **Save policy**
 
-6. Apply to index templates:
+1. Apply to index templates:
+
    - Go to **Index Management → Index Templates**
    - Edit kubernetes and audit templates
    - Add lifecycle policy: "logs-lifecycle"
 
 **Verification**:
+
 - [ ] Lifecycle policy created
 - [ ] Applied to indexes
 - [ ] Old indexes will be automatically deleted
@@ -454,7 +526,9 @@ objectRef.subresource: "exec"
 ### Issue 1: Elasticsearch Won't Start
 
 ```bash
+
 # Check pod events
+
 kubectl describe pod -n logging -l app=elasticsearch-master
 
 # Common issues:
@@ -463,36 +537,52 @@ kubectl describe pod -n logging -l app=elasticsearch-master
 # - Insufficient disk space
 
 # Check logs
+
 kubectl logs -n logging -l app=elasticsearch-master
+```
+
 ```
 
 ### Issue 2: No Logs in Kibana
 
 ```bash
+
 # Check Fluent Bit is running
+
 kubectl get pods -n logging -l app.kubernetes.io/name=fluent-bit
 
 # Check Fluent Bit logs for errors
+
 kubectl logs -n logging -l app.kubernetes.io/name=fluent-bit
 
 # Verify Elasticsearch has indices
+
 curl http://localhost:9200/_cat/indices?v
 
 # Force log generation
+
 kubectl run test-logs --image=busybox --command -- sh -c "while true; do echo 'Test log'; sleep 5; done"
+```
+
 ```
 
 ### Issue 3: Kibana Can't Connect to Elasticsearch
 
 ```bash
+
 # Check Kibana logs
+
 kubectl logs -n logging -l app=kibana
 
 # Verify Elasticsearch service
+
 kubectl get svc -n logging elasticsearch-master
 
 # Check network connectivity
+
 kubectl run test-curl --image=curlimages/curl -it --rm -- curl http://elasticsearch-master.logging:9200
+```
+
 ```
 
 ## Verification Checklist
@@ -511,26 +601,31 @@ kubectl run test-curl --image=curlimages/curl -it --rm -- curl http://elasticsea
 ## Cleanup
 
 ```bash
+
 # Remove test resources
+
 kubectl delete pod test-pod test-logs --ignore-not-found
 
 # Keep logging stack for next lab
 # To completely remove:
 # helm uninstall fluent-bit elasticsearch kibana -n logging
 # kubectl delete namespace logging
+
+```
+
 ```
 
 ## Challenge Exercises
 
 1. **Custom Parser**: Create Fluent Bit parser for application-specific log format
 
-2. **Alert Integration**: Configure Elasticsearch Watcher to send alerts on critical events
+1. **Alert Integration**: Configure Elasticsearch Watcher to send alerts on critical events
 
-3. **Performance Tuning**: Optimize Fluent Bit buffer settings for high-volume logs
+1. **Performance Tuning**: Optimize Fluent Bit buffer settings for high-volume logs
 
-4. **Retention Policy**: Implement tiered storage (hot/warm/cold) for cost optimization
+1. **Retention Policy**: Implement tiered storage (hot/warm/cold) for cost optimization
 
-5. **Security**: Enable Elasticsearch security features (TLS, authentication)
+1. **Security**: Enable Elasticsearch security features (TLS, authentication)
 
 ## Key Takeaways
 

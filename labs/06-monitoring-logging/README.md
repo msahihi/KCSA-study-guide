@@ -5,6 +5,7 @@
 These hands-on labs provide practical experience with Kubernetes monitoring, logging, and runtime security. You'll configure audit logging, deploy Falco for runtime detection, create custom rules, and build a complete security monitoring solution.
 
 **Prerequisites**:
+
 - Completed Domain 1-5 labs
 - Running Kubernetes cluster (v1.30.x)
 - kubectl configured and working
@@ -12,6 +13,7 @@ These hands-on labs provide practical experience with Kubernetes monitoring, log
 - Familiarity with command-line tools
 
 **Lab Environment**:
+
 - Kubernetes v1.30.x
 - Falco v0.37.x
 - Elasticsearch/Kibana (ELK stack)
@@ -21,6 +23,7 @@ These hands-on labs provide practical experience with Kubernetes monitoring, log
 ## Lab Structure
 
 Each lab includes:
+
 - **Objectives**: What you'll learn
 - **Prerequisites**: Required setup
 - **Duration**: Estimated time
@@ -37,12 +40,14 @@ Each lab includes:
 **Focus**: Configure and analyze Kubernetes audit logging
 
 Learn how to:
+
 - Enable audit logging on the API server
 - Write audit policies for different scenarios
 - Analyze audit logs to find security events
 - Query logs efficiently with jq
 
 **Key Skills**:
+
 - Audit policy configuration
 - API server configuration
 - Log analysis
@@ -57,12 +62,14 @@ Learn how to:
 **Focus**: Deploy and configure Falco for runtime security
 
 Learn how to:
+
 - Install Falco using Helm
 - Verify Falco is capturing events
 - Understand default Falco rules
 - View and interpret Falco alerts
 
 **Key Skills**:
+
 - Falco installation
 - Driver configuration
 - Output verification
@@ -77,6 +84,7 @@ Learn how to:
 **Focus**: Create and tune custom Falco detection rules
 
 Learn how to:
+
 - Write custom Falco rules
 - Use macros and lists
 - Test rule triggers
@@ -84,6 +92,7 @@ Learn how to:
 - Implement rule priorities
 
 **Key Skills**:
+
 - Falco rule syntax
 - Custom rule creation
 - Rule testing
@@ -98,12 +107,14 @@ Learn how to:
 **Focus**: Deploy centralized log collection and storage
 
 Learn how to:
+
 - Deploy Elasticsearch for log storage
 - Configure Fluentd/Fluent Bit for log collection
 - Ship audit logs and Falco alerts to Elasticsearch
 - Query aggregated logs with Kibana
 
 **Key Skills**:
+
 - Log aggregation architecture
 - Fluentd/Fluent Bit configuration
 - Elasticsearch deployment
@@ -118,6 +129,7 @@ Learn how to:
 **Focus**: Build comprehensive security monitoring solution
 
 Learn how to:
+
 - Deploy Prometheus for metrics collection
 - Create security-focused Grafana dashboards
 - Configure security alert rules
@@ -125,6 +137,7 @@ Learn how to:
 - Simulate and detect attacks
 
 **Key Skills**:
+
 - Metrics collection
 - Dashboard creation
 - Alert configuration
@@ -171,17 +184,20 @@ Lab 5: Security Monitoring
 ### Quick Setup Script
 
 ```bash
+
 #!/bin/bash
 # setup-monitoring-labs.sh
 
 echo "Setting up monitoring labs environment..."
 
 # Create namespaces
+
 kubectl create namespace logging
 kubectl create namespace monitoring
 kubectl create namespace falco
 
 # Add Helm repositories
+
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo add elastic https://helm.elastic.co
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -189,25 +205,35 @@ helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 
 # Label nodes (if needed for specific labs)
+
 kubectl label nodes --all monitoring=enabled
 
 echo "Environment ready for labs!"
 ```
 
+```
+
 ### Verify Setup
 
 ```bash
+
 # Check Kubernetes version
+
 kubectl version --short
 
 # Check cluster nodes
+
 kubectl get nodes
 
 # Verify namespaces
+
 kubectl get namespaces
 
 # Check available storage classes
+
 kubectl get storageclass
+```
+
 ```
 
 ## Common Tools and Commands
@@ -215,36 +241,46 @@ kubectl get storageclass
 ### Essential Commands
 
 ```bash
+
 # Kubernetes basics
+
 kubectl get pods -A
 kubectl logs <pod> -n <namespace>
 kubectl describe pod <pod> -n <namespace>
 kubectl exec -it <pod> -n <namespace> -- /bin/bash
 
 # Helm operations
+
 helm list -A
 helm install <release> <chart> -n <namespace>
 helm upgrade <release> <chart> -n <namespace>
 helm uninstall <release> -n <namespace>
 
 # Log analysis
+
 kubectl logs <pod> -n <namespace> | grep "ERROR"
 kubectl logs <pod> -n <namespace> --since=1h
 kubectl logs <pod> -n <namespace> --tail=100
 
 # Audit log analysis (if file-based)
+
 sudo cat /var/log/kubernetes/audit.log | jq
 cat audit.log | jq 'select(.objectRef.resource=="secrets")'
 
 # Falco commands
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco -f
 kubectl exec -n falco <falco-pod> -- falco --list
+```
+
 ```
 
 ### Helpful Aliases
 
 ```bash
+
 # Add to ~/.bashrc or ~/.zshrc
+
 alias k='kubectl'
 alias kgp='kubectl get pods'
 alias kgpa='kubectl get pods -A'
@@ -254,10 +290,13 @@ alias kaf='kubectl apply -f'
 alias kdf='kubectl delete -f'
 
 # Monitoring specific
+
 alias kgf='kubectl get pods -n falco'
 alias klf-falco='kubectl logs -n falco -l app.kubernetes.io/name=falco -f'
 alias kgl='kubectl get pods -n logging'
 alias kgm='kubectl get pods -n monitoring'
+```
+
 ```
 
 ## Lab Completion Checklist
@@ -285,20 +324,20 @@ After completing all labs, you should be able to:
 ### General Tips
 
 1. **Read carefully**: Each lab builds on previous knowledge
-2. **Verify each step**: Don't skip verification steps
-3. **Take notes**: Document what you learn
-4. **Experiment**: Try variations beyond the instructions
-5. **Understand, don't memorize**: Focus on concepts
-6. **Clean up**: Remove resources after each lab
+1. **Verify each step**: Don't skip verification steps
+1. **Take notes**: Document what you learn
+1. **Experiment**: Try variations beyond the instructions
+1. **Understand, don't memorize**: Focus on concepts
+1. **Clean up**: Remove resources after each lab
 
 ### Troubleshooting Tips
 
 1. **Check pod status first**: `kubectl get pods -A`
-2. **Read logs**: `kubectl logs <pod> -n <namespace>`
-3. **Describe resources**: `kubectl describe <resource> <name>`
-4. **Verify configurations**: Check ConfigMaps and Secrets
-5. **Check documentation**: Reference official docs
-6. **Start fresh**: Delete and redeploy if stuck
+1. **Read logs**: `kubectl logs <pod> -n <namespace>`
+1. **Describe resources**: `kubectl describe <resource> <name>`
+1. **Verify configurations**: Check ConfigMaps and Secrets
+1. **Check documentation**: Reference official docs
+1. **Start fresh**: Delete and redeploy if stuck
 
 ### Time Management
 
@@ -335,10 +374,10 @@ After completing all labs, you should be able to:
 ### During Labs
 
 1. **Check troubleshooting sections**: Each lab has common issues
-2. **Review theory**: Refer back to domain content
-3. **Search logs**: Error messages usually indicate the issue
-4. **Verify prerequisites**: Ensure previous steps completed
-5. **Start fresh**: Sometimes easier than debugging
+1. **Review theory**: Refer back to domain content
+1. **Search logs**: Error messages usually indicate the issue
+1. **Verify prerequisites**: Ensure previous steps completed
+1. **Start fresh**: Sometimes easier than debugging
 
 ### External Resources
 
@@ -352,24 +391,31 @@ After completing all labs, you should be able to:
 After completing all labs:
 
 ```bash
+
 # Delete lab namespaces
+
 kubectl delete namespace logging
 kubectl delete namespace monitoring
 kubectl delete namespace falco
 
 # Uninstall Helm releases (if any remain)
+
 helm uninstall falco -n falco
 helm uninstall elasticsearch -n logging
 helm uninstall prometheus -n monitoring
 helm uninstall grafana -n monitoring
 
 # Remove labels
+
 kubectl label nodes --all monitoring-
 
 # Clean up local files
+
 rm -rf ~/k8s-security-labs/
 
 echo "Cleanup complete!"
+```
+
 ```
 
 ## Next Steps
@@ -377,10 +423,10 @@ echo "Cleanup complete!"
 After completing these labs:
 
 1. **Review all domain material**: Reinforce theory with practice
-2. **Practice exam scenarios**: Use practice tests
-3. **Build a project**: Create end-to-end security monitoring
-4. **Explore advanced topics**: Service mesh, policy engines
-5. **Prepare for KCSA exam**: Focus on weak areas
+1. **Practice exam scenarios**: Use practice tests
+1. **Build a project**: Create end-to-end security monitoring
+1. **Explore advanced topics**: Service mesh, policy engines
+1. **Prepare for KCSA exam**: Focus on weak areas
 
 ---
 

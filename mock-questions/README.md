@@ -7,6 +7,7 @@ This directory contains comprehensive mock examinations designed to help you pre
 ## Exam Structure
 
 Each mock exam consists of:
+
 - **Total Questions**: 60 questions
 - **Duration**: 90 minutes
 - **Passing Score**: 75% (45 out of 60 questions)
@@ -18,7 +19,7 @@ Each mock exam consists of:
 Questions are distributed across the six KCSA domains:
 
 | Domain | Topic | Questions per Exam |
-|--------|-------|-------------------|
+| -------- | ------- | ------------------- |
 | Domain 1 | Overview of Cloud Native Security | 6 questions |
 | Domain 2 | Kubernetes Cluster Component Security | 12 questions |
 | Domain 3 | Kubernetes Security Fundamentals | 9 questions |
@@ -29,9 +30,11 @@ Questions are distributed across the six KCSA domains:
 ## Available Mock Exams
 
 ### Mock Exam Set 1
+
 **File**: [mock-exam-set-1.md](mock-exam-set-1.md)
 
 **Focus**: Comprehensive coverage of all domains with balanced difficulty
+
 - Tests fundamental understanding of security concepts
 - Scenario-based questions simulating real-world situations
 - Mix of knowledge recall and application
@@ -40,9 +43,11 @@ Questions are distributed across the six KCSA domains:
 **Best For**: First practice exam, baseline assessment
 
 ### Mock Exam Set 2
+
 **File**: [mock-exam-set-2.md](mock-exam-set-2.md)
 
 **Focus**: Advanced scenarios and edge cases
+
 - Complex multi-step scenarios
 - Troubleshooting and problem-solving focus
 - Integration between multiple security concepts
@@ -51,9 +56,11 @@ Questions are distributed across the six KCSA domains:
 **Best For**: Advanced preparation, identifying knowledge gaps
 
 ### Mock Exam Set 3
+
 **File**: [mock-exam-set-3.md](mock-exam-set-3.md)
 
 **Focus**: Common exam traps and gotchas
+
 - Questions designed around common misconceptions
 - Edge cases and nuanced differences
 - Detailed explanations of why wrong answers are incorrect
@@ -66,18 +73,18 @@ Questions are distributed across the six KCSA domains:
 ### Taking the Exam
 
 1. **Time Yourself**: Set a 90-minute timer and take the exam in one sitting
-2. **No Resources**: Don't use documentation or external resources during the exam
-3. **Mark Your Answers**: Write down your answers (A, B, C, or D) for each question
-4. **Review Carefully**: Read each question thoroughly before answering
-5. **Flag Uncertain**: Mark questions you're unsure about for review
+1. **No Resources**: Don't use documentation or external resources during the exam
+1. **Mark Your Answers**: Write down your answers (A, B, C, or D) for each question
+1. **Review Carefully**: Read each question thoroughly before answering
+1. **Flag Uncertain**: Mark questions you're unsure about for review
 
 ### After the Exam
 
 1. **Check Your Answers**: Compare your answers with the correct answers in the answer key
-2. **Calculate Your Score**: Count correct answers and calculate percentage
-3. **Review Explanations**: Read detailed explanations for ALL questions, including ones you got right
-4. **Identify Weak Areas**: Note which domains have the most incorrect answers
-5. **Study and Retry**: Focus on weak areas, then retake the exam after studying
+1. **Calculate Your Score**: Count correct answers and calculate percentage
+1. **Review Explanations**: Read detailed explanations for ALL questions, including ones you got right
+1. **Identify Weak Areas**: Note which domains have the most incorrect answers
+1. **Study and Retry**: Focus on weak areas, then retake the exam after studying
 
 ### Scoring Guide
 
@@ -89,6 +96,7 @@ Questions are distributed across the six KCSA domains:
 ## Study Recommendations by Score Range
 
 ### If you score 75%+ (PASS)
+
 - Take another mock exam to confirm consistency
 - Review explanations for questions you got wrong
 - Focus on time management (aim to finish in 60-70 minutes)
@@ -96,6 +104,7 @@ Questions are distributed across the six KCSA domains:
 - Schedule your actual KCSA exam
 
 ### If you score 60-74% (Close)
+
 - Identify your weakest domains from the answer key
 - Study those specific domain guides thoroughly
 - Complete hands-on labs for weak areas
@@ -103,6 +112,7 @@ Questions are distributed across the six KCSA domains:
 - Take a different mock exam to confirm improvement
 
 ### If you score 45-59% (Needs Work)
+
 - Review all domain study guides systematically
 - Complete all hands-on labs in order
 - Focus on understanding concepts, not memorization
@@ -110,6 +120,7 @@ Questions are distributed across the six KCSA domains:
 - Retake exam after 1 week of comprehensive study
 
 ### If you score below 45% (More Preparation Needed)
+
 - Start from Domain 1 and work through all materials
 - Set up a local Kubernetes cluster for practice
 - Complete all labs with detailed notes
@@ -121,6 +132,7 @@ Questions are distributed across the six KCSA domains:
 Based on exam frequency and importance:
 
 ### High Priority (Appear Most Frequently)
+
 - NetworkPolicy creation and troubleshooting
 - RBAC (Roles, RoleBindings, ClusterRoles, ClusterRoleBindings)
 - Security Context (runAsNonRoot, capabilities, readOnlyRootFilesystem)
@@ -132,6 +144,7 @@ Based on exam frequency and importance:
 - Audit logging and policy configuration
 
 ### Medium Priority (Regular Appearance)
+
 - Service account security and token management
 - AppArmor and Seccomp profile application
 - CIS Benchmark tool (kube-bench)
@@ -143,6 +156,7 @@ Based on exam frequency and importance:
 - Supply chain attack vectors
 
 ### Lower Priority (Occasional)
+
 - Kernel security hardening
 - Container runtime internals
 - SELinux policies
@@ -153,6 +167,7 @@ Based on exam frequency and importance:
 ## Question Format Examples
 
 ### Scenario-Based Question
+
 ```
 You are securing a multi-tenant Kubernetes cluster. A development team needs to deploy
 applications in the 'dev' namespace but should not be able to access production secrets
@@ -167,6 +182,7 @@ Correct Answer: B
 ```
 
 ### Troubleshooting Question
+
 ```
 A pod fails to start with the error "container has runAsNonRoot and image will run as root".
 What is the MOST appropriate solution?
@@ -182,19 +198,20 @@ Correct Answer: B
 ## Common Exam Traps to Avoid
 
 1. **Confusing namespace vs cluster scope**: Know when to use Role vs ClusterRole
-2. **Missing security context hierarchy**: Container settings override pod settings
-3. **NetworkPolicy default behavior**: All traffic is ALLOWED by default (not denied)
-4. **Secret encoding vs encryption**: base64 encoding is NOT encryption
-5. **ServiceAccount auto-mounting**: Tokens are mounted by default (disable when not needed)
-6. **Pod Security Admission modes**: Understand difference between enforce, audit, and warn
-7. **RBAC is additive**: Multiple roles combine permissions (no deny rules)
-8. **Image tags are mutable**: Use digests for immutability, not tags like 'latest'
-9. **Admission controller order**: Mutating runs before validating
-10. **Capabilities are lowercase**: Use 'NET_ADMIN' not 'net_admin' in manifest
+1. **Missing security context hierarchy**: Container settings override pod settings
+1. **NetworkPolicy default behavior**: All traffic is ALLOWED by default (not denied)
+1. **Secret encoding vs encryption**: base64 encoding is NOT encryption
+1. **ServiceAccount auto-mounting**: Tokens are mounted by default (disable when not needed)
+1. **Pod Security Admission modes**: Understand difference between enforce, audit, and warn
+1. **RBAC is additive**: Multiple roles combine permissions (no deny rules)
+1. **Image tags are mutable**: Use digests for immutability, not tags like 'latest'
+1. **Admission controller order**: Mutating runs before validating
+1. **Capabilities are lowercase**: Use 'NET_ADMIN' not 'net_admin' in manifest
 
 ## Tips for Exam Success
 
 ### Before the Exam
+
 - Take all three mock exams under timed conditions
 - Review the KCSA Cheatsheet thoroughly
 - Complete all hands-on labs at least once
@@ -202,6 +219,7 @@ Correct Answer: B
 - Understand the "why" behind each security control
 
 ### During the Exam
+
 - Read each question carefully - watch for keywords like "MOST", "LEAST", "NOT"
 - Eliminate obviously wrong answers first
 - Watch your time - aim for 1.5 minutes per question
@@ -209,6 +227,7 @@ Correct Answer: B
 - Don't overthink - your first instinct is usually correct
 
 ### After the Exam
+
 - Learn from mistakes - wrong answers are learning opportunities
 - Review explanations even for correct answers
 - Focus on understanding concepts, not memorizing answers
@@ -226,6 +245,7 @@ Correct Answer: B
 
 - [ ] Scored 75%+ on all three mock exams consistently
 - [ ] Can complete common tasks without documentation:
+
   - [ ] Create NetworkPolicy with ingress/egress rules
   - [ ] Configure RBAC with Roles and RoleBindings
   - [ ] Apply Security Context to pods/containers

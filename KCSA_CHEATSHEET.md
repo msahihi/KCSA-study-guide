@@ -7,15 +7,15 @@
 ## Table of Contents
 
 1. [Domain 1 - Cluster Setup (10%)](#domain-1---cluster-setup-10)
-2. [Domain 2 - Cluster Hardening (20%)](#domain-2---cluster-hardening-20)
-3. [Domain 3 - System Hardening (15%)](#domain-3---system-hardening-15)
-4. [Domain 4 - Minimize Microservice Vulnerabilities (20%)](#domain-4---minimize-microservice-vulnerabilities-20)
-5. [Domain 5 - Supply Chain Security (20%)](#domain-5---supply-chain-security-20)
-6. [Domain 6 - Monitoring, Logging, and Runtime Security (15%)](#domain-6---monitoring-logging-and-runtime-security-15)
-7. [Essential Commands](#essential-commands)
-8. [Quick Reference Tables](#quick-reference-tables)
-9. [Common Patterns & Best Practices](#common-patterns--best-practices)
-10. [Exam Tips](#exam-tips)
+1. [Domain 2 - Cluster Hardening (20%)](#domain-2---cluster-hardening-20)
+1. [Domain 3 - System Hardening (15%)](#domain-3---system-hardening-15)
+1. [Domain 4 - Minimize Microservice Vulnerabilities (20%)](#domain-4---minimize-microservice-vulnerabilities-20)
+1. [Domain 5 - Supply Chain Security (20%)](#domain-5---supply-chain-security-20)
+1. [Domain 6 - Monitoring, Logging, and Runtime Security (15%)](#domain-6---monitoring-logging-and-runtime-security-15)
+1. [Essential Commands](#essential-commands)
+1. [Quick Reference Tables](#quick-reference-tables)
+1. [Common Patterns & Best Practices](#common-patterns--best-practices)
+1. [Exam Tips](#exam-tips)
 
 ---
 
@@ -491,118 +491,159 @@
 ### RBAC and Authorization
 
 ```bash
+
 # Check if you can perform action
+
 kubectl auth can-i create pods
 kubectl auth can-i delete deployments --namespace=production
 kubectl auth can-i '*' '*' --all-namespaces  # Check cluster-admin
 
 # Check as another user
+
 kubectl auth can-i list secrets --as=system:serviceaccount:default:my-sa
 
 # View RBAC permissions for user
+
 kubectl auth can-i --list --as=user@example.com
 
 # Get roles and bindings
+
 kubectl get roles,rolebindings -n <namespace>
 kubectl get clusterroles,clusterrolebindings
 
 # Describe role to see permissions
+
 kubectl describe role <role-name> -n <namespace>
 kubectl describe clusterrole <clusterrole-name>
 
 # View who can access resources (requires rbac-lookup plugin)
+
 kubectl who-can create pods
 kubectl who-can delete secrets -n production
+```
+
 ```
 
 ### Pod Security and Context
 
 ```bash
+
 # Run pod with security context
+
 kubectl run secure-pod --image=nginx \
   --dry-run=client -o yaml > pod.yaml
+
 # Then edit pod.yaml to add securityContext
 
 # Check pod security
+
 kubectl get pods <pod-name> -o jsonpath='{.spec.securityContext}'
 kubectl get pods <pod-name> -o jsonpath='{.spec.containers[*].securityContext}'
 
 # View pod security admission labels
+
 kubectl get ns <namespace> -o yaml | grep pod-security
 
 # Label namespace for PSA
+
 kubectl label namespace <namespace> \
   pod-security.kubernetes.io/enforce=restricted \
   pod-security.kubernetes.io/audit=restricted \
   pod-security.kubernetes.io/warn=restricted
 ```
 
+```
+
 ### Secrets Management
 
 ```bash
+
 # Create secret from literal
+
 kubectl create secret generic my-secret \
   --from-literal=username=admin \
   --from-literal=password='s3cr3t'
 
 # Create secret from file
+
 kubectl create secret generic tls-secret \
   --from-file=tls.crt=cert.pem \
   --from-file=tls.key=key.pem
 
 # View secret (base64 encoded)
+
 kubectl get secret my-secret -o yaml
 
 # Decode secret
+
 kubectl get secret my-secret -o jsonpath='{.data.password}' | base64 -d
 
 # Create service account
+
 kubectl create serviceaccount my-sa
 
 # Get service account token
+
 kubectl create token my-sa
 
 # Disable auto-mount of service account token
+
 kubectl patch serviceaccount default -p '{"automountServiceAccountToken":false}'
+```
+
 ```
 
 ### Network Policies
 
 ```bash
+
 # Get network policies
+
 kubectl get networkpolicies -A
 kubectl get netpol -n <namespace>
 
 # Describe network policy
+
 kubectl describe networkpolicy <policy-name> -n <namespace>
 
 # Apply network policy from file
+
 kubectl apply -f deny-all-ingress.yaml
 
 # Test network connectivity (from pod)
+
 kubectl exec -it <pod> -- wget -qO- --timeout=2 http://<service>
 kubectl exec -it <pod> -- nc -zv <service> <port>
+```
+
 ```
 
 ### Security Scanning and Auditing
 
 ```bash
+
 # Run kube-bench (CIS benchmarks)
+
 kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job.yaml
 kubectl logs -f job/kube-bench
 
 # Scan image with Trivy
+
 trivy image nginx:latest
 trivy image --severity HIGH,CRITICAL nginx:latest
 trivy image --format json -o results.json nginx:latest
 
 # Scan Kubernetes resources
+
 trivy k8s --report summary cluster
 trivy k8s deployment/my-app
 
 # Check pod logs
+
 kubectl logs <pod-name> -n <namespace>
 kubectl logs <pod-name> -c <container-name> --previous  # Previous crashed container
+```
+
 ```
 
 </details>
@@ -611,7 +652,9 @@ kubectl logs <pod-name> -c <container-name> --previous  # Previous crashed conta
 <summary><strong>Security Context Examples</strong></summary>
 
 ```bash
+
 # Run as non-root with read-only filesystem
+
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
@@ -651,39 +694,51 @@ spec:
 EOF
 ```
 
+```
+
 </details>
 
 <details>
 <summary><strong>Trivy Commands</strong></summary>
 
 ```bash
+
 # Scan container image
+
 trivy image nginx:latest
 trivy image --severity HIGH,CRITICAL alpine:latest
 trivy image --ignore-unfixed nginx:latest  # Only fixable vulnerabilities
 
 # Scan filesystem
+
 trivy fs /path/to/project
 trivy fs --security-checks vuln,secret,config .
 
 # Scan Kubernetes cluster
+
 trivy k8s cluster
 trivy k8s --report summary all
 
 # Scan specific namespace
+
 trivy k8s --namespace production all
 
 # Generate SBOM
+
 trivy image --format cyclonedx -o sbom.json nginx:latest
 trivy image --format spdx -o sbom.spdx nginx:latest
 
 # Scan with custom policy
+
 trivy image --policy policy.rego nginx:latest
 
 # Output formats
+
 trivy image --format json -o results.json nginx:latest
 trivy image --format table nginx:latest
 trivy image --format sarif -o results.sarif nginx:latest
+```
+
 ```
 
 </details>
@@ -692,23 +747,32 @@ trivy image --format sarif -o results.sarif nginx:latest
 <summary><strong>Falco Commands</strong></summary>
 
 ```bash
+
 # Install Falco (Helm)
+
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
 helm install falco falcosecurity/falco
 
 # View Falco logs
+
 kubectl logs -n falco daemonset/falco
 
 # Test Falco detection (spawn shell in container)
+
 kubectl exec -it <pod> -- /bin/sh
+
 # Falco should alert on shell execution
 
 # Custom Falco rules (ConfigMap)
+
 kubectl edit configmap falco -n falco
 
 # View Falco events
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=100 -f
+```
+
 ```
 
 </details>
@@ -717,18 +781,23 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=100 -f
 <summary><strong>OPA Gatekeeper Commands</strong></summary>
 
 ```bash
+
 # Install Gatekeeper
+
 kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
 
 # View constraint templates
+
 kubectl get constrainttemplates
 kubectl describe constrainttemplate k8srequiredlabels
 
 # View constraints
+
 kubectl get constraints
 kubectl get k8srequiredlabels
 
 # Create constraint to require labels
+
 cat <<EOF | kubectl apply -f -
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sRequiredLabels
@@ -745,7 +814,10 @@ spec:
 EOF
 
 # View violations
+
 kubectl get constraints -o yaml
+```
+
 ```
 
 </details>
@@ -758,7 +830,7 @@ kubectl get constraints -o yaml
 <summary><strong>Pod Security Standards Comparison</strong></summary>
 
 | Feature | Privileged | Baseline | Restricted |
-|---------|-----------|----------|------------|
+| --------- | ----------- | ---------- | ------------ |
 | Host Namespaces (PID, IPC, Network) | Allowed | **Blocked** | **Blocked** |
 | Privileged Containers | Allowed | **Blocked** | **Blocked** |
 | Host Path Volumes | Allowed | **Blocked** | **Blocked** |
@@ -778,7 +850,7 @@ kubectl get constraints -o yaml
 <summary><strong>CVSS Severity Ratings</strong></summary>
 
 | Rating | CVSS Score | Action |
-|--------|-----------|--------|
+| -------- | ----------- | -------- |
 | **None** | 0.0 | No action needed |
 | **Low** | 0.1 - 3.9 | Monitor, update when convenient |
 | **Medium** | 4.0 - 6.9 | Update within 30 days |
@@ -793,7 +865,7 @@ kubectl get constraints -o yaml
 <summary><strong>Common Linux Capabilities</strong></summary>
 
 | Capability | Description | Risk |
-|-----------|-------------|------|
+| ----------- | ------------- | ------ |
 | **CAP_SYS_ADMIN** | Perform system administration operations | **Very High** - Avoid |
 | **CAP_NET_ADMIN** | Network configuration | **High** - Rarely needed |
 | **CAP_NET_BIND_SERVICE** | Bind ports < 1024 | **Low** - Often needed |
@@ -806,6 +878,7 @@ kubectl get constraints -o yaml
 **Best Practice**: Drop **ALL** capabilities, then add only specific ones needed.
 
 ```yaml
+
 securityContext:
   capabilities:
     drop:
@@ -814,13 +887,15 @@ securityContext:
     - NET_BIND_SERVICE  # Only if needed
 ```
 
+```
+
 </details>
 
 <details>
 <summary><strong>Admission Controller Types</strong></summary>
 
 | Type | When Runs | Purpose | Example |
-|------|-----------|---------|---------|
+| ------ | ----------- | --------- | --------- |
 | **Mutating** | First | Modify requests | Set default values, inject sidecars |
 | **Validating** | Second (after mutating) | Accept/reject requests | Enforce policies, check compliance |
 
@@ -851,6 +926,7 @@ securityContext:
 **Implementation**:
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -860,12 +936,17 @@ spec:
   podSelector: {}  # Applies to all pods in namespace
   policyTypes:
   - Ingress
+
   # Empty ingress: [] means deny all
+
+```
+
 ```
 
 ### Default Deny All Egress
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -875,12 +956,17 @@ spec:
   podSelector: {}
   policyTypes:
   - Egress
+
   # Empty egress: [] means deny all
+
+```
+
 ```
 
 ### Allow Specific Traffic
 
 ```yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -902,7 +988,10 @@ spec:
       port: 8080
 ```
 
+```
+
 **Best Practices**:
+
 - Apply deny-all first, then add allow rules
 - Test in non-production before enforcing
 - Document required traffic flows
@@ -918,7 +1007,9 @@ spec:
 **Implementation**:
 
 ```yaml
+
 # Read-only access to pods in specific namespace
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -944,7 +1035,10 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
+```
+
 **Best Practices**:
+
 - Start with no permissions, add as needed
 - Use Roles (namespace) over ClusterRoles when possible
 - Never grant `*` (wildcard) in production
@@ -962,13 +1056,16 @@ roleRef:
 **Implementation**:
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
   name: secure-app
   namespace: production
 spec:
+
   # Pod-level security
+
   securityContext:
     runAsNonRoot: true
     runAsUser: 1000
@@ -977,6 +1074,7 @@ spec:
       type: RuntimeDefault
 
   # Service account
+
   serviceAccountName: my-app-sa
   automountServiceAccountToken: false
 
@@ -986,6 +1084,7 @@ spec:
     imagePullPolicy: Always
 
     # Container security
+
     securityContext:
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: true
@@ -996,6 +1095,7 @@ spec:
         - ALL
 
     # Resource limits
+
     resources:
       requests:
         memory: "128Mi"
@@ -1005,6 +1105,7 @@ spec:
         cpu: "200m"
 
     # Writable directories for read-only filesystem
+
     volumeMounts:
     - name: tmp
       mountPath: /tmp
@@ -1018,11 +1119,15 @@ spec:
     emptyDir: {}
 
   # Image pull secret for private registry
+
   imagePullSecrets:
   - name: registry-credentials
 ```
 
+```
+
 **Best Practices**:
+
 - Apply security at both pod and container levels
 - Use read-only root filesystem with emptyDir for writes
 - Drop ALL capabilities, add specific ones if needed
@@ -1042,7 +1147,9 @@ spec:
 1. Create encryption configuration:
 
 ```yaml
+
 # /etc/kubernetes/encryption-config.yaml
+
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
 resources:
@@ -1056,25 +1163,37 @@ resources:
   - identity: {}  # Fallback for reading old unencrypted secrets
 ```
 
-2. Generate encryption key:
+```
+
+1. Generate encryption key:
 
 ```bash
+
 head -c 32 /dev/urandom | base64
 ```
 
-3. Configure API server flag:
+```
+
+1. Configure API server flag:
 
 ```
+
 --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
+
+```
 ```
 
-4. Encrypt existing secrets:
+1. Encrypt existing secrets:
 
 ```bash
+
 kubectl get secrets --all-namespaces -o json | kubectl replace -f -
 ```
 
+```
+
 **Best Practices**:
+
 - Rotate encryption keys regularly (every 90 days)
 - Store encryption config securely (encrypted disk, KMS)
 - Use KMS provider for external key management (AWS KMS, Azure Key Vault)
@@ -1100,12 +1219,14 @@ kubectl get secrets --all-namespaces -o json | kubectl replace -f -
 ### Focus Areas by Domain
 
 **Domain 1 - Cluster Setup (10%)**:
+
 - NetworkPolicy YAML syntax (podSelector, namespaceSelector, ports)
 - CIS benchmark key checks (API server flags, kubelet settings)
 - Ingress TLS configuration
 - Pod Security Standards levels and restrictions
 
 **Domain 2 - Cluster Hardening (20%)**:
+
 - RBAC verbs and resources (get, list, create, delete)
 - RoleBinding vs ClusterRoleBinding (namespace vs cluster)
 - Security context fields (runAsUser, capabilities, seccomp)
@@ -1113,6 +1234,7 @@ kubectl get secrets --all-namespaces -o json | kubectl replace -f -
 - **Most heavily weighted domain** - Study thoroughly
 
 **Domain 3 - System Hardening (15%)**:
+
 - AppArmor profile application (annotation syntax)
 - Seccomp profile types (RuntimeDefault, Localhost, Unconfined)
 - Host OS hardening best practices
@@ -1120,6 +1242,7 @@ kubectl get secrets --all-namespaces -o json | kubectl replace -f -
 - Kernel security modules (SELinux, AppArmor)
 
 **Domain 4 - Minimize Vulnerabilities (20%)**:
+
 - Secrets encryption at rest configuration
 - Admission controller types and order (mutating → validating)
 - OPA Gatekeeper constraint syntax
@@ -1127,6 +1250,7 @@ kubectl get secrets --all-namespaces -o json | kubectl replace -f -
 - **High exam weight** - Know admission controllers well
 
 **Domain 5 - Supply Chain Security (20%)**:
+
 - Trivy scanning commands and output interpretation
 - Image signing with Cosign (keyless vs key-based)
 - SBOM formats (SPDX, CycloneDX)
@@ -1134,6 +1258,7 @@ kubectl get secrets --all-namespaces -o json | kubectl replace -f -
 - **High exam weight** - Practice Trivy and vulnerability assessment
 
 **Domain 6 - Monitoring & Logging (15%)**:
+
 - Audit policy configuration and levels
 - Falco rule syntax and use cases
 - Runtime detection techniques
@@ -1171,14 +1296,19 @@ kubectl get secrets --all-namespaces -o json | kubectl replace -f -
 ### Quick Wins for Exam Day
 
 **Command Aliases** (if allowed to set up environment):
+
 ```bash
+
 alias k=kubectl
 alias kg='kubectl get'
 alias kd='kubectl describe'
 alias ka='kubectl apply -f'
 ```
 
+```
+
 **Remember These Values**:
+
 - Baseline PSS blocks: host namespaces, privileged, hostPath, hostPort
 - Restricted PSS adds: runAsNonRoot, drop ALL capabilities, RuntimeDefault seccomp
 - CVSS Critical: 9.0-10.0 (block), High: 7.0-8.9 (patch ASAP)
@@ -1186,13 +1316,15 @@ alias ka='kubectl apply -f'
 - Common capabilities: NET_BIND_SERVICE (ports < 1024), CHOWN, DAC_OVERRIDE, SYS_ADMIN (avoid)
 
 **Mental Model for Security**:
+
 1. **Least Privilege** - Minimum permissions/access necessary
-2. **Defense in Depth** - Multiple layers of security
-3. **Zero Trust** - Verify everything, trust nothing
-4. **Shift Left** - Security early in pipeline (build, not just runtime)
-5. **Immutability** - Prevent changes (read-only filesystem, immutable secrets)
+1. **Defense in Depth** - Multiple layers of security
+1. **Zero Trust** - Verify everything, trust nothing
+1. **Shift Left** - Security early in pipeline (build, not just runtime)
+1. **Immutability** - Prevent changes (read-only filesystem, immutable secrets)
 
 **If You Get Stuck**:
+
 - Think about "what would attackers do?" and choose option that prevents it
 - More restrictive = more secure (when in doubt)
 - Explicit is better than implicit (RBAC allows, NetworkPolicy blocks)

@@ -24,13 +24,13 @@ These hands-on labs provide practical experience with system hardening technique
 Each lab follows this format:
 
 1. **Objectives**: What you'll learn
-2. **Prerequisites**: Required knowledge and setup
-3. **Estimated Time**: How long the lab takes
-4. **Step-by-Step Instructions**: Detailed commands with explanations
-5. **Expected Output**: What you should see
-6. **Verification**: How to confirm success
-7. **Troubleshooting**: Common issues and solutions
-8. **Cleanup**: Reset your environment
+1. **Prerequisites**: Required knowledge and setup
+1. **Estimated Time**: How long the lab takes
+1. **Step-by-Step Instructions**: Detailed commands with explanations
+1. **Expected Output**: What you should see
+1. **Verification**: How to confirm success
+1. **Troubleshooting**: Common issues and solutions
+1. **Cleanup**: Reset your environment
 
 ## Labs
 
@@ -49,6 +49,7 @@ Learn to harden Kubernetes nodes:
 - Run CIS benchmark audits
 
 **Skills Gained**:
+
 - Host OS security fundamentals
 - CIS Benchmark compliance
 - System auditing techniques
@@ -71,6 +72,7 @@ Create and apply AppArmor profiles:
 - Use complain mode for development
 
 **Skills Gained**:
+
 - AppArmor profile syntax
 - Profile creation and testing
 - Kubernetes integration
@@ -93,6 +95,7 @@ Implement syscall filtering:
 - Handle profile errors
 
 **Skills Gained**:
+
 - Seccomp profile JSON format
 - Syscall filtering techniques
 - Profile deployment strategies
@@ -115,6 +118,7 @@ Secure the container runtime:
 - Simulate and prevent container escapes
 
 **Skills Gained**:
+
 - Containerd configuration
 - Runtime API security
 - Namespace isolation verification
@@ -125,7 +129,9 @@ Secure the container runtime:
 ### Option 1: Kind Cluster (Recommended)
 
 ```bash
+
 # Create a multi-node cluster for realistic scenarios
+
 cat <<EOF | kind create cluster --name kcsa-lab-3 --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -139,32 +145,43 @@ nodes:
 EOF
 
 # Verify cluster
+
 kubectl cluster-info --context kind-kcsa-lab-3
 kubectl get nodes
+```
+
 ```
 
 ### Option 2: Minikube
 
 ```bash
+
 # Start Minikube with containerd
+
 minikube start --driver=docker --container-runtime=containerd \
   --kubernetes-version=v1.30.0 \
   --nodes=2
 
 # Verify
+
 kubectl get nodes
+```
+
 ```
 
 ### Required Tools
 
 ```bash
+
 # Install crictl (CRI CLI)
+
 VERSION="v1.30.0"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
 
 # Configure crictl
+
 cat <<EOF | sudo tee /etc/crictl.yaml
 runtime-endpoint: unix:///run/containerd/containerd.sock
 image-endpoint: unix:///run/containerd/containerd.sock
@@ -173,21 +190,28 @@ debug: false
 EOF
 
 # Verify
+
 crictl version
 
 # Install AppArmor utilities (Ubuntu/Debian)
+
 sudo apt update
 sudo apt install -y apparmor-utils
 
 # Verify AppArmor
+
 sudo aa-status
 
 # Install audit tools
+
 sudo apt install -y auditd
 
 # Start auditd
+
 sudo systemctl enable auditd
 sudo systemctl start auditd
+```
+
 ```
 
 ### Accessing Worker Nodes
@@ -195,13 +219,17 @@ sudo systemctl start auditd
 **For Kind clusters**:
 
 ```bash
+
 # List nodes
+
 docker ps --format "table {{.Names}}\t{{.Status}}"
 
 # Access control-plane node
+
 docker exec -it kcsa-lab-3-control-plane bash
 
 # Access worker node
+
 docker exec -it kcsa-lab-3-worker bash
 
 # Inside node, you can:
@@ -209,16 +237,24 @@ docker exec -it kcsa-lab-3-worker bash
 # - Load AppArmor profiles
 # - Check kernel parameters
 # - Install seccomp profiles
+
+```
+
 ```
 
 **For Minikube**:
 
 ```bash
+
 # SSH into node
+
 minikube ssh
 
 # For multi-node:
+
 minikube ssh -n kcsa-lab-3-m02
+```
+
 ```
 
 ## Lab Tips
@@ -226,39 +262,43 @@ minikube ssh -n kcsa-lab-3-m02
 ### General Tips
 
 1. **Take Notes**: Document interesting findings and gotchas
-2. **Read Errors Carefully**: Error messages often tell you exactly what's wrong
-3. **Use `--dry-run`**: Test manifests before applying: `kubectl apply -f file.yaml --dry-run=client`
-4. **Check Logs**: Always check pod logs when something fails: `kubectl logs <pod>`
-5. **Describe Resources**: Use `kubectl describe` to see events: `kubectl describe pod <pod>`
+1. **Read Errors Carefully**: Error messages often tell you exactly what's wrong
+1. **Use `--dry-run`**: Test manifests before applying: `kubectl apply -f file.yaml --dry-run=client`
+1. **Check Logs**: Always check pod logs when something fails: `kubectl logs <pod>`
+1. **Describe Resources**: Use `kubectl describe` to see events: `kubectl describe pod <pod>`
 
 ### Security Tips
 
 1. **Test in Dev First**: Never test security profiles in production first
-2. **Start Permissive**: Use complain/audit mode before enforcing
-3. **Backup Configs**: Save original configurations before modifying
-4. **Document Changes**: Keep track of what you change and why
-5. **Understand Before Applying**: Don't copy-paste without understanding
+1. **Start Permissive**: Use complain/audit mode before enforcing
+1. **Backup Configs**: Save original configurations before modifying
+1. **Document Changes**: Keep track of what you change and why
+1. **Understand Before Applying**: Don't copy-paste without understanding
 
 ### Troubleshooting Tips
 
 1. **Check AppArmor**: `sudo aa-status` shows loaded profiles
-2. **Check Seccomp**: `grep Seccomp /proc/<pid>/status` shows seccomp mode
-3. **Check Capabilities**: `cat /proc/<pid>/status | grep Cap` shows capabilities
-4. **Check Logs**: `sudo dmesg | grep -i denied` shows kernel denials
-5. **Check Audit**: `sudo ausearch -m AVC,SECCOMP -ts recent` shows security events
+1. **Check Seccomp**: `grep Seccomp /proc/<pid>/status` shows seccomp mode
+1. **Check Capabilities**: `cat /proc/<pid>/status | grep Cap` shows capabilities
+1. **Check Logs**: `sudo dmesg | grep -i denied` shows kernel denials
+1. **Check Audit**: `sudo ausearch -m AVC,SECCOMP -ts recent` shows security events
 
 ### Common Issues
 
 **Issue**: "Profile not found"
+
 - **Solution**: Ensure profile is loaded on the node where pod is scheduled
 
 **Issue**: "Permission denied"
+
 - **Solution**: Check AppArmor/Seccomp logs, adjust profile or add capability
 
 **Issue**: "OOMKilled"
+
 - **Solution**: Increase memory limits or optimize application
 
 **Issue**: "CrashLoopBackOff"
+
 - **Solution**: Check pod logs, verify image, check security context
 
 ## Lab Environment Reset
@@ -266,15 +306,23 @@ minikube ssh -n kcsa-lab-3-m02
 Between labs, you may want to reset your environment:
 
 ```bash
+
 # Delete all pods in default namespace
+
 kubectl delete pods --all
 
 # Delete all custom resources
+
 kubectl delete configmap,secret --all
 
 # For complete reset, delete and recreate cluster
+
 kind delete cluster --name kcsa-lab-3
+
 # Then recreate with setup command above
+
+```
+
 ```
 
 ## Lab Verification
@@ -282,6 +330,7 @@ kind delete cluster --name kcsa-lab-3
 After completing each lab, verify your understanding:
 
 ### Lab 1 Verification
+
 - [ ] Can identify insecure host configurations
 - [ ] Can disable unnecessary services
 - [ ] Can configure SSH securely
@@ -289,6 +338,7 @@ After completing each lab, verify your understanding:
 - [ ] Can run CIS benchmark audits
 
 ### Lab 2 Verification
+
 - [ ] Can write basic AppArmor profiles
 - [ ] Can load and apply profiles to pods
 - [ ] Can test profile enforcement
@@ -296,6 +346,7 @@ After completing each lab, verify your understanding:
 - [ ] Can use complain mode
 
 ### Lab 3 Verification
+
 - [ ] Can create seccomp JSON profiles
 - [ ] Can apply profiles to pods
 - [ ] Can identify blocked syscalls
@@ -303,6 +354,7 @@ After completing each lab, verify your understanding:
 - [ ] Can generate profiles from audit logs
 
 ### Lab 4 Verification
+
 - [ ] Can configure containerd securely
 - [ ] Can verify namespace isolation
 - [ ] Can drop capabilities properly
@@ -316,36 +368,39 @@ After completing the labs, try these challenges:
 ### Challenge 1: Secure a Real Application
 
 Take an existing application (e.g., WordPress, Jenkins) and:
+
 1. Apply AppArmor and Seccomp profiles
-2. Drop all unnecessary capabilities
-3. Set appropriate resource limits
-4. Run as non-root user
-5. Use read-only root filesystem
+1. Drop all unnecessary capabilities
+1. Set appropriate resource limits
+1. Run as non-root user
+1. Use read-only root filesystem
 
 ### Challenge 2: CIS Benchmark Compliance
 
 Audit your cluster with kube-bench and:
+
 1. Fix all failing host security checks
-2. Document why any checks can't be fixed
-3. Create a compliance report
-4. Automate remediation
+1. Document why any checks can't be fixed
+1. Create a compliance report
+1. Automate remediation
 
 ### Challenge 3: Break and Fix
 
 Intentionally misconfigure security settings:
+
 1. Create pods with various privilege escalation paths
-2. Practice detecting the vulnerabilities
-3. Fix the issues using security controls
-4. Document your findings
+1. Practice detecting the vulnerabilities
+1. Fix the issues using security controls
+1. Document your findings
 
 ## Next Steps
 
 After completing all Domain 3 labs:
 
 1. Review the [Domain 3 concepts](../../domains/03-system-hardening/README.md)
-2. Complete the [Domain 3 practice questions](../../mock-questions/domain-03-questions.md)
-3. Move to [Domain 4: Minimize Microservice Vulnerabilities](../../domains/04-minimize-vulnerabilities/README.md)
-4. Continue with [Domain 4 Labs](../04-minimize-vulnerabilities/README.md)
+1. Complete the [Domain 3 practice questions](../../mock-questions/domain-03-questions.md)
+1. Move to [Domain 4: Minimize Microservice Vulnerabilities](../../domains/04-minimize-vulnerabilities/README.md)
+1. Continue with [Domain 4 Labs](../04-minimize-vulnerabilities/README.md)
 
 ## Resources
 
@@ -361,10 +416,10 @@ After completing all Domain 3 labs:
 If you encounter issues with these labs:
 
 1. Check the troubleshooting sections
-2. Review the expected output
-3. Verify your environment matches the prerequisites
-4. Consult the domain theory documentation
-5. Ask for help in CNCF Slack #kubernetes-security
+1. Review the expected output
+1. Verify your environment matches the prerequisites
+1. Consult the domain theory documentation
+1. Ask for help in CNCF Slack #kubernetes-security
 
 ---
 

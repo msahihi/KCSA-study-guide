@@ -33,23 +33,33 @@ This lab assumes a kubeadm-deployed cluster where you can access the control pla
 SSH to your control plane node and create an audit policy:
 
 ```bash
+
 # SSH to control plane node
+
 ssh user@control-plane-node
 
 # Create audit policy directory
+
 sudo mkdir -p /etc/kubernetes/audit
 
 # Create basic audit policy
+
 sudo tee /etc/kubernetes/audit/policy.yaml <<EOF
 apiVersion: audit.k8s.io/v1
 kind: Policy
+
 # Don't log requests to the following
+
 omitStages:
   - "RequestReceived"
 rules:
+
   # Log everything at Metadata level
+
   - level: Metadata
 EOF
+```
+
 ```
 
 ### Step 2: Configure API Server
@@ -57,17 +67,23 @@ EOF
 Modify the API server manifest to enable audit logging:
 
 ```bash
+
 # Backup original API server manifest
+
 sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml \
      /etc/kubernetes/kube-apiserver.yaml.backup
 
 # Edit API server manifest
+
 sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
+```
+
 ```
 
 Add these flags to the `command` section:
 
 ```yaml
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -77,9 +93,11 @@ spec:
   containers:
   - command:
     - kube-apiserver
+
     # ... existing flags ...
 
     # ADD THESE AUDIT FLAGS:
+
     - --audit-policy-file=/etc/kubernetes/audit/policy.yaml
     - --audit-log-path=/var/log/kubernetes/audit.log
     - --audit-log-maxage=30
@@ -89,9 +107,11 @@ spec:
     # ... other flags ...
 
     volumeMounts:
+
     # ... existing mounts ...
 
     # ADD THESE VOLUME MOUNTS:
+
     - mountPath: /etc/kubernetes/audit
       name: audit-policy
       readOnly: true
@@ -99,9 +119,11 @@ spec:
       name: audit-logs
 
   volumes:
+
   # ... existing volumes ...
 
   # ADD THESE VOLUMES:
+
   - name: audit-policy
     hostPath:
       path: /etc/kubernetes/audit
@@ -112,14 +134,21 @@ spec:
       type: DirectoryOrCreate
 ```
 
+```
+
 ### Step 3: Wait for API Server Restart
 
 ```bash
+
 # Watch API server pod restart
+
 kubectl get pods -n kube-system -w | grep kube-apiserver
 
 # Or watch API server logs
+
 sudo tail -f /var/log/pods/kube-system_kube-apiserver-*/kube-apiserver/*.log
+```
+
 ```
 
 **Expected**: API server should restart within 30-60 seconds.
@@ -127,27 +156,39 @@ sudo tail -f /var/log/pods/kube-system_kube-apiserver-*/kube-apiserver/*.log
 ### Step 4: Verify Audit Logging
 
 ```bash
+
 # Check if audit log file exists
+
 sudo ls -lh /var/log/kubernetes/audit.log
 
 # View recent audit entries
+
 sudo tail /var/log/kubernetes/audit.log | jq
 
 # Trigger some API activity
+
 kubectl get pods -A
 kubectl get nodes
 
 # Check audit log captured these requests
+
 sudo tail -20 /var/log/kubernetes/audit.log | jq -r '.requestURI'
 ```
 
-**Expected Output**:
 ```
+
+**Expected Output**:
+
+```
+
 /api/v1/pods?limit=500
 /api/v1/nodes?limit=500
+
+```
 ```
 
 **Verification**:
+
 - [ ] Audit log file exists at `/var/log/kubernetes/audit.log`
 - [ ] API server is running (check with `kubectl get pods -n kube-system`)
 - [ ] Audit entries are being written (check file growth with `ls -lh`)
@@ -160,6 +201,7 @@ sudo tail -20 /var/log/kubernetes/audit.log | jq -r '.requestURI'
 Create a more sophisticated audit policy:
 
 ```bash
+
 sudo tee /etc/kubernetes/audit/policy.yaml <<'EOF'
 apiVersion: audit.k8s.io/v1
 kind: Policy
@@ -167,7 +209,9 @@ omitStages:
   - "RequestReceived"
 
 rules:
+
   # 1. Don't log read-only requests to non-sensitive resources
+
   - level: None
     verbs: ["get", "list", "watch"]
     resources:
@@ -175,6 +219,7 @@ rules:
       resources: ["endpoints", "services", "configmaps"]
 
   # 2. Don't log health checks
+
   - level: None
     users: ["system:kube-proxy"]
     verbs: ["watch"]
@@ -183,6 +228,7 @@ rules:
       resources: ["endpoints", "services"]
 
   # 3. Don't log controller manager and scheduler
+
   - level: None
     users:
     - system:kube-controller-manager
@@ -190,12 +236,14 @@ rules:
     - system:serviceaccount:kube-system:generic-garbage-collector
 
   # 4. Log secret access with full request and response
+
   - level: RequestResponse
     resources:
     - group: ""
       resources: ["secrets"]
 
   # 5. Log pod exec, attach, portforward at Request level
+
   - level: Request
     verbs: ["create"]
     resources:
@@ -203,6 +251,7 @@ rules:
       resources: ["pods/exec", "pods/attach", "pods/portforward"]
 
   # 6. Log all RBAC changes with full details
+
   - level: RequestResponse
     verbs: ["create", "update", "patch", "delete"]
     resources:
@@ -210,6 +259,7 @@ rules:
       resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
 
   # 7. Log security-sensitive resource modifications
+
   - level: Request
     verbs: ["create", "update", "patch", "delete"]
     resources:
@@ -221,6 +271,7 @@ rules:
       resources: ["networkpolicies"]
 
   # 8. Log authentication and authorization events
+
   - level: Metadata
     resources:
     - group: "authentication.k8s.io"
@@ -229,16 +280,19 @@ rules:
       resources: ["subjectaccessreviews"]
 
   # 9. Catch-all: log everything else at Metadata level
+
   - level: Metadata
     omitStages:
     - "RequestReceived"
 EOF
 ```
 
+```
+
 **Explanation of Policy Rules**:
 
 | Rule | Purpose | Level |
-|------|---------|-------|
+| ------ | --------- | ------- |
 | #1-3 | Reduce noise from routine operations | None |
 | #4 | Track all secret access (critical) | RequestResponse |
 | #5 | Track interactive pod access | Request |
@@ -252,35 +306,47 @@ EOF
 The API server will automatically reload the policy within 30 seconds. Verify:
 
 ```bash
+
 # Check API server logs for policy reload
+
 sudo tail -50 /var/log/pods/kube-system_kube-apiserver-*/kube-apiserver/*.log | grep audit
 
 # Generate test activity
+
 kubectl get secrets -n kube-system
 kubectl get pods
 kubectl exec -it <any-pod> -- echo "test"  # If you have a running pod
 ```
 
+```
+
 ### Step 7: Verify Policy Effectiveness
 
 ```bash
+
 # Test 1: Verify secrets are logged at RequestResponse level
+
 kubectl get secrets -n kube-system
 sudo tail -50 /var/log/kubernetes/audit.log | jq 'select(.objectRef.resource=="secrets") | {level, verb, name: .objectRef.name}'
 
 # Expected: level = "RequestResponse"
 
 # Test 2: Verify regular pod list is logged at Metadata level
+
 kubectl get pods
 sudo tail -50 /var/log/kubernetes/audit.log | jq 'select(.objectRef.resource=="pods" and .verb=="list") | {level, verb}'
 
 # Expected: level = "Metadata"
 
 # Test 3: Check log file size (should be smaller than before)
+
 sudo ls -lh /var/log/kubernetes/audit.log
 ```
 
+```
+
 **Verification**:
+
 - [ ] Secret access logged at RequestResponse level
 - [ ] Pod exec logged at Request level
 - [ ] Regular operations logged at Metadata level
@@ -293,18 +359,23 @@ sudo ls -lh /var/log/kubernetes/audit.log
 Create various security-relevant activities:
 
 ```bash
+
 # Create test namespace
+
 kubectl create namespace audit-test
 
 # Create a secret (should log at RequestResponse)
+
 kubectl create secret generic test-secret \
   --from-literal=password=supersecret \
   -n audit-test
 
 # Read the secret
+
 kubectl get secret test-secret -n audit-test -o yaml
 
 # Create a privileged pod (should log at Request)
+
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
@@ -320,20 +391,26 @@ spec:
 EOF
 
 # Wait for pod to be ready
+
 kubectl wait --for=condition=Ready pod/privileged-pod -n audit-test --timeout=60s
 
 # Exec into pod (should log at Request)
+
 kubectl exec -it privileged-pod -n audit-test -- whoami
 
 # Create RBAC role (should log at RequestResponse)
+
 kubectl create role pod-reader \
   --verb=get,list \
   --resource=pods \
   -n audit-test
 
 # Generate failed authentication (try invalid token)
+
 curl -k https://$(kubectl cluster-info | grep "Kubernetes control plane" | awk '{print $7}')/api/v1/namespaces \
   -H "Authorization: Bearer invalid-token"
+```
+
 ```
 
 ### Step 9: Query Audit Logs with jq
@@ -341,6 +418,7 @@ curl -k https://$(kubectl cluster-info | grep "Kubernetes control plane" | awk '
 **Query 1: Find All Secret Access**
 
 ```bash
+
 sudo cat /var/log/kubernetes/audit.log | \
   jq 'select(.objectRef.resource=="secrets") |
       {time: .requestReceivedTimestamp,
@@ -350,8 +428,12 @@ sudo cat /var/log/kubernetes/audit.log | \
        namespace: .objectRef.namespace}'
 ```
 
+```
+
 **Expected Output**:
+
 ```json
+
 {
   "time": "2024-01-15T10:30:00.123456Z",
   "user": "kubernetes-admin",
@@ -361,9 +443,12 @@ sudo cat /var/log/kubernetes/audit.log | \
 }
 ```
 
+```
+
 **Query 2: Find Pod Exec Events**
 
 ```bash
+
 sudo cat /var/log/kubernetes/audit.log | \
   jq 'select(.objectRef.resource=="pods" and .objectRef.subresource=="exec") |
       {time: .requestReceivedTimestamp,
@@ -373,9 +458,12 @@ sudo cat /var/log/kubernetes/audit.log | \
        command: .requestURI}'
 ```
 
+```
+
 **Query 3: Find Failed Authentication Attempts**
 
 ```bash
+
 sudo cat /var/log/kubernetes/audit.log | \
   jq 'select(.responseStatus.code >= 400 and
              .objectRef.resource=="tokenreviews") |
@@ -385,9 +473,12 @@ sudo cat /var/log/kubernetes/audit.log | \
        source: .sourceIPs[0]}'
 ```
 
+```
+
 **Query 4: Find Privileged Pod Creation**
 
 ```bash
+
 sudo cat /var/log/kubernetes/audit.log | \
   jq 'select(.verb=="create" and
              .objectRef.resource=="pods" and
@@ -398,9 +489,12 @@ sudo cat /var/log/kubernetes/audit.log | \
        namespace: .objectRef.namespace}'
 ```
 
+```
+
 **Query 5: Find RBAC Changes**
 
 ```bash
+
 sudo cat /var/log/kubernetes/audit.log | \
   jq 'select(.objectRef.apiGroup=="rbac.authorization.k8s.io" and
              (.verb=="create" or .verb=="update" or .verb=="delete")) |
@@ -411,23 +505,32 @@ sudo cat /var/log/kubernetes/audit.log | \
        name: .objectRef.name}'
 ```
 
+```
+
 **Query 6: Top 10 Most Active Users**
 
 ```bash
+
 sudo cat /var/log/kubernetes/audit.log | \
   jq -r '.user.username' | \
   sort | uniq -c | sort -rn | head -10
 ```
 
+```
+
 **Query 7: API Request Rate by Hour**
 
 ```bash
+
 sudo cat /var/log/kubernetes/audit.log | \
   jq -r '.requestReceivedTimestamp | split("T")[1] | split(":")[0]' | \
   sort | uniq -c
 ```
 
+```
+
 **Verification**:
+
 - [ ] Can find secret access events
 - [ ] Can identify pod exec operations
 - [ ] Can detect failed authentication
@@ -439,7 +542,9 @@ sudo cat /var/log/kubernetes/audit.log | \
 Create a helper script for common queries:
 
 ```bash
+
 cat > ~/audit-analyzer.sh <<'EOF'
+
 #!/bin/bash
 # Kubernetes Audit Log Analyzer
 
@@ -510,20 +615,29 @@ EOF
 chmod +x ~/audit-analyzer.sh
 ```
 
+```
+
 Test the script:
 
 ```bash
+
 # Show statistics
+
 ~/audit-analyzer.sh stats
 
 # Show secret access
+
 ~/audit-analyzer.sh secrets
 
 # Show exec events
+
 ~/audit-analyzer.sh exec
 ```
 
+```
+
 **Verification**:
+
 - [ ] Script executes without errors
 - [ ] Can quickly query different event types
 - [ ] Output is readable and useful
@@ -533,7 +647,9 @@ Test the script:
 ### Scenario 1: Track Specific User Activity
 
 ```bash
+
 # Replace with actual username
+
 USER="kubernetes-admin"
 
 sudo cat /var/log/kubernetes/audit.log | \
@@ -545,10 +661,14 @@ sudo cat /var/log/kubernetes/audit.log | \
        name: .objectRef.name}'
 ```
 
+```
+
 ### Scenario 2: Find Suspicious After-Hours Activity
 
 ```bash
+
 # Find activity between 10 PM and 6 AM
+
 sudo cat /var/log/kubernetes/audit.log | \
   jq 'select(.requestReceivedTimestamp |
              strptime("%Y-%m-%dT%H:%M:%S") |
@@ -559,14 +679,20 @@ sudo cat /var/log/kubernetes/audit.log | \
        resource: .objectRef.resource}'
 ```
 
+```
+
 ### Scenario 3: Detect Bulk Secret Reading
 
 ```bash
+
 # Find users who read more than 5 secrets in last hour
+
 sudo cat /var/log/kubernetes/audit.log | \
   jq -r 'select(.objectRef.resource=="secrets" and .verb=="get") |
          "\(.user.username)"' | \
   sort | uniq -c | awk '$1 > 5'
+```
+
 ```
 
 ## Troubleshooting
@@ -576,6 +702,7 @@ sudo cat /var/log/kubernetes/audit.log | \
 **Symptoms**: API server crash loops after enabling audit
 
 **Causes**:
+
 - Invalid YAML in audit policy
 - Policy file not found
 - Log directory doesn't exist
@@ -583,19 +710,26 @@ sudo cat /var/log/kubernetes/audit.log | \
 **Solutions**:
 
 ```bash
+
 # Check API server logs
+
 sudo tail -100 /var/log/pods/kube-system_kube-apiserver-*/kube-apiserver/*.log
 
 # Validate policy YAML syntax
+
 cat /etc/kubernetes/audit/policy.yaml | python3 -c "import yaml, sys; yaml.safe_load(sys.stdin)"
 
 # Ensure directories exist
+
 sudo mkdir -p /etc/kubernetes/audit
 sudo mkdir -p /var/log/kubernetes
 
 # Restore backup if needed
+
 sudo cp /etc/kubernetes/kube-apiserver.yaml.backup \
      /etc/kubernetes/manifests/kube-apiserver.yaml
+```
+
 ```
 
 ### Issue 2: No Audit Logs Generated
@@ -603,6 +737,7 @@ sudo cp /etc/kubernetes/kube-apiserver.yaml.backup \
 **Symptoms**: Audit log file is empty or not created
 
 **Causes**:
+
 - Volume mount incorrect
 - Path typo in configuration
 - Insufficient disk space
@@ -610,18 +745,25 @@ sudo cp /etc/kubernetes/kube-apiserver.yaml.backup \
 **Solutions**:
 
 ```bash
+
 # Check volume mounts
+
 kubectl get pod kube-apiserver-<node> -n kube-system -o yaml | grep -A 5 "audit"
 
 # Check disk space
+
 df -h /var/log
 
 # Manually create log file
+
 sudo touch /var/log/kubernetes/audit.log
 sudo chmod 600 /var/log/kubernetes/audit.log
 
 # Trigger API activity
+
 kubectl get nodes
+```
+
 ```
 
 ### Issue 3: Logs Growing Too Fast
@@ -631,7 +773,9 @@ kubectl get nodes
 **Solutions**:
 
 ```bash
+
 # Check log size
+
 sudo ls -lh /var/log/kubernetes/audit.log*
 
 # Reduce audit level for noisy resources
@@ -639,6 +783,9 @@ sudo ls -lh /var/log/kubernetes/audit.log*
 
 # Increase rotation frequency
 # In API server manifest, reduce --audit-log-maxsize to 50 or 100
+
+```
+
 ```
 
 ### Issue 4: Can't Query Logs with jq
@@ -648,18 +795,25 @@ sudo ls -lh /var/log/kubernetes/audit.log*
 **Solutions**:
 
 ```bash
+
 # Install jq if not present
+
 sudo apt-get install jq  # Debian/Ubuntu
 brew install jq          # macOS
 
 # Check log format
+
 sudo head -1 /var/log/kubernetes/audit.log
 
 # Ensure log is valid JSON
+
 sudo tail -1 /var/log/kubernetes/audit.log | jq .
 
 # Check for truncated lines (audit log entries can be large)
 # Use cat instead of tail for complete lines
+
+```
+
 ```
 
 ## Verification Checklist
@@ -679,7 +833,9 @@ Before proceeding, verify:
 ## Cleanup
 
 ```bash
+
 # Remove test resources
+
 kubectl delete namespace audit-test
 
 # Optionally disable audit logging (restore backup)
@@ -687,28 +843,35 @@ kubectl delete namespace audit-test
 #      /etc/kubernetes/manifests/kube-apiserver.yaml
 
 # Keep audit logging enabled for next labs
+
+```
+
 ```
 
 ## Challenge Exercises
 
 1. **Custom Policy**: Write an audit policy that:
+
    - Logs all write operations at Request level
    - Logs secret access at RequestResponse level
    - Doesn't log read operations
    - Doesn't log system component activity
 
-2. **Compliance Report**: Create a script that generates a daily report of:
+1. **Compliance Report**: Create a script that generates a daily report of:
+
    - All secret access (who, when, which secrets)
    - All pod exec operations
    - All RBAC changes
    - All privileged pod creations
 
-3. **Real-time Monitoring**: Write a script that:
+1. **Real-time Monitoring**: Write a script that:
+
    - Tails the audit log in real-time
    - Alerts on critical events (secret access, exec, RBAC changes)
    - Sends notifications to Slack or email
 
-4. **Log Analysis**: Analyze audit logs to answer:
+1. **Log Analysis**: Analyze audit logs to answer:
+
    - Which user is most active?
    - Which namespace has the most changes?
    - What percentage of requests are read vs write?

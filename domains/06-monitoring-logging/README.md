@@ -80,15 +80,15 @@ Implement comprehensive security monitoring:
 By the end of this domain, you will be able to:
 
 1. Configure Kubernetes audit logging with appropriate policies
-2. Analyze audit logs to detect security incidents
-3. Install and configure Falco for runtime security
-4. Create custom Falco rules for specific threats
-5. Establish behavior baselines and detect anomalies
-6. Implement log aggregation and analysis pipelines
-7. Build security monitoring dashboards
-8. Integrate detection tools with response systems
-9. Perform security incident investigation
-10. Implement compliance monitoring and reporting
+1. Analyze audit logs to detect security incidents
+1. Install and configure Falco for runtime security
+1. Create custom Falco rules for specific threats
+1. Establish behavior baselines and detect anomalies
+1. Implement log aggregation and analysis pipelines
+1. Build security monitoring dashboards
+1. Integrate detection tools with response systems
+1. Perform security incident investigation
+1. Implement compliance monitoring and reporting
 
 ## Key Concepts Summary
 
@@ -121,7 +121,7 @@ By the end of this domain, you will be able to:
 ### Security Monitoring Layers
 
 | Layer | What to Monitor | Tools | Purpose |
-|-------|----------------|-------|---------|
+| ------- | ---------------- | ------- | --------- |
 | **API Server** | API requests, authentication | Audit logs | Track all cluster changes |
 | **Runtime** | System calls, process execution | Falco | Detect malicious behavior |
 | **Application** | App-specific logs | Fluentd, Fluent Bit | Debug and security events |
@@ -131,7 +131,7 @@ By the end of this domain, you will be able to:
 ### Detection Capabilities by Tool
 
 | Tool | Detection Type | Strengths | Use Cases |
-|------|---------------|-----------|-----------|
+| ------ | --------------- | ----------- | ----------- |
 | **Audit Logs** | API activity | Complete API record, compliance | Who did what when |
 | **Falco** | Runtime behavior | Real-time, syscall-level | Container escape, privilege escalation |
 | **Metrics** | Resource patterns | Trends, anomalies | Resource abuse, DoS |
@@ -145,25 +145,25 @@ By the end of this domain, you will be able to:
    - Service account token usage
    - RBAC policy violations
 
-2. **Container Security**
+1. **Container Security**
    - Container escape attempts
    - Privileged container creation
    - Host filesystem access
    - Sensitive file access
 
-3. **Network Activity**
+1. **Network Activity**
    - Unexpected outbound connections
    - Connection to known malicious IPs
    - Lateral movement attempts
    - Port scanning activity
 
-4. **System Activity**
+1. **System Activity**
    - Unauthorized process execution
    - Shell spawned in container
    - Binary downloads and execution
    - Crypto mining indicators
 
-5. **Configuration Changes**
+1. **Configuration Changes**
    - Security policy modifications
    - New privileged resources
    - Network policy changes
@@ -210,6 +210,7 @@ Falco is the de facto standard for Kubernetes runtime security and is heavily fe
 ### Key Falco Concepts
 
 **Rules**: Conditions that trigger alerts
+
 ```yaml
 - rule: Shell Spawned in Container
   desc: A shell was spawned in a container
@@ -221,30 +222,40 @@ Falco is the de facto standard for Kubernetes runtime security and is heavily fe
   priority: WARNING
 ```
 
+```
+
 **Macros**: Reusable condition snippets
+
 ```yaml
+
 - macro: spawned_process
   condition: evt.type = execve and evt.dir=<
 ```
 
+```
+
 **Lists**: Reusable collections
+
 ```yaml
+
 - list: shell_binaries
   items: [bash, sh, zsh, csh]
+```
+
 ```
 
 ### Falco Detection Methods
 
 1. **System Call Monitoring**: Captures all syscalls via kernel module or eBPF
-2. **Kubernetes Audit Events**: Integrates with K8s audit logs
-3. **Cloud Trail Events**: AWS/GCP/Azure cloud API monitoring
+1. **Kubernetes Audit Events**: Integrates with K8s audit logs
+1. **Cloud Trail Events**: AWS/GCP/Azure cloud API monitoring
 
 ## Audit Logging Deep Dive
 
 ### Audit Policy Stages
 
 | Stage | When | Use Case |
-|-------|------|----------|
+| ------- | ------ | ---------- |
 | **RequestReceived** | As soon as request arrives | Capture all attempts |
 | **ResponseStarted** | After response headers sent | Long-running requests |
 | **ResponseComplete** | After full response sent | Complete transaction record |
@@ -253,7 +264,7 @@ Falco is the de facto standard for Kubernetes runtime security and is heavily fe
 ### Audit Levels
 
 | Level | Information Logged | Use Case |
-|-------|-------------------|----------|
+| ------- | ------------------- | ---------- |
 | **None** | Nothing | Exclude noisy endpoints |
 | **Metadata** | Request metadata only | Basic tracking |
 | **Request** | Metadata + request body | Sensitive operations |
@@ -262,26 +273,33 @@ Falco is the de facto standard for Kubernetes runtime security and is heavily fe
 ### Essential Audit Policy Pattern
 
 ```yaml
+
 apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
+
   # Log secret access at request level
+
   - level: RequestResponse
     resources:
     - group: ""
       resources: ["secrets"]
 
   # Log authentication at metadata level
+
   - level: Metadata
     omitStages: ["RequestReceived"]
 
   # Don't log health checks
+
   - level: None
     users: ["system:kube-proxy"]
     verbs: ["watch"]
     resources:
     - group: ""
       resources: ["endpoints", "services"]
+```
+
 ```
 
 ## Practical Skills Required
@@ -320,25 +338,25 @@ Complete these labs in order to build practical skills:
    - Analyze audit log output
    - Track security-relevant events
 
-2. **[Lab 2: Falco Deployment](../../labs/06-monitoring-logging/lab-02-falco-deployment.md)**
+1. **[Lab 2: Falco Deployment](../../labs/06-monitoring-logging/lab-02-falco-deployment.md)**
    - Install Falco on Kubernetes
    - Configure Falco output
    - Verify Falco is detecting events
    - Explore default rules
 
-3. **[Lab 3: Custom Falco Rules](../../labs/06-monitoring-logging/lab-03-falco-rules.md)**
+1. **[Lab 3: Custom Falco Rules](../../labs/06-monitoring-logging/lab-03-falco-rules.md)**
    - Create custom detection rules
    - Test rule triggers
    - Tune rules for accuracy
    - Implement rule priorities
 
-4. **[Lab 4: Log Aggregation](../../labs/06-monitoring-logging/lab-04-log-aggregation.md)**
+1. **[Lab 4: Log Aggregation](../../labs/06-monitoring-logging/lab-04-log-aggregation.md)**
    - Deploy log collection stack
    - Configure Fluentd/Fluent Bit
    - Set up Elasticsearch for storage
    - Create Kibana dashboards
 
-5. **[Lab 5: Security Monitoring Dashboard](../../labs/06-monitoring-logging/lab-05-security-monitoring.md)**
+1. **[Lab 5: Security Monitoring Dashboard](../../labs/06-monitoring-logging/lab-05-security-monitoring.md)**
    - Integrate multiple data sources
    - Build security dashboards
    - Configure alert rules
@@ -349,50 +367,63 @@ Complete these labs in order to build practical skills:
 ### Essential Commands
 
 ```bash
+
 # Audit logs (if configured to log to file)
+
 sudo cat /var/log/kubernetes/audit.log | jq
 kubectl get pods -v=8  # See audit events in kubectl
 
 # Falco
+
 kubectl get pods -n falco
 kubectl logs -n falco -l app.kubernetes.io/name=falco
 falco --list  # List all loaded rules
 falco --list-events  # Show supported events
 
 # Log collection
+
 kubectl get pods -n logging
 kubectl logs -n logging -l app=fluentd
 kubectl logs <pod> --previous  # Previous container logs
 
 # Prometheus metrics
+
 kubectl get servicemonitor -A
 kubectl port-forward -n monitoring svc/prometheus 9090:9090
 
 # Check audit policy
+
 kubectl get pod kube-apiserver-controlplane -n kube-system -o yaml | grep audit
+```
+
 ```
 
 ### Sample Audit Policy
 
 ```yaml
+
 apiVersion: audit.k8s.io/v1
 kind: Policy
 omitStages:
   - "RequestReceived"
 rules:
+
   # Log pod exec/attach at metadata level
+
   - level: Metadata
     resources:
     - group: ""
       resources: ["pods/exec", "pods/attach"]
 
   # Log secret access with full details
+
   - level: RequestResponse
     resources:
     - group: ""
       resources: ["secrets"]
 
   # Log RBAC changes
+
   - level: RequestResponse
     verbs: ["create", "update", "patch", "delete"]
     resources:
@@ -400,14 +431,19 @@ rules:
       resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
 
   # Don't log read-only requests
+
   - level: None
     verbs: ["get", "list", "watch"]
+```
+
 ```
 
 ### Common Falco Rules
 
 ```yaml
+
 # Detect shell in container
+
 - rule: Shell in Container
   desc: A shell was spawned in a container
   condition: >
@@ -418,6 +454,7 @@ rules:
   priority: WARNING
 
 # Detect sensitive file read
+
 - rule: Read Sensitive File
   desc: Attempt to read sensitive files
   condition: >
@@ -428,6 +465,7 @@ rules:
   priority: WARNING
 
 # Detect privilege escalation
+
 - rule: Set Privileged Container
   desc: Privileged container started
   condition: >
@@ -438,20 +476,29 @@ rules:
   priority: CRITICAL
 ```
 
+```
+
 ### Analyzing Audit Logs with jq
 
 ```bash
+
 # Find all secret access
+
 cat audit.log | jq 'select(.objectRef.resource=="secrets")'
 
 # Find failed authentication
+
 cat audit.log | jq 'select(.responseStatus.code>=400 and .verb=="create" and .objectRef.resource=="tokenreviews")'
 
 # Track who created privileged pods
+
 cat audit.log | jq 'select(.verb=="create" and .objectRef.resource=="pods" and .requestObject.spec.containers[].securityContext.privileged==true) | {user:.user.username, pod:.objectRef.name}'
 
 # Find all actions by a specific user
+
 cat audit.log | jq 'select(.user.username=="suspicious-user")'
+```
+
 ```
 
 ## Common Pitfalls and Tips
@@ -459,12 +506,12 @@ cat audit.log | jq 'select(.user.username=="suspicious-user")'
 ### Pitfalls to Avoid
 
 1. **Log overload**: Logging everything creates too much noise
-2. **Missing audit backend**: Logs go nowhere if not configured
-3. **Ignoring false positives**: Leads to alert fatigue
-4. **No log retention**: Logs deleted before incidents are detected
-5. **Delayed detection**: Monitoring not real-time enough
-6. **Missing context**: Logs without correlation are hard to investigate
-7. **No response plan**: Detection without response is incomplete
+1. **Missing audit backend**: Logs go nowhere if not configured
+1. **Ignoring false positives**: Leads to alert fatigue
+1. **No log retention**: Logs deleted before incidents are detected
+1. **Delayed detection**: Monitoring not real-time enough
+1. **Missing context**: Logs without correlation are hard to investigate
+1. **No response plan**: Detection without response is incomplete
 
 ### Exam Tips
 
@@ -479,15 +526,15 @@ cat audit.log | jq 'select(.user.username=="suspicious-user")'
 ### Best Practices
 
 1. **Defense-in-depth**: Use multiple detection layers
-2. **Tune aggressively**: Reduce false positives early
-3. **Automate response**: Manual response is too slow
-4. **Retain logs**: Keep audit logs for compliance periods
-5. **Encrypt logs**: Logs contain sensitive information
-6. **Monitor the monitors**: Ensure monitoring stack is healthy
-7. **Test detection**: Regularly verify rules trigger correctly
-8. **Document baselines**: Know what normal looks like
-9. **Incident playbooks**: Prepare response procedures
-10. **Regular review**: Update rules as threats evolve
+1. **Tune aggressively**: Reduce false positives early
+1. **Automate response**: Manual response is too slow
+1. **Retain logs**: Keep audit logs for compliance periods
+1. **Encrypt logs**: Logs contain sensitive information
+1. **Monitor the monitors**: Ensure monitoring stack is healthy
+1. **Test detection**: Regularly verify rules trigger correctly
+1. **Document baselines**: Know what normal looks like
+1. **Incident playbooks**: Prepare response procedures
+1. **Regular review**: Update rules as threats evolve
 
 ## Real-World Scenarios
 
@@ -496,8 +543,11 @@ cat audit.log | jq 'select(.user.username=="suspicious-user")'
 **Problem**: Cryptocurrency mining malware is consuming cluster resources.
 
 **Detection Strategy**:
+
 ```yaml
+
 # Falco rule for crypto mining
+
 - rule: Cryptocurrency Mining Activity
   desc: Detect common crypto mining processes
   condition: >
@@ -508,7 +558,10 @@ cat audit.log | jq 'select(.user.username=="suspicious-user")'
   priority: CRITICAL
 ```
 
+```
+
 **Additional Indicators**:
+
 - Prometheus: High CPU usage patterns
 - Network: Outbound connections to mining pools
 - Audit logs: Unexpected container deployments
@@ -518,14 +571,19 @@ cat audit.log | jq 'select(.user.username=="suspicious-user")'
 **Problem**: A user with legitimate access is exfiltrating secrets.
 
 **Detection Strategy**:
+
 - Audit logs: Track all secret access
 - Behavioral analytics: Unusual access patterns
 - Time-based analysis: Access outside normal hours
 - Volume analysis: Excessive secret reads
 
 ```bash
+
 # Find excessive secret access
+
 cat audit.log | jq 'select(.objectRef.resource=="secrets") | .user.username' | sort | uniq -c | sort -rn
+```
+
 ```
 
 ### Scenario 3: Container Escape Attempt
@@ -533,8 +591,11 @@ cat audit.log | jq 'select(.objectRef.resource=="secrets") | .user.username' | s
 **Problem**: Attacker attempting to escape container to host.
 
 **Detection Strategy**:
+
 ```yaml
+
 # Falco rules for container escape
+
 - rule: Container Escape - Mount Host
   desc: Detect host filesystem mount
   condition: >
@@ -551,25 +612,30 @@ cat audit.log | jq 'select(.objectRef.resource=="secrets") | .user.username' | s
   priority: CRITICAL
 ```
 
+```
+
 **Response Actions**:
+
 1. Immediate pod termination
-2. Node isolation
-3. Forensic image capture
-4. Audit log analysis
+1. Node isolation
+1. Forensic image capture
+1. Audit log analysis
 
 ### Scenario 4: Compliance Audit
 
 **Problem**: Must demonstrate security monitoring for SOC 2 compliance.
 
 **Requirements**:
+
 1. All API activity logged (audit logs)
-2. Privileged operations tracked (audit policy + Falco)
-3. Secret access monitored (audit logs)
-4. Logs retained for 1 year (log storage)
-5. Real-time alerting (Falco + AlertManager)
-6. Regular security reports (dashboards)
+1. Privileged operations tracked (audit policy + Falco)
+1. Secret access monitored (audit logs)
+1. Logs retained for 1 year (log storage)
+1. Real-time alerting (Falco + AlertManager)
+1. Regular security reports (dashboards)
 
 **Implementation**:
+
 - Enable comprehensive audit policy
 - Deploy Falco with compliance rules
 - Configure log aggregation and retention
@@ -581,24 +647,28 @@ cat audit.log | jq 'select(.objectRef.resource=="secrets") | .user.username' | s
 ### Indicators of Compromise (IoCs)
 
 **Account Indicators**:
+
 - Multiple failed authentication attempts
 - Account access from unusual locations/times
 - Dormant account suddenly active
 - Privilege escalation attempts
 
 **Runtime Indicators**:
+
 - Shells spawned in containers
 - Unexpected process execution
 - Sensitive file access
 - Network connections to known bad IPs
 
 **Resource Indicators**:
+
 - Sudden resource usage spikes
 - Pods communicating with external networks
 - Unusual data transfer volumes
 - Container image from unknown registry
 
 **Configuration Indicators**:
+
 - Security policy disabled or modified
 - Privileged workload created
 - Network policy removed
@@ -607,17 +677,24 @@ cat audit.log | jq 'select(.objectRef.resource=="secrets") | .user.username' | s
 ### Establishing Baselines
 
 ```bash
+
 # Normal pod count by namespace
+
 kubectl get pods -A --no-headers | awk '{print $1}' | sort | uniq -c
 
 # Normal container images in use
+
 kubectl get pods -A -o jsonpath='{.items[*].spec.containers[*].image}' | tr ' ' '\n' | sort | uniq -c
 
 # Normal service accounts
+
 kubectl get sa -A --no-headers | wc -l
 
 # Normal API call rates (from audit logs)
+
 cat audit.log | jq -r '.requestURI' | sort | uniq -c | sort -rn | head -20
+```
+
 ```
 
 ## Integration Patterns
@@ -625,7 +702,9 @@ cat audit.log | jq -r '.requestURI' | sort | uniq -c | sort -rn | head -20
 ### Falco + AlertManager + Slack
 
 ```yaml
+
 # Falco output to AlertManager
+
 json_output: true
 json_include_output_property: true
 http_output:
@@ -633,6 +712,7 @@ http_output:
   url: "http://alertmanager:9093/api/v1/alerts"
 
 # AlertManager route to Slack
+
 route:
   routes:
   - match:
@@ -645,10 +725,14 @@ receivers:
     channel: '#security-alerts'
 ```
 
+```
+
 ### Audit Logs + Elasticsearch + Kibana
 
 ```yaml
+
 # Fluentd config for audit logs
+
 <source>
   @type tail
   path /var/log/kubernetes/audit.log
@@ -669,10 +753,14 @@ receivers:
 </match>
 ```
 
+```
+
 ### Prometheus + Falco Exporter
 
 ```yaml
+
 # ServiceMonitor for Falco metrics
+
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -685,6 +773,8 @@ spec:
   endpoints:
   - port: metrics
     interval: 30s
+```
+
 ```
 
 ## Study Checklist
@@ -739,10 +829,10 @@ Before moving to the next domain, ensure you can:
 After completing this domain:
 
 1. Complete all Domain 6 labs in sequence
-2. Practice writing audit policies and Falco rules
-3. Review all KCSA domains to prepare for the exam
-4. Take practice exams and identify weak areas
-5. Build a complete security monitoring solution as a capstone project
+1. Practice writing audit policies and Falco rules
+1. Review all KCSA domains to prepare for the exam
+1. Take practice exams and identify weak areas
+1. Build a complete security monitoring solution as a capstone project
 
 ---
 

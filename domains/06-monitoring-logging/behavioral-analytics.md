@@ -44,7 +44,7 @@ Normal Behavior (Baseline)
 ### Anomaly Types
 
 | Anomaly Type | Description | Example |
-|--------------|-------------|---------|
+| -------------- | ------------- | --------- |
 | **Point Anomaly** | Single unusual event | One failed auth, then success |
 | **Contextual Anomaly** | Unusual in context | Login from new location |
 | **Collective Anomaly** | Pattern across events | Gradual privilege escalation |
@@ -58,18 +58,25 @@ Normal Behavior (Baseline)
 Use statistical methods to identify outliers:
 
 ```bash
+
 # Example: Find pods using unusual CPU
 # 1. Collect normal CPU usage (baseline)
+
 kubectl top pods -A > baseline.txt
 
 # 2. Current usage
+
 kubectl top pods -A > current.txt
 
 # 3. Compare (simplified - real tools use standard deviations)
+
 diff baseline.txt current.txt
 ```
 
+```
+
 **Statistical Concepts**:
+
 - **Mean**: Average value
 - **Standard Deviation**: How spread out values are
 - **Outliers**: Values beyond 2-3 standard deviations
@@ -80,11 +87,15 @@ diff baseline.txt current.txt
 Simple but effective for known ranges:
 
 ```yaml
+
 # Example: Alert on excessive API calls
+
 alert: ExcessiveAPICalls
 condition: |
   rate(apiserver_request_total[5m]) > 1000
 description: "API call rate exceeds normal threshold"
+```
+
 ```
 
 **Pros**: Easy to understand and implement
@@ -95,12 +106,15 @@ description: "API call rate exceeds normal threshold"
 Detect unusual sequences of events:
 
 ```
+
 Normal Pattern:
   Login → List Pods → Get Pod → View Logs → Logout
 
 Suspicious Pattern:
   Login → List Secrets → Get Secret → Get Secret → Get Secret → ...
   (Excessive secret access suggests data exfiltration)
+
+```
 ```
 
 #### 4. Machine Learning (Advanced)
@@ -108,11 +122,13 @@ Suspicious Pattern:
 ML can learn complex patterns automatically:
 
 **Approaches**:
+
 - **Supervised**: Train on labeled data (attack/normal)
 - **Unsupervised**: Detect anomalies without labels (clustering)
 - **Semi-supervised**: Mix of both
 
 **Common Algorithms**:
+
 - Isolation Forest (anomaly detection)
 - K-means clustering (group similar behavior)
 - Neural networks (complex pattern recognition)
@@ -126,20 +142,28 @@ ML can learn complex patterns automatically:
 #### API Activity Baselines
 
 ```bash
+
 # Most frequent API endpoints
+
 cat audit.log | jq -r '.requestURI' | sort | uniq -c | sort -rn | head -20
 
 # API calls by user
+
 cat audit.log | jq -r '.user.username' | sort | uniq -c | sort -rn
 
 # API calls by verb (get, list, create, etc.)
+
 cat audit.log | jq -r '.verb' | sort | uniq -c
 
 # API calls by resource type
+
 cat audit.log | jq -r '.objectRef.resource' | sort | uniq -c | sort -rn
 ```
 
+```
+
 **Normal baseline includes**:
+
 - Which users access which resources
 - Typical API call rates
 - Common request patterns
@@ -148,57 +172,77 @@ cat audit.log | jq -r '.objectRef.resource' | sort | uniq -c | sort -rn
 #### Resource Baselines
 
 ```bash
+
 # Normal pod count per namespace
+
 kubectl get pods -A --no-headers | awk '{print $1}' | sort | uniq -c
 
 # Normal container images in use
+
 kubectl get pods -A -o jsonpath='{.items[*].spec.containers[*].image}' | \
   tr ' ' '\n' | sort | uniq -c | sort -rn
 
 # Normal service accounts
+
 kubectl get sa -A --no-headers | wc -l
 
 # Normal privileged workloads (should be few or zero)
+
 kubectl get pods -A -o json | \
   jq '[.items[] | select(.spec.containers[].securityContext.privileged==true)] | length'
+```
+
 ```
 
 #### Network Baselines
 
 ```bash
+
 # With Falco - normal outbound connections
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco | \
   grep "Outbound connection" | \
   awk '{print $NF}' | sort | uniq -c
 
 # Normal service communication patterns
 # (requires service mesh or network monitoring)
+
 kubectl get pods -A -o wide
+```
+
 ```
 
 #### Authentication Baselines
 
 ```bash
+
 # Normal authentication sources (from audit logs)
+
 cat audit.log | jq -r '.sourceIPs[]' | sort | uniq -c | sort -rn
 
 # Normal user agents
+
 cat audit.log | jq -r '.userAgent' | sort | uniq -c | sort -rn
 
 # Normal service account usage
+
 cat audit.log | jq -r '.user.username' | \
   grep "system:serviceaccount" | sort | uniq -c | sort -rn
+```
+
 ```
 
 ### Baseline Collection Period
 
 **Recommendations**:
+
 - **Minimum**: 1 week (captures weekly patterns)
 - **Better**: 4 weeks (captures monthly variations)
 - **Best**: 3 months (captures seasonal patterns)
 - **Update**: Regularly (systems change over time)
 
 **Considerations**:
+
 - Include normal business cycles
 - Exclude known incidents/anomalies
 - Account for maintenance windows
@@ -209,7 +253,9 @@ cat audit.log | jq -r '.user.username' | \
 Store baselines for comparison:
 
 ```bash
+
 # Example baseline storage structure
+
 /var/lib/baselines/
 ├── api-activity/
 │   ├── 2024-01-01.json
@@ -222,6 +268,8 @@ Store baselines for comparison:
     └── allowed-destinations.txt
 ```
 
+```
+
 ## Behavioral Indicators of Compromise (BIoCs)
 
 ### Account Compromise Indicators
@@ -229,19 +277,26 @@ Store baselines for comparison:
 #### Unusual Authentication Patterns
 
 ```bash
+
 # Multiple failed auth attempts followed by success
+
 cat audit.log | jq -r 'select(.objectRef.resource=="tokenreviews") |
   "\(.requestReceivedTimestamp) \(.user.username) \(.responseStatus.code)"'
 
 # Authentication from new/unusual location
+
 cat audit.log | jq 'select(.sourceIPs[0] | in(["1.2.3.4", "5.6.7.8"]) | not)'
 
 # Authentication outside business hours
+
 cat audit.log | jq 'select(.requestReceivedTimestamp | strptime("%Y-%m-%dT%H:%M:%S") |
   .hour < 6 or .hour > 22)'  # Before 6 AM or after 10 PM
 ```
 
+```
+
 **Indicators**:
+
 - Login from unusual IP address or location
 - Login at unusual time (e.g., 3 AM)
 - Multiple failed attempts followed by success
@@ -252,23 +307,30 @@ cat audit.log | jq 'select(.requestReceivedTimestamp | strptime("%Y-%m-%dT%H:%M:
 #### Privilege Escalation Attempts
 
 ```bash
+
 # Attempts to create privileged pods
+
 cat audit.log | jq 'select(.verb=="create" and
   .objectRef.resource=="pods" and
   .requestObject.spec.containers[].securityContext.privileged==true)'
 
 # Attempts to modify RBAC
+
 cat audit.log | jq 'select(.verb!="get" and .verb!="list" and
   .objectRef.apiGroup=="rbac.authorization.k8s.io")'
 
 # Attempts to create new service accounts with bindings
+
 cat audit.log | jq 'select(.verb=="create" and
   (.objectRef.resource=="serviceaccounts" or
    .objectRef.resource=="rolebindings" or
    .objectRef.resource=="clusterrolebindings"))'
 ```
 
+```
+
 **Indicators**:
+
 - Creating privileged pods
 - Modifying RBAC policies
 - Creating new service accounts with high permissions
@@ -280,7 +342,9 @@ cat audit.log | jq 'select(.verb=="create" and
 #### Suspicious Runtime Activity
 
 ```yaml
+
 # Falco rules for container compromise
+
 - rule: Shell Spawned in Container
   desc: Detect shell execution in container
   condition: >
@@ -306,7 +370,10 @@ cat audit.log | jq 'select(.verb=="create" and
   priority: CRITICAL
 ```
 
+```
+
 **Indicators**:
+
 - Shell spawned in container (especially if no shell expected)
 - Reading sensitive files (/etc/shadow, /etc/sudoers)
 - Downloading and executing binaries
@@ -317,18 +384,25 @@ cat audit.log | jq 'select(.verb=="create" and
 #### Resource Abuse
 
 ```bash
+
 # With Prometheus/metrics
 # Unusual CPU usage spike
+
 kubectl top pods -A | awk '{if($3 ~ /[0-9]+m/ && $3+0 > 1000) print $0}'
 
 # Memory usage spike
+
 kubectl top pods -A | awk '{if($4 ~ /[0-9]+Mi/ && $4+0 > 2000) print $0}'
 
 # Pod restart patterns (crash loops might indicate exploitation attempts)
+
 kubectl get pods -A | grep -E "CrashLoopBackOff|Error"
 ```
 
+```
+
 **Indicators**:
+
 - Sudden CPU/memory spike
 - Excessive network traffic
 - Unusual disk I/O
@@ -339,18 +413,24 @@ kubectl get pods -A | grep -E "CrashLoopBackOff|Error"
 #### Excessive Data Access
 
 ```bash
+
 # Excessive secret reading
+
 cat audit.log | jq -r 'select(.objectRef.resource=="secrets") |
   "\(.user.username) \(.objectRef.name)"' | \
   sort | uniq -c | sort -rn | head -10
 
 # Accessing many resources in short time
+
 cat audit.log | jq -r 'select(.verb=="get" or .verb=="list") |
   "\(.user.username) \(.requestReceivedTimestamp)"' | \
   uniq -c | sort -rn
 ```
 
+```
+
 **Indicators**:
+
 - User accessing many secrets in short period
 - Downloading large amounts of data
 - Accessing resources they don't normally use
@@ -360,13 +440,18 @@ cat audit.log | jq -r 'select(.verb=="get" or .verb=="list") |
 #### Unusual Network Patterns
 
 ```bash
+
 # With Falco - connections to external IPs
+
 kubectl logs -n falco -l app.kubernetes.io/name=falco | \
   grep "Outbound connection" | \
   grep -v "10\.\|172\.\|192\.168\."  # Exclude internal IPs
 ```
 
+```
+
 **Indicators**:
+
 - Large outbound data transfers
 - Connections to unknown external IPs
 - Connections to file sharing services
@@ -378,14 +463,19 @@ kubectl logs -n falco -l app.kubernetes.io/name=falco | \
 #### Cross-Namespace Access
 
 ```bash
+
 # Users accessing multiple namespaces
+
 cat audit.log | jq -r 'select(.objectRef.namespace!=null) |
   "\(.user.username) \(.objectRef.namespace)"' | \
   sort | uniq | \
   awk '{users[$1]++} END {for(u in users) if(users[u]>5) print u, users[u]}'
 ```
 
+```
+
 **Indicators**:
+
 - User accessing unusual namespaces
 - Service account used outside its namespace
 - Pod-to-pod connections across trust boundaries
@@ -394,13 +484,18 @@ cat audit.log | jq -r 'select(.objectRef.namespace!=null) |
 #### Service Discovery
 
 ```bash
+
 # Excessive list/watch operations
+
 cat audit.log | jq 'select(.verb=="list" or .verb=="watch") |
   {user: .user.username, resource: .objectRef.resource, count: 1}' | \
   jq -s 'group_by(.user) | map({user: .[0].user, count: length})'
 ```
 
+```
+
 **Indicators**:
+
 - Enumeration of services and endpoints
 - Discovery of running pods
 - Listing secrets across namespaces
@@ -413,7 +508,9 @@ cat audit.log | jq 'select(.verb=="list" or .verb=="watch") |
 #### Anomaly Detection with PromQL
 
 ```yaml
+
 # Alert on unusual API request rate
+
 - alert: UnusualAPIRequestRate
   expr: |
     rate(apiserver_request_total[5m]) >
@@ -423,6 +520,7 @@ cat audit.log | jq 'select(.verb=="list" or .verb=="watch") |
     summary: "API request rate is 2x normal"
 
 # Alert on unusual pod creation rate
+
 - alert: RapidPodCreation
   expr: |
     increase(kube_pod_created[5m]) > 50
@@ -430,6 +528,7 @@ cat audit.log | jq 'select(.verb=="list" or .verb=="watch") |
     summary: "More than 50 pods created in 5 minutes"
 
 # Alert on unusual authentication failures
+
 - alert: HighAuthFailureRate
   expr: |
     rate(apiserver_request_total{code=~"401|403"}[5m]) > 10
@@ -438,31 +537,40 @@ cat audit.log | jq 'select(.verb=="list" or .verb=="watch") |
     summary: "High authentication failure rate detected"
 ```
 
+```
+
 ### Using Audit Logs for Behavior Analysis
 
 #### Pattern Detection Scripts
 
 ```bash
+
 #!/bin/bash
 # detect-anomalies.sh - Simple anomaly detection
 
 # Baseline file (created during normal operations)
+
 BASELINE="/var/lib/baselines/normal-activity.json"
 CURRENT_LOG="/var/log/kubernetes/audit.log"
 
 # Count API calls per user
+
 current_counts=$(cat $CURRENT_LOG | \
   jq -r '.user.username' | sort | uniq -c)
 
 # Compare with baseline
+
 while read count user; do
   baseline_count=$(grep "\"$user\"" $BASELINE | jq -r '.count')
 
   # Alert if current count is 3x baseline
+
   if [ $count -gt $((baseline_count * 3)) ]; then
     echo "ALERT: User $user has $count requests (baseline: $baseline_count)"
   fi
 done <<< "$current_counts"
+```
+
 ```
 
 ### Using Falco for Runtime Behavior
@@ -470,7 +578,9 @@ done <<< "$current_counts"
 Falco can detect runtime behavioral anomalies:
 
 ```yaml
+
 # Detect processes that don't normally run
+
 - rule: Unexpected Process Spawned
   desc: A process not in the allowed list was spawned
   condition: >
@@ -486,6 +596,7 @@ Falco can detect runtime behavioral anomalies:
   items: [nginx, node, python, java]
 
 # Detect unusual file access
+
 - rule: Unusual File Access
   desc: Container accessing files it normally doesn't
   condition: >
@@ -499,36 +610,45 @@ Falco can detect runtime behavioral anomalies:
   items: [/etc/nginx/nginx.conf, /etc/hosts, /etc/resolv.conf]
 ```
 
+```
+
 ## Alert Tuning and False Positives
 
 ### Common False Positive Causes
 
 1. **Incomplete baselines**: Baseline doesn't capture all normal behavior
-2. **Environmental changes**: New features or deployments
-3. **Over-sensitive thresholds**: Thresholds set too tight
-4. **Seasonal patterns**: Not accounting for time-based variations
-5. **Testing activity**: QA/staging environment activity
-6. **Automated systems**: CI/CD, monitoring tools
+1. **Environmental changes**: New features or deployments
+1. **Over-sensitive thresholds**: Thresholds set too tight
+1. **Seasonal patterns**: Not accounting for time-based variations
+1. **Testing activity**: QA/staging environment activity
+1. **Automated systems**: CI/CD, monitoring tools
 
 ### Tuning Strategies
 
 #### 1. Adjust Thresholds
 
 ```yaml
+
 # Before (too sensitive)
+
 - alert: HighAPICalls
   expr: rate(apiserver_request_total[5m]) > 100
 
 # After (more reasonable)
+
 - alert: HighAPICalls
   expr: rate(apiserver_request_total[5m]) > 500
   for: 15m  # Must persist for 15 minutes
 ```
 
+```
+
 #### 2. Add Context
 
 ```yaml
+
 # Add allow-lists
+
 - rule: Shell in Container
   condition: >
     spawned_process and
@@ -539,28 +659,38 @@ Falco can detect runtime behavioral anomalies:
   priority: WARNING
 ```
 
+```
+
 #### 3. Implement Severity Levels
 
 ```yaml
+
 # Info - expected but worth noting
+
 - rule: Config File Modified
   priority: INFO
 
 # Notice - unusual but might be legitimate
+
 - rule: Off-Hours Access
   priority: NOTICE
 
 # Warning - likely needs investigation
+
 - rule: Privileged Pod Created
   priority: WARNING
 
 # Error - almost certainly problematic
+
 - rule: Unknown Process in Container
   priority: ERROR
 
 # Critical - immediate response required
+
 - rule: Container Escape Attempt
   priority: CRITICAL
+```
+
 ```
 
 #### 4. Correlation and Enrichment
@@ -568,7 +698,9 @@ Falco can detect runtime behavioral anomalies:
 Don't alert on single event - correlate multiple signals:
 
 ```python
+
 # Pseudo-code for correlation
+
 if (failed_auth_attempts > 5 and
     successful_auth and
     source_ip_is_new and
@@ -580,20 +712,24 @@ else:
     severity = INFO
 ```
 
+```
+
 ### Alert Fatigue Prevention
 
 **Best Practices**:
 
 1. **Start conservative**: Fewer, high-confidence alerts
-2. **Tune continuously**: Review and adjust weekly
-3. **Use alert routing**: Send different severities to different channels
-4. **Implement alert suppression**: Don't repeatedly alert on same issue
-5. **Provide context**: Include enough information for quick triage
-6. **Document false positives**: Track and eliminate recurring FPs
-7. **Regular review**: Disable rules that never provide value
+1. **Tune continuously**: Review and adjust weekly
+1. **Use alert routing**: Send different severities to different channels
+1. **Implement alert suppression**: Don't repeatedly alert on same issue
+1. **Provide context**: Include enough information for quick triage
+1. **Document false positives**: Track and eliminate recurring FPs
+1. **Regular review**: Disable rules that never provide value
 
 ```yaml
+
 # Example alert with good context
+
 - rule: Suspicious Activity Detected
   output: >
     SUSPICIOUS: Shell spawned in production container
@@ -607,11 +743,14 @@ else:
   priority: WARNING
 ```
 
+```
+
 ## Integration with SIEM
 
 ### Sending Data to SIEM
 
 Most SIEM systems can ingest:
+
 - Kubernetes audit logs (via syslog, HTTP, or file collection)
 - Falco alerts (via webhook or syslog)
 - Prometheus metrics (via exporters)
@@ -619,7 +758,9 @@ Most SIEM systems can ingest:
 #### Example: Falco to Splunk
 
 ```yaml
+
 # Falco config for Splunk HEC (HTTP Event Collector)
+
 http_output:
   enabled: true
   url: "https://splunk.example.com:8088/services/collector/event"
@@ -630,10 +771,14 @@ json_output: true
 json_include_output_property: true
 ```
 
+```
+
 #### Example: Audit Logs to ELK
 
 ```yaml
+
 # Filebeat config for audit logs
+
 filebeat.inputs:
 - type: log
   enabled: true
@@ -649,33 +794,44 @@ output.elasticsearch:
   index: "k8s-audit-%{+yyyy.MM.dd}"
 ```
 
+```
+
 ### SIEM Correlation Examples
 
 #### Correlation Rule 1: Account Compromise
 
 ```
+
 IF (failed_auth_attempts > 5 in last 5 minutes)
 AND (successful_auth from same user)
 AND (source_ip NOT IN known_user_ips)
 THEN alert "Possible account compromise"
+
+```
 ```
 
 #### Correlation Rule 2: Data Exfiltration
 
 ```
+
 IF (secret_access_count > 20 in last 1 hour)
 AND (large_outbound_transfer)
 AND (destination_ip NOT IN whitelist)
 THEN alert "Possible data exfiltration"
 ```
 
+```
+
 #### Correlation Rule 3: Lateral Movement
 
 ```
+
 IF (new_pod_exec from user)
 AND (user accessed multiple namespaces in last hour)
 AND (outbound_connections to internal IPs)
 THEN alert "Possible lateral movement"
+
+```
 ```
 
 ## Real-World Scenarios
@@ -683,17 +839,22 @@ THEN alert "Possible lateral movement"
 ### Scenario 1: Detecting Crypto Mining
 
 **Normal Behavior**:
+
 - Pods use 10-20% CPU on average
 - Limited outbound connections
 
 **Anomalous Behavior**:
+
 - New pod created outside normal deployment process
 - Pod consistently uses 95-100% CPU
 - Outbound connection to mining pool domain
 
 **Detection**:
+
 ```yaml
+
 # Falco rule
+
 - rule: Cryptocurrency Mining
   desc: Detect crypto mining activity
   condition: >
@@ -703,47 +864,62 @@ THEN alert "Possible lateral movement"
   priority: CRITICAL
 
 # Prometheus alert
+
 - alert: HighCPUUsage
   expr: |
     rate(container_cpu_usage_seconds_total[5m]) > 0.9
   for: 1h
 ```
 
+```
+
 ### Scenario 2: Insider Threat
 
 **Normal Behavior**:
+
 - Developer accesses 2-3 namespaces daily
 - Reads 5-10 secrets per day
 - Works 9 AM - 5 PM
 
 **Anomalous Behavior**:
+
 - Accessed 15 namespaces in 2 hours
 - Read 50 secrets
 - Activity at 2 AM
 
 **Detection**:
+
 ```bash
+
 # Audit log analysis
+
 cat audit.log | jq 'select(.user.username=="developer@example.com") |
   select(.requestReceivedTimestamp | strptime("%Y-%m-%dT%H:%M:%S") | .hour < 6 or .hour > 22) |
   select(.objectRef.resource=="secrets")'
 ```
 
+```
+
 ### Scenario 3: Container Escape
 
 **Normal Behavior**:
+
 - Application containers run defined processes only
 - No host filesystem access
 - No privileged operations
 
 **Anomalous Behavior**:
+
 - Shell spawned in container
 - Attempt to mount host filesystem
 - Privilege escalation attempts
 
 **Detection**:
+
 ```yaml
+
 # Falco rules
+
 - rule: Container Escape - Host Mount
   condition: >
     container and
@@ -761,18 +937,21 @@ cat audit.log | jq 'select(.user.username=="developer@example.com") |
   priority: CRITICAL
 ```
 
+```
+
 ## Exam Tips
 
 For the KCSA exam, understand:
 
 1. **Difference between signature-based and behavior-based detection**
-2. **What to baseline**: API activity, resource counts, network patterns
-3. **Common behavioral indicators**: Unusual times, locations, volumes
-4. **False positive management**: Tuning, allow-lists, correlation
-5. **Integration with monitoring**: Prometheus, audit logs, Falco
-6. **Basic anomaly detection**: Statistical outliers, thresholds
+1. **What to baseline**: API activity, resource counts, network patterns
+1. **Common behavioral indicators**: Unusual times, locations, volumes
+1. **False positive management**: Tuning, allow-lists, correlation
+1. **Integration with monitoring**: Prometheus, audit logs, Falco
+1. **Basic anomaly detection**: Statistical outliers, thresholds
 
 **Practice**:
+
 - Identify normal vs. anomalous behavior in scenarios
 - Tune Falco rules to reduce false positives
 - Analyze audit logs for behavioral patterns
@@ -783,14 +962,15 @@ For the KCSA exam, understand:
 **Key Takeaways**:
 
 1. Behavioral analytics detects unknown threats by finding anomalies
-2. Establish baselines of normal behavior first
-3. Multiple behavioral indicators are more reliable than single events
-4. Tune aggressively to prevent alert fatigue
-5. Integrate multiple data sources (audit logs, metrics, runtime events)
-6. Update baselines as your environment evolves
-7. Behavioral analytics complements signature-based detection
+1. Establish baselines of normal behavior first
+1. Multiple behavioral indicators are more reliable than single events
+1. Tune aggressively to prevent alert fatigue
+1. Integrate multiple data sources (audit logs, metrics, runtime events)
+1. Update baselines as your environment evolves
+1. Behavioral analytics complements signature-based detection
 
 **Best Practices**:
+
 - Collect baseline for at least 1 month
 - Use multiple detection techniques
 - Correlate signals for higher confidence
@@ -799,6 +979,7 @@ For the KCSA exam, understand:
 - Have clear escalation paths
 
 **Next Steps**:
+
 - Continue to [Runtime Detection and Response](runtime-detection.md)
 - Practice establishing baselines in your environment
 - Learn to tune detection rules effectively
