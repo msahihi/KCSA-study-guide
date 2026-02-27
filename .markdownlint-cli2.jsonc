@@ -1,0 +1,28 @@
+{
+  "config": {
+    "default": true,
+    "MD013": false,
+    "MD033": false,
+    "MD034": false,
+    "MD040": false,
+    "MD041": false,
+    "MD024": {
+      "siblings_only": true
+    },
+    "MD046": {
+      "style": "fenced"
+    },
+    "MD049": {
+      "style": "asterisk"
+    },
+    "MD050": {
+      "style": "asterisk"
+    }
+  },
+  "globs": [
+    "**/*.md"
+  ],
+  "ignores": [
+    "node_modules"
+  ]
+}

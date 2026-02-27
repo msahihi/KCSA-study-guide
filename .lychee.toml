@@ -1,0 +1,22 @@
+# Lychee link checker configuration
+cache = true
+max_cache_age = "1d"
+
+# Accept these HTTP status codes
+accept = [200, 201, 202, 203, 204, 205, 206, 207, 208, 226, 307, 308, 403, 429]
+
+# Exclude patterns
+exclude = [
+    'localhost',
+    '127.0.0.1',
+    '^file://',
+    '.git',
+    'mailto:',
+]
+
+# Retry settings
+max_retries = 3
+retry_wait_time = 2
+
+# Timeout
+timeout = 20

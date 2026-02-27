@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Cache
+.lycheecache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+
+# Temporary files
+*.tmp
+tmp/
+temp/
